@@ -1,16 +1,18 @@
 /**
  * TimeBar - Google Apps Script Backend
  * 
+ * ⚠️ 重要：請先設定下方的 SPREADSHEET_ID！
+ * 
  * 設定步驟：
- * 1. 開啟 Google Sheets，建立新試算表
- * 2. 點選「擴充功能」→「Apps Script」
- * 3. 將此檔案內容貼上，取代預設的 Code.gs
- * 4. 點選「部署」→「新增部署作業」
- * 5. 選擇「網頁應用程式」
- * 6. 設定「誰可以存取」為「任何人」
- * 7. 點選「部署」，複製產生的網址
- * 8. 將網址貼到 index.html 的 GAS_WEB_APP_URL 變數中
+ * 1. 開啟你的 Google Sheets
+ * 2. 從網址複製試算表 ID（網址中 /d/ 和 /edit 之間的那串字）
+ *    例如：https://docs.google.com/spreadsheets/d/【這裡是ID】/edit
+ * 3. 將 ID 貼到下方 SPREADSHEET_ID 變數中
+ * 4. 儲存後重新部署（部署 → 管理部署作業 → 編輯 → 版本選「新版本」→ 部署）
  */
+
+// ⚠️ 請在這裡填入你的試算表 ID
+const SPREADSHEET_ID = '1bJ-plKk3locg4fRWtEcdL5rIgT2KQvEz5Xer1h7--MU';
 
 // 試算表設定
 const SHEET_NAMES = {
@@ -18,9 +20,14 @@ const SHEET_NAMES = {
   USER_DATA: '使用者資料'
 };
 
+// 取得試算表（使用明確的 ID）
+function getSpreadsheet() {
+  return SpreadsheetApp.openById(SPREADSHEET_ID);
+}
+
 // 取得或建立工作表
 function getOrCreateSheet(name) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getSpreadsheet();
   let sheet = ss.getSheetByName(name);
   
   if (!sheet) {
@@ -33,6 +40,9 @@ function getOrCreateSheet(name) {
       ]]);
       sheet.getRange(1, 1, 1, 9).setFontWeight('bold').setBackground('#10b981').setFontColor('white');
       sheet.setFrozenRows(1);
+      sheet.setColumnWidth(1, 150);
+      sheet.setColumnWidth(7, 200);
+      sheet.setColumnWidth(8, 180);
     } else if (name === SHEET_NAMES.USER_DATA) {
       sheet.getRange(1, 1, 1, 5).setValues([[
         '年齡', '月薪', '退休年齡', '目前存款', '更新時間'
@@ -60,6 +70,8 @@ function doGet(e) {
         records: getRecords().records,
         userData: getUserData().userData
       };
+    } else if (action === 'ping') {
+      result = { message: 'pong', timestamp: new Date().toISOString() };
     }
     result.success = true;
   } catch (error) {
@@ -85,6 +97,8 @@ function doPost(e) {
       result = saveUserData(data.data);
     } else if (action === 'deleteRecord') {
       result = deleteRecord(data.id);
+    } else if (action === 'test') {
+      result = { message: 'POST is working!', receivedData: data };
     }
     
     result.success = true;
@@ -104,22 +118,32 @@ function addRecord(record) {
   const dateStr = Utilities.formatDate(timestamp, 'Asia/Taipei', 'yyyy-MM-dd HH:mm:ss');
   const dateOnly = Utilities.formatDate(timestamp, 'Asia/Taipei', 'yyyy-MM-dd');
   
-  sheet.appendRow([
+  const rowData = [
     record.id || Utilities.getUuid(),
-    record.type,           // 'spend' 或 'save'
+    record.type === 'save' ? '儲蓄' : '花費',
     record.amount,
     record.isRecurring ? '是' : '否',
-    record.timeCost,
+    Math.round(record.timeCost * 100) / 100,
     record.category || '',
     record.note || '',
     dateStr,
     dateOnly
-  ]);
+  ];
   
-  // 自動調整欄寬
-  sheet.autoResizeColumns(1, 9);
+  sheet.appendRow(rowData);
   
-  return { message: 'Record added successfully' };
+  // 格式化金額欄位
+  const lastRow = sheet.getLastRow();
+  sheet.getRange(lastRow, 3).setNumberFormat('#,##0');
+  
+  // 根據類型設定顏色
+  if (record.type === 'save') {
+    sheet.getRange(lastRow, 2).setBackground('#d1fae5').setFontColor('#065f46');
+  } else {
+    sheet.getRange(lastRow, 2).setBackground('#fee2e2').setFontColor('#991b1b');
+  }
+  
+  return { message: 'Record added successfully', id: rowData[0] };
 }
 
 // 取得所有消費紀錄
@@ -135,10 +159,10 @@ function getRecords() {
   for (let i = 1; i < data.length; i++) {
     records.push({
       id: data[i][0],
-      type: data[i][1],
-      amount: data[i][2],
+      type: data[i][1] === '儲蓄' ? 'save' : 'spend',
+      amount: Number(data[i][2]),
       isRecurring: data[i][3] === '是',
-      timeCost: data[i][4],
+      timeCost: Number(data[i][4]),
       category: data[i][5],
       note: data[i][6],
       timestamp: data[i][7],
@@ -168,6 +192,10 @@ function saveUserData(userData) {
     timestamp
   ]);
   
+  // 格式化
+  sheet.getRange(2, 2).setNumberFormat('#,##0');
+  sheet.getRange(2, 4).setNumberFormat('#,##0');
+  
   return { message: 'User data saved successfully' };
 }
 
@@ -183,10 +211,10 @@ function getUserData() {
   const lastRow = data[data.length - 1];
   return {
     userData: {
-      age: lastRow[0],
-      salary: lastRow[1],
-      retireAge: lastRow[2],
-      currentSavings: lastRow[3],
+      age: Number(lastRow[0]),
+      salary: Number(lastRow[1]),
+      retireAge: Number(lastRow[2]),
+      currentSavings: Number(lastRow[3]),
       updatedAt: lastRow[4]
     }
   };
@@ -239,52 +267,42 @@ function getStats() {
   };
 }
 
-// 每月摘要（可用於推播通知）
-function getMonthlySummary() {
-  const records = getRecords().records;
-  const now = new Date();
-  const currentMonth = now.getMonth();
-  const currentYear = now.getFullYear();
-  
-  const thisMonthRecords = records.filter(r => {
-    const date = new Date(r.timestamp);
-    return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
-  });
-  
-  const monthSaved = thisMonthRecords
-    .filter(r => r.type === 'save')
-    .reduce((sum, r) => sum + r.amount, 0);
-    
-  const monthSpent = thisMonthRecords
-    .filter(r => r.type === 'spend')
-    .reduce((sum, r) => sum + r.amount, 0);
-  
-  return {
-    month: `${currentYear}/${currentMonth + 1}`,
-    saved: monthSaved,
-    spent: monthSpent,
-    net: monthSaved - monthSpent,
-    count: thisMonthRecords.length
-  };
+// ========== 測試函數 ==========
+
+// 測試試算表連接
+function testConnection() {
+  try {
+    const ss = getSpreadsheet();
+    Logger.log('✅ 連接成功！試算表名稱：' + ss.getName());
+    return true;
+  } catch (error) {
+    Logger.log('❌ 連接失敗：' + error.toString());
+    Logger.log('請確認 SPREADSHEET_ID 是否正確設定');
+    return false;
+  }
 }
 
-// 測試函數
-function test() {
-  // 測試新增紀錄
-  addRecord({
+// 測試新增紀錄
+function testAddRecord() {
+  if (!testConnection()) return;
+  
+  const result = addRecord({
     type: 'save',
-    amount: 5000,
-    isRecurring: true,
-    timeCost: 24,
-    category: '薪資儲蓄',
-    note: '測試紀錄'
+    amount: 1000,
+    isRecurring: false,
+    timeCost: 5.5,
+    category: '測試',
+    note: '這是測試紀錄'
   });
   
-  // 測試取得紀錄
-  const records = getRecords();
-  Logger.log(records);
+  Logger.log('新增結果：' + JSON.stringify(result));
+}
+
+// 測試讀取紀錄
+function testGetRecords() {
+  if (!testConnection()) return;
   
-  // 測試統計
-  const stats = getStats();
-  Logger.log(stats);
+  const result = getRecords();
+  Logger.log('紀錄數量：' + result.records.length);
+  Logger.log('紀錄內容：' + JSON.stringify(result.records));
 }
