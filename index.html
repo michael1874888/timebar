@@ -477,7 +477,21 @@
       }, [userData, netSavingsImpact]);
 
       const ageDiff = retireAge - estimatedAge;
-      const isAhead = ageDiff > 0;
+      const ageDiffDays = Math.round(ageDiff * 365);
+      const isAhead = ageDiff > 0.001; // 小於約半天視為持平
+      const isBehind = ageDiff < -0.001;
+      const isOnTrack = !isAhead && !isBehind;
+
+      // 格式化差異顯示
+      const formatAgeDiff = (diff) => {
+        const absDiff = Math.abs(diff);
+        const absDays = Math.round(absDiff * 365);
+        if (absDays < 1) return { value: '0', unit: '天', isSmall: true };
+        if (absDays < 30) return { value: absDays.toString(), unit: '天', isSmall: true };
+        if (absDays < 365) return { value: Math.round(absDays / 30).toString(), unit: '個月', isSmall: false };
+        return { value: absDiff.toFixed(1), unit: '年', isSmall: false };
+      };
+      const diffDisplay = formatAgeDiff(ageDiff);
 
       // 計算目標退休金
       const targetFund = FinanceCalc.targetFundByAge(currentSavings, monthlySavings, yearsToRetire, realRate);
@@ -556,7 +570,7 @@
                 </div>
                 <button onClick={onOpenSettings} className="text-right">
                   <div className="text-xs text-gray-500">📍 預估</div>
-                  <div className={`font-bold text-xl ${isAhead ? 'text-emerald-400' : 'text-orange-400'}`}>
+                  <div className={`font-bold text-xl ${isOnTrack ? 'text-white' : isAhead ? 'text-emerald-400' : 'text-orange-400'}`}>
                     {estimatedAge.toFixed(1)} 歲
                   </div>
                 </button>
@@ -564,11 +578,14 @@
               
               {/* GPS Status Bar */}
               <div className={`rounded-xl px-4 py-2 text-center text-sm ${
+                isOnTrack ? 'bg-gray-700 text-gray-300' :
                 isAhead ? 'bg-emerald-500/20 text-emerald-400' : 'bg-orange-500/20 text-orange-400'
               }`}>
-                {isAhead 
-                  ? `🚀 領先 ${Math.abs(ageDiff).toFixed(1)} 年！繼續保持！`
-                  : `⏰ 落後 ${Math.abs(ageDiff).toFixed(1)} 年，加油追上！`
+                {isOnTrack 
+                  ? `✅ 完美！目前剛好符合計畫`
+                  : isAhead 
+                    ? `🚀 領先 ${diffDisplay.value} ${diffDisplay.unit}！繼續保持！`
+                    : `⏰ 落後 ${diffDisplay.value} ${diffDisplay.unit}，加油追上！`
                 }
               </div>
             </div>
@@ -583,8 +600,12 @@
                   <div className="text-gray-500 text-xs">額外儲蓄</div>
                 </div>
                 <div>
-                  <div className="text-white font-bold text-lg">{formatCurrency(Math.round(targetFund))}</div>
-                  <div className="text-gray-500 text-xs">目標退休金</div>
+                  <div className={`font-bold text-lg ${
+                    isOnTrack ? 'text-white' : isAhead ? 'text-emerald-400' : 'text-orange-400'
+                  }`}>
+                    {isOnTrack ? '±0' : isAhead ? '+' : ''}{ageDiffDays} 天
+                  </div>
+                  <div className="text-gray-500 text-xs">退休時間影響</div>
                 </div>
                 <div>
                   <div className="text-orange-400 font-bold text-lg">{formatCurrency(totalSpent)}</div>
@@ -773,6 +794,20 @@
 
       const estimatedAge = FinanceCalc.estimatedRetireAge(userData, netSavingsImpact);
       const ageDiff = retireAge - estimatedAge;
+      const isAhead = ageDiff > 0.001;
+      const isBehind = ageDiff < -0.001;
+      const isOnTrack = !isAhead && !isBehind;
+
+      // 格式化差異顯示
+      const formatAgeDiff = (diff) => {
+        const absDiff = Math.abs(diff);
+        const absDays = Math.round(absDiff * 365);
+        if (absDays < 1) return { value: '0', unit: '天' };
+        if (absDays < 30) return { value: absDays.toString(), unit: '天' };
+        if (absDays < 365) return { value: Math.round(absDays / 30).toString(), unit: '個月' };
+        return { value: absDiff.toFixed(1), unit: '年' };
+      };
+      const diffDisplay = formatAgeDiff(ageDiff);
 
       const sortedRecords = [...records].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
       const groupedRecords = sortedRecords.reduce((groups, record) => {
@@ -822,16 +857,18 @@
                   </div>
                   <div className="flex-1 mx-4">
                     <div className="h-3 bg-gray-700 rounded-full overflow-hidden relative">
-                      <div className={`h-full rounded-full transition-all ${ageDiff >= 0 ? 'bg-emerald-500' : 'bg-orange-500'}`}
-                        style={{ width: `${Math.min(100, 50 + ageDiff * 5)}%` }} />
+                      <div className={`h-full rounded-full transition-all ${
+                        isOnTrack ? 'bg-gray-500' : isAhead ? 'bg-emerald-500' : 'bg-orange-500'
+                      }`}
+                        style={{ width: `${Math.min(100, Math.max(10, 50 + ageDiff * 10))}%` }} />
                       <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-white rounded-full" />
                     </div>
                   </div>
                   <div>
-                    <div className={`text-xs ${ageDiff >= 0 ? 'text-emerald-400' : 'text-orange-400'}`}>
+                    <div className={`text-xs ${isOnTrack ? 'text-gray-400' : isAhead ? 'text-emerald-400' : 'text-orange-400'}`}>
                       📍 預估
                     </div>
-                    <div className={`font-bold text-lg ${ageDiff >= 0 ? 'text-emerald-400' : 'text-orange-400'}`}>
+                    <div className={`font-bold text-lg ${isOnTrack ? 'text-white' : isAhead ? 'text-emerald-400' : 'text-orange-400'}`}>
                       {estimatedAge.toFixed(1)} 歲
                     </div>
                   </div>
@@ -839,11 +876,14 @@
               </div>
               
               <div className={`text-center text-sm px-4 py-2 rounded-xl ${
-                ageDiff >= 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-orange-500/20 text-orange-400'
+                isOnTrack ? 'bg-gray-700 text-gray-300' :
+                isAhead ? 'bg-emerald-500/20 text-emerald-400' : 'bg-orange-500/20 text-orange-400'
               }`}>
-                {ageDiff >= 0 
-                  ? `🎉 比目標提早 ${ageDiff.toFixed(1)} 年！`
-                  : `📈 需要再努力 ${Math.abs(ageDiff).toFixed(1)} 年`
+                {isOnTrack
+                  ? `✅ 完美！目前剛好符合計畫`
+                  : isAhead 
+                    ? `🎉 比目標提早 ${diffDisplay.value} ${diffDisplay.unit}！`
+                    : `📈 需要再努力 ${diffDisplay.value} ${diffDisplay.unit}`
                 }
               </div>
             </div>
@@ -1175,7 +1215,7 @@
               )}
             </div>
 
-            <div className="text-center text-gray-600 text-sm mt-8">TimeBar v2.2</div>
+            <div className="text-center text-gray-600 text-sm mt-8">TimeBar v2.2.1</div>
           </div>
         </div>
       );
