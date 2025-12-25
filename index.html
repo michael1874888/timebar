@@ -177,15 +177,18 @@
     // 🔧 在這裡填入你的 Google Apps Script Web App URL
     const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzZi4pEbKa_bEKtyKppVw9Ls_jmx8QdgP6zlarNiWI4ylXWJb5qpvcC-a9flq5Jvxnm/exec'; // 例如: 'https://script.google.com/macros/s/xxx/exec'
     
-    // ==================== CONSTANTS ====================
-    const INFLATION_RATE = 0.025;
-    const ROI_RATE = 0.06;
-    const REAL_RATE = (1 + ROI_RATE) / (1 + INFLATION_RATE) - 1;
+    // ==================== DEFAULT CONSTANTS ====================
+    const DEFAULT_INFLATION_RATE = 2.5;
+    const DEFAULT_ROI_RATE = 6;
     const WORKING_DAYS_PER_MONTH = 22;
     const WORKING_HOURS_PER_DAY = 8;
     const MONTHS_PER_YEAR = 12;
 
     // ==================== UTILITIES ====================
+    const calculateRealRate = (inflationRate, roiRate) => {
+      return (1 + roiRate / 100) / (1 + inflationRate / 100) - 1;
+    };
+
     const formatTime = (totalHours) => {
       const absHours = Math.abs(totalHours);
       if (absHours < 1) {
@@ -268,7 +271,7 @@
         if (!this.isConfigured()) return { success: false, error: 'API not configured' };
         
         try {
-          const response = await fetch(GAS_WEB_APP_URL, {
+          await fetch(GAS_WEB_APP_URL, {
             method: 'POST',
             mode: 'no-cors',
             headers: { 'Content-Type': 'application/json' },
@@ -303,6 +306,22 @@
             mode: 'no-cors',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ action: 'saveUserData', data: userData }),
+          });
+          return { success: true };
+        } catch (error) {
+          return { success: false, error: error.message };
+        }
+      },
+      
+      async clearAllData() {
+        if (!this.isConfigured()) return { success: false };
+        
+        try {
+          await fetch(GAS_WEB_APP_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'clearAllData' }),
           });
           return { success: true };
         } catch (error) {
@@ -384,7 +403,14 @@
           if (step < 3) {
             setStep(step + 1);
           } else {
-            onComplete({ age, salary, retireAge, currentSavings });
+            onComplete({ 
+              age, 
+              salary, 
+              retireAge, 
+              currentSavings,
+              inflationRate: DEFAULT_INFLATION_RATE,
+              roiRate: DEFAULT_ROI_RATE,
+            });
           }
           setIsAnimating(false);
         }, 300);
@@ -521,7 +547,7 @@
 
     // ==================== MAIN TRACKER ====================
     const MainTracker = ({ userData, records, onAddRecord, onOpenHistory, onOpenSettings }) => {
-      const [mode, setMode] = useState('spend'); // 'spend' | 'save'
+      const [mode, setMode] = useState('spend');
       const [amount, setAmount] = useState(500);
       const [isRecurring, setIsRecurring] = useState(false);
       const [category, setCategory] = useState('');
@@ -531,10 +557,11 @@
       const [showConfetti, setShowConfetti] = useState(false);
       const [isSaving, setIsSaving] = useState(false);
 
-      const { age, salary, retireAge, currentSavings } = userData;
+      const { age, salary, retireAge, currentSavings, inflationRate = DEFAULT_INFLATION_RATE, roiRate = DEFAULT_ROI_RATE } = userData;
       const yearsToRetire = retireAge - age;
       const hourlyRate = salary / WORKING_DAYS_PER_MONTH / WORKING_HOURS_PER_DAY;
-      const monthlyRate = REAL_RATE / 12;
+      const realRate = calculateRealRate(inflationRate, roiRate);
+      const monthlyRate = realRate / 12;
       const monthsToRetire = yearsToRetire * 12;
 
       // Calculate cumulative stats
@@ -546,8 +573,8 @@
       const netDays = Math.round(netHours / 24);
 
       // Calculate projected retirement fund
-      const monthlyContribution = salary * 0.2; // Assume 20% savings rate
-      const projectedFund = currentSavings * Math.pow(1 + REAL_RATE, yearsToRetire) +
+      const monthlyContribution = salary * 0.2;
+      const projectedFund = currentSavings * Math.pow(1 + realRate, yearsToRetire) +
         monthlyContribution * ((Math.pow(1 + monthlyRate, monthsToRetire) - 1) / monthlyRate);
 
       // Calculate time cost/gain
@@ -556,10 +583,10 @@
         if (isRecurring) {
           futureValue = amount * ((Math.pow(1 + monthlyRate, monthsToRetire) - 1) / monthlyRate);
         } else {
-          futureValue = amount * Math.pow(1 + REAL_RATE, yearsToRetire);
+          futureValue = amount * Math.pow(1 + realRate, yearsToRetire);
         }
         return futureValue / hourlyRate;
-      }, [amount, isRecurring, monthsToRetire, yearsToRetire, hourlyRate, monthlyRate]);
+      }, [amount, isRecurring, monthsToRetire, yearsToRetire, hourlyRate, monthlyRate, realRate]);
 
       const timeCost = calculateTimeCost();
       const timeFormatted = formatTime(timeCost);
@@ -574,7 +601,7 @@
           type: mode,
           amount,
           isRecurring,
-          timeCost: mode === 'spend' ? timeCost : timeCost,
+          timeCost: timeCost,
           category: category || (mode === 'spend' ? '一般消費' : '儲蓄'),
           note,
           timestamp: new Date().toISOString(),
@@ -592,7 +619,6 @@
         
         setIsSaving(false);
         
-        // Reset after showing result
         setTimeout(() => {
           setShowResult(false);
           setResultType(null);
@@ -822,7 +848,6 @@
                   </button>
                 </>
               ) : (
-                /* Result Display */
                 <div className="bg-gray-800/60 backdrop-blur-sm rounded-3xl p-8 text-center animate-slide-up">
                   {resultType === 'spend' ? (
                     <>
@@ -908,7 +933,6 @@
 
       const sortedRecords = [...records].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
-      // Group by month
       const groupedRecords = sortedRecords.reduce((groups, record) => {
         const date = new Date(record.timestamp);
         const key = `${date.getFullYear()}-${date.getMonth() + 1}`;
@@ -919,7 +943,6 @@
 
       return (
         <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800 pb-8">
-          {/* Header */}
           <div className="sticky top-0 bg-gray-900/95 backdrop-blur border-b border-gray-800 z-10">
             <div className="max-w-lg mx-auto px-4 py-4 flex items-center">
               <button onClick={onClose} className="text-gray-400 hover:text-white mr-4 p-1">
@@ -932,7 +955,6 @@
           </div>
 
           <div className="max-w-lg mx-auto px-4 pt-4">
-            {/* Summary Card */}
             <div className="bg-gradient-to-br from-gray-800/80 to-gray-800/40 rounded-3xl p-6 mb-6 border border-gray-700/50">
               <div className="grid grid-cols-2 gap-6 mb-6">
                 <div className="text-center">
@@ -947,7 +969,6 @@
               
               <div className="h-px bg-gray-700 mb-6" />
               
-              {/* Timeline */}
               <div className="text-center mb-4">
                 <div className="text-gray-400 text-sm mb-2">退休時間軸</div>
                 <div className="flex items-center justify-between">
@@ -979,7 +1000,6 @@
               </div>
             </div>
 
-            {/* Records List */}
             {Object.keys(groupedRecords).length === 0 ? (
               <div className="text-center py-16">
                 <div className="text-5xl mb-4">📝</div>
@@ -1054,18 +1074,27 @@
       const [salary, setSalary] = useState(userData.salary);
       const [retireAge, setRetireAge] = useState(userData.retireAge);
       const [currentSavings, setCurrentSavings] = useState(userData.currentSavings || 0);
+      const [inflationRate, setInflationRate] = useState(userData.inflationRate || DEFAULT_INFLATION_RATE);
+      const [roiRate, setRoiRate] = useState(userData.roiRate || DEFAULT_ROI_RATE);
       const [showConfirm, setShowConfirm] = useState(false);
+      const [isClearing, setIsClearing] = useState(false);
 
       const handleSave = () => {
-        onUpdateUser({ age, salary, retireAge, currentSavings });
+        onUpdateUser({ age, salary, retireAge, currentSavings, inflationRate, roiRate });
         onClose();
       };
 
+      const handleClear = async () => {
+        setIsClearing(true);
+        await onReset();
+        setIsClearing(false);
+      };
+
       const hourlyRate = Math.round(salary / WORKING_DAYS_PER_MONTH / WORKING_HOURS_PER_DAY);
+      const realRate = calculateRealRate(inflationRate, roiRate);
 
       return (
         <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800 pb-8">
-          {/* Header */}
           <div className="sticky top-0 bg-gray-900/95 backdrop-blur border-b border-gray-800 z-10">
             <div className="max-w-lg mx-auto px-4 py-4 flex items-center justify-between">
               <div className="flex items-center">
@@ -1147,21 +1176,52 @@
               </div>
             </div>
 
-            {/* System Info */}
+            {/* Financial Parameters */}
             <div className="bg-gray-800/50 rounded-3xl p-6 mb-6">
-              <h2 className="text-white font-bold mb-4">計算參數</h2>
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-500">通膨率</span>
-                  <span className="text-gray-300">2.5%</span>
+              <h2 className="text-white font-bold mb-2">計算參數</h2>
+              <p className="text-gray-500 text-xs mb-6">可依個人預期調整</p>
+              
+              <div className="space-y-6">
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <span className="text-gray-400">通膨率</span>
+                    <span className="text-white font-bold">{inflationRate}%</span>
+                  </div>
+                  <input
+                    type="range" min="0" max="10" step="0.5" value={inflationRate}
+                    onChange={(e) => setInflationRate(parseFloat(e.target.value))}
+                    className="slider w-full"
+                  />
+                  <div className="flex justify-between text-gray-600 text-xs mt-1">
+                    <span>0%</span><span>10%</span>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">投資報酬率</span>
-                  <span className="text-gray-300">6%</span>
+
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <span className="text-gray-400">投資報酬率</span>
+                    <span className="text-white font-bold">{roiRate}%</span>
+                  </div>
+                  <input
+                    type="range" min="0" max="15" step="0.5" value={roiRate}
+                    onChange={(e) => setRoiRate(parseFloat(e.target.value))}
+                    className="slider w-full"
+                  />
+                  <div className="flex justify-between text-gray-600 text-xs mt-1">
+                    <span>0%</span><span>15%</span>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">實質報酬率</span>
-                  <span className="text-emerald-400">≈ 3.41%</span>
+
+                <div className="bg-emerald-500/10 rounded-xl p-4 border border-emerald-500/20">
+                  <div className="flex justify-between">
+                    <span className="text-emerald-400">實質報酬率</span>
+                    <span className="text-emerald-400 font-bold">
+                      ≈ {(realRate * 100).toFixed(2)}%
+                    </span>
+                  </div>
+                  <div className="text-emerald-400/60 text-xs mt-1">
+                    (1 + {roiRate}%) ÷ (1 + {inflationRate}%) - 1
+                  </div>
                 </div>
               </div>
             </div>
@@ -1194,13 +1254,17 @@
                 </button>
               ) : (
                 <div>
-                  <p className="text-gray-400 text-sm mb-3">確定要清除所有資料嗎？此動作無法復原。</p>
+                  <p className="text-gray-400 text-sm mb-3">
+                    確定要清除所有資料嗎？此動作無法復原。
+                    {GAS_WEB_APP_URL && <span className="text-red-400">（包含雲端資料）</span>}
+                  </p>
                   <div className="flex gap-3">
                     <button
-                      onClick={() => { onReset(); onClose(); }}
-                      className="bg-red-500 text-white px-4 py-2 rounded-xl text-sm font-medium"
+                      onClick={handleClear}
+                      disabled={isClearing}
+                      className="bg-red-500 text-white px-4 py-2 rounded-xl text-sm font-medium disabled:opacity-50"
                     >
-                      確定清除
+                      {isClearing ? '清除中...' : '確定清除'}
                     </button>
                     <button
                       onClick={() => setShowConfirm(false)}
@@ -1215,7 +1279,7 @@
 
             {/* Version */}
             <div className="text-center text-gray-600 text-sm mt-8">
-              TimeBar v2.0
+              TimeBar v2.1
             </div>
           </div>
         </div>
@@ -1235,7 +1299,13 @@
           const savedRecords = Storage.load('records', []);
           
           if (savedUserData) {
-            setUserData(savedUserData);
+            // Ensure default values for new fields
+            const completeUserData = {
+              ...savedUserData,
+              inflationRate: savedUserData.inflationRate ?? DEFAULT_INFLATION_RATE,
+              roiRate: savedUserData.roiRate ?? DEFAULT_ROI_RATE,
+            };
+            setUserData(completeUserData);
             setRecords(savedRecords);
             setScreen('main');
           } else {
@@ -1273,10 +1343,18 @@
         setUserData(newData);
       };
 
-      const handleReset = () => {
+      const handleReset = async () => {
+        // Clear cloud data
+        await GoogleSheetsAPI.clearAllData();
+        
+        // Clear local data
         Storage.clear();
+        
+        // Reset state
         setUserData(null);
         setRecords([]);
+        
+        // Navigate to onboarding
         setScreen('onboarding');
       };
 

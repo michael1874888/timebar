@@ -1,5 +1,5 @@
 /**
- * TimeBar - Google Apps Script Backend
+ * TimeBar - Google Apps Script Backend v2.1
  * 
  * ⚠️ 重要：請先設定下方的 SPREADSHEET_ID！
  * 
@@ -44,10 +44,10 @@ function getOrCreateSheet(name) {
       sheet.setColumnWidth(7, 200);
       sheet.setColumnWidth(8, 180);
     } else if (name === SHEET_NAMES.USER_DATA) {
-      sheet.getRange(1, 1, 1, 5).setValues([[
-        '年齡', '月薪', '退休年齡', '目前存款', '更新時間'
+      sheet.getRange(1, 1, 1, 7).setValues([[
+        '年齡', '月薪', '退休年齡', '目前存款', '通膨率(%)', '投資報酬率(%)', '更新時間'
       ]]);
-      sheet.getRange(1, 1, 1, 5).setFontWeight('bold').setBackground('#10b981').setFontColor('white');
+      sheet.getRange(1, 1, 1, 7).setFontWeight('bold').setBackground('#10b981').setFontColor('white');
       sheet.setFrozenRows(1);
     }
   }
@@ -97,6 +97,10 @@ function doPost(e) {
       result = saveUserData(data.data);
     } else if (action === 'deleteRecord') {
       result = deleteRecord(data.id);
+    } else if (action === 'clearAllData') {
+      result = clearAllData();
+    } else if (action === 'clearRecords') {
+      result = clearRecords();
     } else if (action === 'test') {
       result = { message: 'POST is working!', receivedData: data };
     }
@@ -173,10 +177,18 @@ function getRecords() {
   return { records };
 }
 
-// 儲存使用者資料
+// 儲存使用者資料（含通膨率和投資報酬率）
 function saveUserData(userData) {
   const sheet = getOrCreateSheet(SHEET_NAMES.USER_DATA);
   const timestamp = Utilities.formatDate(new Date(), 'Asia/Taipei', 'yyyy-MM-dd HH:mm:ss');
+  
+  // 確保標題列有新欄位
+  const headers = sheet.getRange(1, 1, 1, 7).getValues()[0];
+  if (headers[4] !== '通膨率(%)') {
+    sheet.getRange(1, 1, 1, 7).setValues([[
+      '年齡', '月薪', '退休年齡', '目前存款', '通膨率(%)', '投資報酬率(%)', '更新時間'
+    ]]);
+  }
   
   // 清除舊資料（保留標題）
   const lastRow = sheet.getLastRow();
@@ -184,17 +196,25 @@ function saveUserData(userData) {
     sheet.deleteRows(2, lastRow - 1);
   }
   
+  // 預設值
+  const inflationRate = userData.inflationRate !== undefined ? userData.inflationRate : 2.5;
+  const roiRate = userData.roiRate !== undefined ? userData.roiRate : 6;
+  
   sheet.appendRow([
     userData.age,
     userData.salary,
     userData.retireAge,
     userData.currentSavings || 0,
+    inflationRate,
+    roiRate,
     timestamp
   ]);
   
   // 格式化
   sheet.getRange(2, 2).setNumberFormat('#,##0');
   sheet.getRange(2, 4).setNumberFormat('#,##0');
+  sheet.getRange(2, 5).setNumberFormat('0.0');
+  sheet.getRange(2, 6).setNumberFormat('0.0');
   
   return { message: 'User data saved successfully' };
 }
@@ -215,12 +235,14 @@ function getUserData() {
       salary: Number(lastRow[1]),
       retireAge: Number(lastRow[2]),
       currentSavings: Number(lastRow[3]),
-      updatedAt: lastRow[4]
+      inflationRate: lastRow[4] !== undefined && lastRow[4] !== '' ? Number(lastRow[4]) : 2.5,
+      roiRate: lastRow[5] !== undefined && lastRow[5] !== '' ? Number(lastRow[5]) : 6,
+      updatedAt: lastRow[6] || lastRow[4] // 相容舊版
     }
   };
 }
 
-// 刪除紀錄
+// 刪除單筆紀錄
 function deleteRecord(recordId) {
   const sheet = getOrCreateSheet(SHEET_NAMES.RECORDS);
   const data = sheet.getDataRange().getValues();
@@ -233,6 +255,37 @@ function deleteRecord(recordId) {
   }
   
   return { message: 'Record not found' };
+}
+
+// 清除所有消費紀錄（保留標題）
+function clearRecords() {
+  const sheet = getOrCreateSheet(SHEET_NAMES.RECORDS);
+  const lastRow = sheet.getLastRow();
+  
+  if (lastRow > 1) {
+    sheet.deleteRows(2, lastRow - 1);
+  }
+  
+  return { message: 'All records cleared successfully' };
+}
+
+// 清除所有資料（消費紀錄 + 使用者資料）
+function clearAllData() {
+  // 清除消費紀錄
+  const recordsSheet = getOrCreateSheet(SHEET_NAMES.RECORDS);
+  const recordsLastRow = recordsSheet.getLastRow();
+  if (recordsLastRow > 1) {
+    recordsSheet.deleteRows(2, recordsLastRow - 1);
+  }
+  
+  // 清除使用者資料
+  const userSheet = getOrCreateSheet(SHEET_NAMES.USER_DATA);
+  const userLastRow = userSheet.getLastRow();
+  if (userLastRow > 1) {
+    userSheet.deleteRows(2, userLastRow - 1);
+  }
+  
+  return { message: 'All data cleared successfully' };
 }
 
 // 取得統計資料
@@ -305,4 +358,12 @@ function testGetRecords() {
   const result = getRecords();
   Logger.log('紀錄數量：' + result.records.length);
   Logger.log('紀錄內容：' + JSON.stringify(result.records));
+}
+
+// 測試清除資料
+function testClearAllData() {
+  if (!testConnection()) return;
+  
+  const result = clearAllData();
+  Logger.log('清除結果：' + JSON.stringify(result));
 }
