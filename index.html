@@ -8,17 +8,14 @@
   <meta name="theme-color" content="#111827">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⏱️</text></svg>">
   
-  <!-- Preconnect for performance -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
   
-  <!-- React -->
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -33,381 +30,282 @@
   </script>
   
   <style>
-    * {
-      -webkit-tap-highlight-color: transparent;
-      box-sizing: border-box;
-    }
+    * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+    body { font-family: 'Inter', 'Noto Sans TC', system-ui, sans-serif; background: #111827; margin: 0; padding: 0; min-height: 100vh; overflow-x: hidden; }
     
-    body {
-      font-family: 'Inter', 'Noto Sans TC', system-ui, sans-serif;
-      background: #111827;
-      margin: 0;
-      padding: 0;
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
+    .slider { -webkit-appearance: none; appearance: none; height: 8px; border-radius: 9999px; background: linear-gradient(to right, #374151, #4b5563); outline: none; }
+    .slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #10b981, #059669); cursor: pointer; box-shadow: 0 0 20px rgba(16, 185, 129, 0.4); transition: transform 0.15s ease; }
+    .slider::-webkit-slider-thumb:hover { transform: scale(1.1); }
+    .slider::-webkit-slider-thumb:active { transform: scale(0.95); }
+    .slider::-moz-range-thumb { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #10b981, #059669); cursor: pointer; border: none; box-shadow: 0 0 20px rgba(16, 185, 129, 0.4); }
+    .slider.orange::-webkit-slider-thumb { background: linear-gradient(135deg, #f97316, #ea580c); box-shadow: 0 0 20px rgba(249, 115, 22, 0.4); }
+    .slider.orange::-moz-range-thumb { background: linear-gradient(135deg, #f97316, #ea580c); box-shadow: 0 0 20px rgba(249, 115, 22, 0.4); }
     
-    .slider {
-      -webkit-appearance: none;
-      appearance: none;
-      height: 8px;
-      border-radius: 9999px;
-      background: linear-gradient(to right, #374151, #4b5563);
-      outline: none;
-    }
+    @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slide-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes confetti { 0% { transform: translateY(-10px) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
     
-    .slider::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #10b981, #059669);
-      cursor: pointer;
-      box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
-      transition: transform 0.15s ease;
-    }
+    .animate-fade-in { animation: fade-in 0.4s ease-out; }
+    .animate-slide-up { animation: slide-up 0.5s ease-out; }
+    .animate-confetti { animation: confetti 2s ease-out forwards; }
+    .tabular-nums { font-variant-numeric: tabular-nums; }
     
-    .slider::-webkit-slider-thumb:hover {
-      transform: scale(1.1);
-    }
+    .spinner { width: 40px; height: 40px; border: 3px solid #374151; border-top-color: #10b981; border-radius: 50%; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
     
-    .slider::-webkit-slider-thumb:active {
-      transform: scale(0.95);
-    }
-    
-    .slider::-moz-range-thumb {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #10b981, #059669);
-      cursor: pointer;
-      border: none;
-      box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
-    }
-    
-    .slider.orange::-webkit-slider-thumb {
-      background: linear-gradient(135deg, #f97316, #ea580c);
-      box-shadow: 0 0 20px rgba(249, 115, 22, 0.4);
-    }
-    
-    .slider.orange::-moz-range-thumb {
-      background: linear-gradient(135deg, #f97316, #ea580c);
-      box-shadow: 0 0 20px rgba(249, 115, 22, 0.4);
-    }
-    
-    @keyframes fade-in {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    
-    @keyframes slide-up {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    
-    @keyframes pulse-green {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
-      50% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
-    }
-    
-    .animate-fade-in {
-      animation: fade-in 0.4s ease-out;
-    }
-    
-    .animate-slide-up {
-      animation: slide-up 0.5s ease-out;
-    }
-    
-    @keyframes confetti {
-      0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
-      100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
-    }
-    
-    .animate-confetti {
-      animation: confetti 2s ease-out forwards;
-    }
-    
-    .tabular-nums {
-      font-variant-numeric: tabular-nums;
-    }
-    
-    .hide-scrollbar::-webkit-scrollbar {
-      display: none;
-    }
-    
-    .hide-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
-    
-    /* Loading spinner */
-    .spinner {
-      width: 40px;
-      height: 40px;
-      border: 3px solid #374151;
-      border-top-color: #10b981;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-    
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    
-    /* Number input styling */
-    input[type="number"]::-webkit-inner-spin-button,
-    input[type="number"]::-webkit-outer-spin-button {
-      -webkit-appearance: none;
-      margin: 0;
-    }
-    
-    input[type="number"] {
-      -moz-appearance: textfield;
-    }
+    input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type="number"] { -moz-appearance: textfield; }
   </style>
 </head>
 <body>
   <div id="root"></div>
   
   <script type="text/babel">
-    const { useState, useEffect, useCallback, useRef } = React;
+    const { useState, useEffect, useCallback, useMemo } = React;
 
     // ==================== CONFIG ====================
-    // 🔧 在這裡填入你的 Google Apps Script Web App URL
     const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzZi4pEbKa_bEKtyKppVw9Ls_jmx8QdgP6zlarNiWI4ylXWJb5qpvcC-a9flq5Jvxnm/exec'; // 例如: 'https://script.google.com/macros/s/xxx/exec'
     
-    // ==================== DEFAULT CONSTANTS ====================
+    // ==================== CONSTANTS ====================
     const DEFAULT_INFLATION_RATE = 2.5;
     const DEFAULT_ROI_RATE = 6;
     const WORKING_DAYS_PER_MONTH = 22;
     const WORKING_HOURS_PER_DAY = 8;
-    const MONTHS_PER_YEAR = 12;
 
-    // ==================== UTILITIES ====================
-    const calculateRealRate = (inflationRate, roiRate) => {
-      return (1 + roiRate / 100) / (1 + inflationRate / 100) - 1;
+    // ==================== FINANCIAL CALCULATIONS ====================
+    const FinanceCalc = {
+      // 計算實質報酬率
+      realRate(inflation, roi) {
+        return (1 + roi / 100) / (1 + inflation / 100) - 1;
+      },
+      
+      // 計算複利終值 (Future Value)
+      futureValue(pv, rate, years) {
+        return pv * Math.pow(1 + rate, years);
+      },
+      
+      // 計算年金終值 (每月投入)
+      annuityFV(monthly, rate, years) {
+        const monthlyRate = rate / 12;
+        const months = years * 12;
+        if (monthlyRate === 0) return monthly * months;
+        return monthly * ((Math.pow(1 + monthlyRate, months) - 1) / monthlyRate);
+      },
+      
+      // 計算達成目標金額需要幾年
+      yearsToTarget(currentSavings, monthlySavings, targetAmount, rate) {
+        if (currentSavings >= targetAmount) return 0;
+        
+        const monthlyRate = rate / 12;
+        
+        // Binary search for years
+        let low = 0, high = 100;
+        while (high - low > 0.01) {
+          const mid = (low + high) / 2;
+          const fv = this.futureValue(currentSavings, rate, mid) + this.annuityFV(monthlySavings, rate, mid);
+          if (fv < targetAmount) {
+            low = mid;
+          } else {
+            high = mid;
+          }
+        }
+        return (low + high) / 2;
+      },
+      
+      // 計算目標退休金（基於目標退休年齡）
+      targetFundByAge(currentSavings, monthlySavings, yearsToRetire, rate) {
+        return this.futureValue(currentSavings, rate, yearsToRetire) + 
+               this.annuityFV(monthlySavings, rate, yearsToRetire);
+      },
+      
+      // 4% 法則：月領金額 → 需要多少退休金
+      monthlyToFund(monthlyExpense) {
+        return monthlyExpense * 300;
+      },
+      
+      // 4% 法則：退休金 → 可以月領多少
+      fundToMonthly(fund) {
+        return fund / 300;
+      },
+      
+      // 計算每月需儲蓄多少才能達成目標
+      requiredMonthlySavings(currentSavings, targetAmount, years, rate) {
+        const monthlyRate = rate / 12;
+        const months = years * 12;
+        const fvCurrent = this.futureValue(currentSavings, rate, years);
+        const remaining = targetAmount - fvCurrent;
+        
+        if (remaining <= 0) return 0;
+        if (monthlyRate === 0) return remaining / months;
+        
+        return remaining / ((Math.pow(1 + monthlyRate, months) - 1) / monthlyRate);
+      },
+      
+      // 計算預估退休年齡 (ETA)
+      estimatedRetireAge(userData, netSavingsImpact = 0) {
+        const { age, currentSavings, monthlySavings, retireAge, inflationRate, roiRate } = userData;
+        const realRate = this.realRate(inflationRate, roiRate);
+        
+        // 目標退休金 = 按原計畫能存到的金額
+        const yearsToRetire = retireAge - age;
+        const targetFund = this.targetFundByAge(currentSavings, monthlySavings, yearsToRetire, realRate);
+        
+        // 考慮實際行為後的調整
+        const adjustedSavings = currentSavings + netSavingsImpact;
+        
+        // 計算需要幾年才能達到目標
+        const yearsNeeded = this.yearsToTarget(adjustedSavings, monthlySavings, targetFund, realRate);
+        
+        return age + yearsNeeded;
+      }
     };
 
+    // ==================== UTILITIES ====================
     const formatTime = (totalHours) => {
       const absHours = Math.abs(totalHours);
-      if (absHours < 1) {
-        return { value: Math.round(absHours * 60), unit: '分鐘', color: 'text-emerald-400' };
-      } else if (absHours < 8) {
-        return { value: Math.round(absHours * 10) / 10, unit: '小時', color: 'text-emerald-400' };
-      } else if (absHours < 24) {
-        return { value: Math.round(absHours * 10) / 10, unit: '小時', color: 'text-yellow-400' };
-      } else if (absHours < 24 * 7) {
-        return { value: Math.round(absHours / 24 * 10) / 10, unit: '天', color: 'text-yellow-400' };
-      } else if (absHours < 24 * 30) {
-        return { value: Math.round(absHours / 24 * 10) / 10, unit: '天', color: 'text-orange-400' };
-      } else if (absHours < 24 * 365) {
-        return { value: Math.round(absHours / 24 / 30 * 10) / 10, unit: '個月', color: 'text-orange-500' };
-      } else {
-        return { value: Math.round(absHours / 24 / 365 * 100) / 100, unit: '年', color: 'text-red-500' };
-      }
+      if (absHours < 1) return { value: Math.round(absHours * 60), unit: '分鐘', color: 'text-emerald-400' };
+      if (absHours < 8) return { value: Math.round(absHours * 10) / 10, unit: '小時', color: 'text-emerald-400' };
+      if (absHours < 24) return { value: Math.round(absHours * 10) / 10, unit: '小時', color: 'text-yellow-400' };
+      if (absHours < 24 * 7) return { value: Math.round(absHours / 24 * 10) / 10, unit: '天', color: 'text-yellow-400' };
+      if (absHours < 24 * 30) return { value: Math.round(absHours / 24 * 10) / 10, unit: '天', color: 'text-orange-400' };
+      if (absHours < 24 * 365) return { value: Math.round(absHours / 24 / 30 * 10) / 10, unit: '個月', color: 'text-orange-500' };
+      return { value: Math.round(absHours / 24 / 365 * 100) / 100, unit: '年', color: 'text-red-500' };
     };
 
     const formatCurrency = (amount) => {
-      if (Math.abs(amount) >= 100000000) {
-        return `${(amount / 100000000).toFixed(2)}億`;
-      }
-      if (Math.abs(amount) >= 10000) {
-        return `${(amount / 10000).toFixed(amount % 10000 === 0 ? 0 : 1)}萬`;
-      }
+      if (Math.abs(amount) >= 100000000) return `${(amount / 100000000).toFixed(2)}億`;
+      if (Math.abs(amount) >= 10000) return `${(amount / 10000).toFixed(amount % 10000 === 0 ? 0 : 1)}萬`;
       return amount.toLocaleString();
     };
 
-    const formatCurrencyFull = (amount) => {
-      return `NT$ ${amount.toLocaleString()}`;
-    };
+    const formatCurrencyFull = (amount) => `NT$ ${amount.toLocaleString()}`;
 
     const getRandomItem = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
     const getEquivalent = (hours, isSpend) => {
       const absHours = Math.abs(hours);
-      if (isSpend) {
-        const items = [
-          { max: 2, texts: ['一杯咖啡的時間', '一頓午餐'] },
-          { max: 8, texts: ['一天的工作', '一次電影約會'] },
-          { max: 24, texts: ['一整天的休息', '一頓高級餐廳'] },
-          { max: 168, texts: ['一週的假期', '一趟國內旅行'] },
-          { max: 720, texts: ['一個月的自由', '一趟日本旅行'] },
-          { max: 8760, texts: ['一整年的時光', '環遊世界的機會'] },
-          { max: Infinity, texts: ['好幾年的退休生活', '財務自由的關鍵'] },
-        ];
-        const match = items.find(i => absHours <= i.max) || items[items.length - 1];
-        return getRandomItem(match.texts);
-      } else {
-        const items = [
-          { max: 8, texts: ['多睡一天懶覺', '退休後的悠閒早晨'] },
-          { max: 24, texts: ['多一天去爬山', '陪家人的一天'] },
-          { max: 168, texts: ['多一週的旅行', '學一項新技能'] },
-          { max: 720, texts: ['多一個月的自由', '完成一個小夢想'] },
-          { max: Infinity, texts: ['人生多了好多可能', '離財務自由更近一步'] },
-        ];
-        const match = items.find(i => absHours <= i.max) || items[items.length - 1];
-        return getRandomItem(match.texts);
-      }
-    };
-
-    const getMotivationalQuote = () => {
-      const quotes = [
-        '每一分錢都是你未來自由的磚塊 🧱',
-        '今天的忍耐，是明天的自由 ✨',
-        '少買一個，多活一天 💪',
-        '自由不是免費的，是省出來的 🎯',
-        '你正在買回自己的時間 ⏰',
-        '退休後的你會感謝現在的決定 🙏',
+      const items = isSpend ? [
+        { max: 2, texts: ['一杯咖啡的時間', '一頓午餐'] },
+        { max: 8, texts: ['一天的工作', '一次電影約會'] },
+        { max: 24, texts: ['一整天的休息', '一頓高級餐廳'] },
+        { max: 168, texts: ['一週的假期', '一趟國內旅行'] },
+        { max: 720, texts: ['一個月的自由', '一趟日本旅行'] },
+        { max: 8760, texts: ['一整年的時光', '環遊世界的機會'] },
+        { max: Infinity, texts: ['好幾年的退休生活', '財務自由的關鍵'] },
+      ] : [
+        { max: 8, texts: ['多睡一天懶覺', '退休後的悠閒早晨'] },
+        { max: 24, texts: ['多一天去爬山', '陪家人的一天'] },
+        { max: 168, texts: ['多一週的旅行', '學一項新技能'] },
+        { max: 720, texts: ['多一個月的自由', '完成一個小夢想'] },
+        { max: Infinity, texts: ['人生多了好多可能', '離財務自由更近一步'] },
       ];
-      return getRandomItem(quotes);
+      return getRandomItem((items.find(i => absHours <= i.max) || items[items.length - 1]).texts);
     };
 
-    // ==================== GOOGLE SHEETS API ====================
+    const getMotivationalQuote = () => getRandomItem([
+      '每一分錢都是你未來自由的磚塊 🧱',
+      '今天的忍耐，是明天的自由 ✨',
+      '少買一個，多活一天 💪',
+      '自由不是免費的，是省出來的 🎯',
+      '你正在買回自己的時間 ⏰',
+      '退休後的你會感謝現在的決定 🙏',
+    ]);
+
+    // ==================== API ====================
     const GoogleSheetsAPI = {
       isConfigured: () => !!GAS_WEB_APP_URL,
       
       async saveRecord(record) {
-        if (!this.isConfigured()) return { success: false, error: 'API not configured' };
-        
+        if (!this.isConfigured()) return { success: false };
         try {
           await fetch(GAS_WEB_APP_URL, {
-            method: 'POST',
-            mode: 'no-cors',
+            method: 'POST', mode: 'no-cors',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ action: 'addRecord', data: record }),
           });
           return { success: true };
-        } catch (error) {
-          console.error('Save error:', error);
-          return { success: false, error: error.message };
-        }
-      },
-      
-      async getRecords() {
-        if (!this.isConfigured()) return { success: false, data: [] };
-        
-        try {
-          const response = await fetch(`${GAS_WEB_APP_URL}?action=getRecords`);
-          const data = await response.json();
-          return { success: true, data: data.records || [] };
-        } catch (error) {
-          console.error('Fetch error:', error);
-          return { success: false, data: [] };
-        }
+        } catch (e) { return { success: false }; }
       },
       
       async saveUserData(userData) {
         if (!this.isConfigured()) return { success: false };
-        
         try {
           await fetch(GAS_WEB_APP_URL, {
-            method: 'POST',
-            mode: 'no-cors',
+            method: 'POST', mode: 'no-cors',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ action: 'saveUserData', data: userData }),
           });
           return { success: true };
-        } catch (error) {
-          return { success: false, error: error.message };
-        }
+        } catch (e) { return { success: false }; }
       },
       
       async clearAllData() {
         if (!this.isConfigured()) return { success: false };
-        
         try {
           await fetch(GAS_WEB_APP_URL, {
-            method: 'POST',
-            mode: 'no-cors',
+            method: 'POST', mode: 'no-cors',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ action: 'clearAllData' }),
           });
           return { success: true };
-        } catch (error) {
-          return { success: false, error: error.message };
-        }
+        } catch (e) { return { success: false }; }
       },
     };
 
-    // ==================== LOCAL STORAGE ====================
     const Storage = {
-      save(key, data) {
-        try {
-          localStorage.setItem(`timebar_${key}`, JSON.stringify(data));
-          return true;
-        } catch { return false; }
-      },
-      
-      load(key, defaultValue = null) {
-        try {
-          const data = localStorage.getItem(`timebar_${key}`);
-          return data ? JSON.parse(data) : defaultValue;
-        } catch { return defaultValue; }
-      },
-      
-      clear() {
-        Object.keys(localStorage)
-          .filter(k => k.startsWith('timebar_'))
-          .forEach(k => localStorage.removeItem(k));
-      },
+      save(key, data) { try { localStorage.setItem(`timebar_${key}`, JSON.stringify(data)); return true; } catch { return false; } },
+      load(key, def = null) { try { const d = localStorage.getItem(`timebar_${key}`); return d ? JSON.parse(d) : def; } catch { return def; } },
+      clear() { Object.keys(localStorage).filter(k => k.startsWith('timebar_')).forEach(k => localStorage.removeItem(k)); },
     };
 
-    // ==================== CONFETTI ====================
+    // ==================== COMPONENTS ====================
     const Confetti = ({ active }) => {
       if (!active) return null;
-      
       const particles = Array.from({ length: 50 }, (_, i) => ({
-        id: i,
-        x: Math.random() * 100,
-        delay: Math.random() * 0.5,
-        duration: 1 + Math.random() * 1,
+        id: i, x: Math.random() * 100, delay: Math.random() * 0.5, duration: 1 + Math.random(),
         color: ['#10b981', '#34d399', '#6ee7b7', '#fbbf24', '#f472b6'][Math.floor(Math.random() * 5)],
         size: 8 + Math.random() * 8,
       }));
-
       return (
         <div className="fixed inset-0 pointer-events-none overflow-hidden z-50">
-          {particles.map((p) => (
-            <div
-              key={p.id}
-              className="absolute rounded-full animate-confetti"
-              style={{
-                left: `${p.x}%`,
-                width: p.size,
-                height: p.size,
-                backgroundColor: p.color,
-                animationDelay: `${p.delay}s`,
-                animationDuration: `${p.duration}s`,
-              }}
-            />
+          {particles.map(p => (
+            <div key={p.id} className="absolute rounded-full animate-confetti"
+              style={{ left: `${p.x}%`, width: p.size, height: p.size, backgroundColor: p.color,
+                animationDelay: `${p.delay}s`, animationDuration: `${p.duration}s` }} />
           ))}
         </div>
       );
     };
 
-    // ==================== ONBOARDING ====================
+    // ==================== ONBOARDING (5 Steps) ====================
     const OnboardingScreen = ({ onComplete }) => {
       const [step, setStep] = useState(0);
       const [age, setAge] = useState(30);
       const [salary, setSalary] = useState(50000);
       const [retireAge, setRetireAge] = useState(65);
       const [currentSavings, setCurrentSavings] = useState(0);
+      const [monthlySavings, setMonthlySavings] = useState(10000);
       const [isAnimating, setIsAnimating] = useState(false);
 
+      useEffect(() => {
+        setMonthlySavings(Math.round(salary * 0.2));
+      }, [salary]);
+
       const hourlyRate = Math.round(salary / WORKING_DAYS_PER_MONTH / WORKING_HOURS_PER_DAY);
+      const realRate = FinanceCalc.realRate(DEFAULT_INFLATION_RATE, DEFAULT_ROI_RATE);
+      const yearsToRetire = retireAge - age;
+      const projectedFund = FinanceCalc.targetFundByAge(currentSavings, monthlySavings, yearsToRetire, realRate);
+      const monthlyRetirement = FinanceCalc.fundToMonthly(projectedFund);
 
       const handleNext = () => {
         setIsAnimating(true);
         setTimeout(() => {
-          if (step < 3) {
+          if (step < 4) {
             setStep(step + 1);
           } else {
-            onComplete({ 
-              age, 
-              salary, 
-              retireAge, 
-              currentSavings,
+            onComplete({
+              age, salary, retireAge, currentSavings, monthlySavings,
+              targetRetirementFund: Math.round(projectedFund),
               inflationRate: DEFAULT_INFLATION_RATE,
               roiRate: DEFAULT_ROI_RATE,
             });
@@ -424,11 +322,8 @@
             <div className="flex flex-col items-center">
               <div className="text-8xl font-black text-white mb-4 tabular-nums">{age}</div>
               <div className="text-gray-400 mb-8">歲</div>
-              <input
-                type="range" min="18" max="55" value={age}
-                onChange={(e) => setAge(parseInt(e.target.value))}
-                className="slider w-72"
-              />
+              <input type="range" min="18" max="55" value={age}
+                onChange={(e) => setAge(parseInt(e.target.value))} className="slider w-72" />
               <div className="flex justify-between w-72 text-gray-500 text-sm mt-2">
                 <span>18</span><span>55</span>
               </div>
@@ -440,19 +335,14 @@
           subtitle: '這決定了你的時間單價',
           content: (
             <div className="flex flex-col items-center">
-              <div className="text-5xl font-black text-white mb-2 tabular-nums">
-                {formatCurrencyFull(salary)}
-              </div>
+              <div className="text-5xl font-black text-white mb-2 tabular-nums">{formatCurrencyFull(salary)}</div>
               <div className="text-gray-400 mb-4">/月</div>
               <div className="bg-gray-800/50 rounded-2xl px-6 py-3 mb-8">
                 <span className="text-gray-400">時薪約 </span>
                 <span className="text-emerald-400 font-bold">${hourlyRate}</span>
               </div>
-              <input
-                type="range" min="25000" max="500000" step="5000" value={salary}
-                onChange={(e) => setSalary(parseInt(e.target.value))}
-                className="slider w-72"
-              />
+              <input type="range" min="25000" max="500000" step="5000" value={salary}
+                onChange={(e) => setSalary(parseInt(e.target.value))} className="slider w-72" />
               <div className="flex justify-between w-72 text-gray-500 text-sm mt-2">
                 <span>$2.5萬</span><span>$50萬</span>
               </div>
@@ -461,21 +351,18 @@
         },
         {
           title: '想幾歲退休？',
-          subtitle: '目標要有，夢想才會實現',
+          subtitle: '這是你的目標，GPS 會幫你導航',
           content: (
             <div className="flex flex-col items-center">
               <div className="text-8xl font-black text-white mb-2 tabular-nums">{retireAge}</div>
               <div className="text-gray-400 mb-4">歲退休</div>
               <div className="bg-emerald-500/20 rounded-2xl px-6 py-3 mb-8">
                 <span className="text-emerald-400">還有 </span>
-                <span className="text-emerald-300 font-bold">{retireAge - age} 年</span>
+                <span className="text-emerald-300 font-bold">{yearsToRetire} 年</span>
                 <span className="text-emerald-400"> 可以奮鬥</span>
               </div>
-              <input
-                type="range" min={age + 5} max="75" value={retireAge}
-                onChange={(e) => setRetireAge(parseInt(e.target.value))}
-                className="slider w-72"
-              />
+              <input type="range" min={age + 5} max="75" value={retireAge}
+                onChange={(e) => setRetireAge(parseInt(e.target.value))} className="slider w-72" />
               <div className="flex justify-between w-72 text-gray-500 text-sm mt-2">
                 <span>{age + 5}</span><span>75</span>
               </div>
@@ -484,22 +371,40 @@
         },
         {
           title: '目前有多少存款？',
-          subtitle: '這是你的起跑點（可以之後再改）',
+          subtitle: '這是你的起跑點',
           content: (
             <div className="flex flex-col items-center">
-              <div className="text-4xl font-black text-white mb-4 tabular-nums">
-                {formatCurrencyFull(currentSavings)}
-              </div>
-              <input
-                type="range" min="0" max="10000000" step="100000" value={currentSavings}
-                onChange={(e) => setCurrentSavings(parseInt(e.target.value))}
-                className="slider w-72"
-              />
+              <div className="text-4xl font-black text-white mb-4 tabular-nums">{formatCurrencyFull(currentSavings)}</div>
+              <input type="range" min="0" max="10000000" step="100000" value={currentSavings}
+                onChange={(e) => setCurrentSavings(parseInt(e.target.value))} className="slider w-72" />
               <div className="flex justify-between w-72 text-gray-500 text-sm mt-2">
                 <span>$0</span><span>$1000萬</span>
               </div>
-              <div className="text-gray-500 text-sm mt-4">
-                沒有也沒關係，從零開始更厲害 💪
+              <div className="text-gray-500 text-sm mt-4">沒有也沒關係，從零開始更厲害 💪</div>
+            </div>
+          ),
+        },
+        {
+          title: '每月存多少？',
+          subtitle: '這只是估計，之後可以調整',
+          content: (
+            <div className="flex flex-col items-center">
+              <div className="text-4xl font-black text-white mb-2 tabular-nums">{formatCurrencyFull(monthlySavings)}</div>
+              <div className="text-gray-400 mb-4">/每月</div>
+              <div className="text-gray-500 text-xs mb-6">佔月薪 {Math.round(monthlySavings / salary * 100)}%</div>
+              <input type="range" min="0" max={Math.min(salary, 200000)} step="1000" value={monthlySavings}
+                onChange={(e) => setMonthlySavings(parseInt(e.target.value))} className="slider w-72" />
+              <div className="flex justify-between w-72 text-gray-500 text-sm mt-2">
+                <span>$0</span><span>{formatCurrency(Math.min(salary, 200000))}</span>
+              </div>
+              
+              {/* Preview */}
+              <div className="bg-gray-800/60 rounded-2xl p-4 mt-8 w-72 border border-gray-700/50">
+                <div className="text-gray-400 text-xs mb-2 text-center">按此計畫，{retireAge}歲時可累積</div>
+                <div className="text-emerald-400 text-2xl font-bold text-center">{formatCurrency(Math.round(projectedFund))}</div>
+                <div className="text-gray-500 text-xs text-center mt-1">
+                  退休後每月可領約 {formatCurrency(Math.round(monthlyRetirement))}
+                </div>
               </div>
             </div>
           ),
@@ -515,31 +420,26 @@
             <div className="text-gray-500 text-xs text-center">你的時間，你定價</div>
           </div>
 
-          <div className="flex gap-3 mb-12">
+          <div className="flex gap-2 mb-12">
             {steps.map((_, i) => (
-              <div
-                key={i}
-                className={`h-1.5 rounded-full transition-all duration-500 ${
-                  i === step ? 'w-8 bg-emerald-400' : i < step ? 'w-4 bg-emerald-600' : 'w-4 bg-gray-700'
-                }`}
-              />
+              <div key={i} className={`h-1.5 rounded-full transition-all duration-500 ${
+                i === step ? 'w-8 bg-emerald-400' : i < step ? 'w-4 bg-emerald-600' : 'w-4 bg-gray-700'
+              }`} />
             ))}
           </div>
 
-          <div className={`text-center mb-10 transition-all duration-300 ${isAnimating ? 'opacity-0 translate-y-4' : 'opacity-100'}`}>
+          <div className={`text-center mb-8 transition-all duration-300 ${isAnimating ? 'opacity-0 translate-y-4' : 'opacity-100'}`}>
             <h1 className="text-3xl font-bold text-white mb-2">{steps[step].title}</h1>
             <p className="text-gray-400">{steps[step].subtitle}</p>
           </div>
 
-          <div className={`mb-12 transition-all duration-300 ${isAnimating ? 'opacity-0 scale-95' : 'opacity-100'}`}>
+          <div className={`mb-8 transition-all duration-300 ${isAnimating ? 'opacity-0 scale-95' : 'opacity-100'}`}>
             {steps[step].content}
           </div>
 
-          <button
-            onClick={handleNext}
-            className="bg-emerald-500 hover:bg-emerald-400 text-gray-900 font-bold py-4 px-16 rounded-2xl text-lg transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg shadow-emerald-500/25"
-          >
-            {step < 3 ? '繼續' : '開始使用'}
+          <button onClick={handleNext}
+            className="bg-emerald-500 hover:bg-emerald-400 text-gray-900 font-bold py-4 px-16 rounded-2xl text-lg transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg shadow-emerald-500/25">
+            {step < 4 ? '繼續' : '開始使用'}
           </button>
         </div>
       );
@@ -557,27 +457,32 @@
       const [showConfetti, setShowConfetti] = useState(false);
       const [isSaving, setIsSaving] = useState(false);
 
-      const { age, salary, retireAge, currentSavings, inflationRate = DEFAULT_INFLATION_RATE, roiRate = DEFAULT_ROI_RATE } = userData;
+      const { age, salary, retireAge, currentSavings, monthlySavings,
+              inflationRate = DEFAULT_INFLATION_RATE, roiRate = DEFAULT_ROI_RATE } = userData;
+      
       const yearsToRetire = retireAge - age;
       const hourlyRate = salary / WORKING_DAYS_PER_MONTH / WORKING_HOURS_PER_DAY;
-      const realRate = calculateRealRate(inflationRate, roiRate);
+      const realRate = FinanceCalc.realRate(inflationRate, roiRate);
       const monthlyRate = realRate / 12;
       const monthsToRetire = yearsToRetire * 12;
 
-      // Calculate cumulative stats
-      const totalSaved = records.filter(r => r.type === 'save').reduce((sum, r) => sum + r.amount, 0);
-      const totalSpent = records.filter(r => r.type === 'spend').reduce((sum, r) => sum + r.amount, 0);
-      const totalSavedHours = records.filter(r => r.type === 'save').reduce((sum, r) => sum + r.timeCost, 0);
-      const totalSpentHours = records.filter(r => r.type === 'spend').reduce((sum, r) => sum + r.timeCost, 0);
-      const netHours = totalSavedHours - totalSpentHours;
-      const netDays = Math.round(netHours / 24);
+      // 計算累積影響
+      const totalSaved = records.filter(r => r.type === 'save').reduce((s, r) => s + r.amount, 0);
+      const totalSpent = records.filter(r => r.type === 'spend').reduce((s, r) => s + r.amount, 0);
+      const netSavingsImpact = totalSaved - totalSpent;
 
-      // Calculate projected retirement fund
-      const monthlyContribution = salary * 0.2;
-      const projectedFund = currentSavings * Math.pow(1 + realRate, yearsToRetire) +
-        monthlyContribution * ((Math.pow(1 + monthlyRate, monthsToRetire) - 1) / monthlyRate);
+      // GPS: 計算預估退休年齡
+      const estimatedAge = useMemo(() => {
+        return FinanceCalc.estimatedRetireAge(userData, netSavingsImpact);
+      }, [userData, netSavingsImpact]);
 
-      // Calculate time cost/gain
+      const ageDiff = retireAge - estimatedAge;
+      const isAhead = ageDiff > 0;
+
+      // 計算目標退休金
+      const targetFund = FinanceCalc.targetFundByAge(currentSavings, monthlySavings, yearsToRetire, realRate);
+
+      // 計算當前花費/儲蓄的時間成本
       const calculateTimeCost = useCallback(() => {
         let futureValue;
         if (isRecurring) {
@@ -593,7 +498,6 @@
 
       const handleSubmit = async () => {
         if (amount <= 0) return;
-        
         setIsSaving(true);
         
         const record = {
@@ -601,14 +505,13 @@
           type: mode,
           amount,
           isRecurring,
-          timeCost: timeCost,
+          timeCost,
           category: category || (mode === 'spend' ? '一般消費' : '儲蓄'),
           note,
           timestamp: new Date().toISOString(),
         };
 
         await onAddRecord(record);
-        
         setResultType(mode);
         setShowResult(true);
         
@@ -618,7 +521,6 @@
         }
         
         setIsSaving(false);
-        
         setTimeout(() => {
           setShowResult(false);
           setResultType(null);
@@ -639,42 +541,54 @@
         }`}>
           <Confetti active={showConfetti} />
           
-          {/* Header */}
-          <div className="pt-4 pb-3 px-4">
-            <div className="max-w-lg mx-auto flex justify-between items-center">
-              <button onClick={onOpenHistory} className="text-left">
-                <div className="text-xs text-gray-500">淨省下</div>
-                <div className={`font-bold text-lg ${netDays >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {netDays >= 0 ? '+' : ''}{netDays} 天
+          {/* GPS Header */}
+          <div className="pt-4 pb-2 px-4">
+            <div className="max-w-lg mx-auto">
+              <div className="flex justify-between items-start mb-2">
+                <button onClick={onOpenHistory} className="text-left">
+                  <div className="text-xs text-gray-500">🎯 目標</div>
+                  <div className="text-white font-bold text-xl">{retireAge} 歲</div>
+                </button>
+                <div className="text-center">
+                  <div className="text-xl font-black text-white">
+                    Time<span className="text-emerald-400">Bar</span>
+                  </div>
                 </div>
-              </button>
-              <div className="text-center">
-                <div className="text-xl font-black text-white">
-                  Time<span className="text-emerald-400">Bar</span>
-                </div>
+                <button onClick={onOpenSettings} className="text-right">
+                  <div className="text-xs text-gray-500">📍 預估</div>
+                  <div className={`font-bold text-xl ${isAhead ? 'text-emerald-400' : 'text-orange-400'}`}>
+                    {estimatedAge.toFixed(1)} 歲
+                  </div>
+                </button>
               </div>
-              <button onClick={onOpenSettings} className="text-right">
-                <div className="text-xs text-gray-500">目標</div>
-                <div className="text-white font-bold text-lg">{retireAge}歲</div>
-              </button>
+              
+              {/* GPS Status Bar */}
+              <div className={`rounded-xl px-4 py-2 text-center text-sm ${
+                isAhead ? 'bg-emerald-500/20 text-emerald-400' : 'bg-orange-500/20 text-orange-400'
+              }`}>
+                {isAhead 
+                  ? `🚀 領先 ${Math.abs(ageDiff).toFixed(1)} 年！繼續保持！`
+                  : `⏰ 落後 ${Math.abs(ageDiff).toFixed(1)} 年，加油追上！`
+                }
+              </div>
             </div>
           </div>
 
           {/* Stats Summary */}
-          <div className="px-4 mb-4">
+          <div className="px-4 py-3">
             <div className="max-w-lg mx-auto bg-gray-800/40 rounded-2xl p-4">
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
                   <div className="text-emerald-400 font-bold text-lg">{formatCurrency(totalSaved)}</div>
-                  <div className="text-gray-500 text-xs">累積省下</div>
+                  <div className="text-gray-500 text-xs">額外儲蓄</div>
                 </div>
                 <div>
-                  <div className="text-white font-bold text-lg">{formatCurrency(Math.round(projectedFund))}</div>
-                  <div className="text-gray-500 text-xs">預估退休金</div>
+                  <div className="text-white font-bold text-lg">{formatCurrency(Math.round(targetFund))}</div>
+                  <div className="text-gray-500 text-xs">目標退休金</div>
                 </div>
                 <div>
-                  <div className="text-red-400 font-bold text-lg">{formatCurrency(totalSpent)}</div>
-                  <div className="text-gray-500 text-xs">放縱花費</div>
+                  <div className="text-orange-400 font-bold text-lg">{formatCurrency(totalSpent)}</div>
+                  <div className="text-gray-500 text-xs">額外支出</div>
                 </div>
               </div>
             </div>
@@ -687,26 +601,14 @@
               {/* Mode Toggle */}
               <div className="flex justify-center mb-6">
                 <div className="bg-gray-800 rounded-2xl p-1.5 flex">
-                  <button
-                    onClick={() => { setMode('spend'); setShowResult(false); }}
+                  <button onClick={() => { setMode('spend'); setShowResult(false); }}
                     className={`px-8 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ${
-                      mode === 'spend'
-                        ? 'bg-orange-500 text-gray-900 shadow-lg shadow-orange-500/25'
-                        : 'text-gray-400 hover:text-white'
-                    }`}
-                  >
-                    💸 花費
-                  </button>
-                  <button
-                    onClick={() => { setMode('save'); setShowResult(false); }}
+                      mode === 'spend' ? 'bg-orange-500 text-gray-900 shadow-lg shadow-orange-500/25' : 'text-gray-400 hover:text-white'
+                    }`}>💸 花費</button>
+                  <button onClick={() => { setMode('save'); setShowResult(false); }}
                     className={`px-8 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ${
-                      mode === 'save'
-                        ? 'bg-emerald-500 text-gray-900 shadow-lg shadow-emerald-500/25'
-                        : 'text-gray-400 hover:text-white'
-                    }`}
-                  >
-                    💰 儲蓄
-                  </button>
+                      mode === 'save' ? 'bg-emerald-500 text-gray-900 shadow-lg shadow-emerald-500/25' : 'text-gray-400 hover:text-white'
+                    }`}>💰 儲蓄</button>
                 </div>
               </div>
 
@@ -714,42 +616,25 @@
                 <>
                   {/* Recurring Toggle */}
                   <div className="flex justify-center mb-6">
-                    <button
-                      onClick={() => setIsRecurring(!isRecurring)}
+                    <button onClick={() => setIsRecurring(!isRecurring)}
                       className={`px-4 py-2 rounded-xl text-sm transition-all duration-300 ${
-                        isRecurring
-                          ? 'bg-purple-500/20 text-purple-400 border border-purple-500/50'
-                          : 'bg-gray-800 text-gray-400'
-                      }`}
-                    >
-                      {isRecurring ? '🔄 每月固定' : '☝️ 僅此一次'}
-                    </button>
+                        isRecurring ? 'bg-purple-500/20 text-purple-400 border border-purple-500/50' : 'bg-gray-800 text-gray-400'
+                      }`}>{isRecurring ? '🔄 每月固定' : '☝️ 僅此一次'}</button>
                   </div>
 
                   {/* Amount Input */}
                   <div className="text-center mb-4">
-                    <div className="text-gray-400 text-sm mb-2">
-                      {mode === 'spend' ? '這次要花' : '這次要存'}
-                    </div>
-                    <div className="text-6xl font-black text-white tabular-nums mb-2">
-                      {formatCurrencyFull(amount)}
-                    </div>
-                    {isRecurring && (
-                      <div className="text-purple-400 text-sm">/每月</div>
-                    )}
+                    <div className="text-gray-400 text-sm mb-2">{mode === 'spend' ? '這次要花' : '這次要存'}</div>
+                    <div className="text-6xl font-black text-white tabular-nums mb-2">{formatCurrencyFull(amount)}</div>
+                    {isRecurring && <div className="text-purple-400 text-sm">/每月</div>}
                   </div>
 
                   {/* Slider */}
                   <div className="mb-4 px-2">
-                    <input
-                      type="range"
-                      min="0"
-                      max="100000"
+                    <input type="range" min="0" max="100000"
                       step={amount < 1000 ? 100 : amount < 10000 ? 500 : 1000}
-                      value={amount}
-                      onChange={(e) => setAmount(parseInt(e.target.value))}
-                      className={`slider w-full ${mode === 'spend' ? 'orange' : ''}`}
-                    />
+                      value={amount} onChange={(e) => setAmount(parseInt(e.target.value))}
+                      className={`slider w-full ${mode === 'spend' ? 'orange' : ''}`} />
                     <div className="flex justify-between text-gray-600 text-xs mt-1">
                       <span>$0</span><span>$10萬</span>
                     </div>
@@ -758,17 +643,12 @@
                   {/* Quick Amounts */}
                   <div className="flex gap-2 justify-center flex-wrap mb-6">
                     {[100, 500, 1000, 3000, 5000, 10000].map((qa) => (
-                      <button
-                        key={qa}
-                        onClick={() => setAmount(qa)}
+                      <button key={qa} onClick={() => setAmount(qa)}
                         className={`px-3 py-1.5 rounded-lg text-sm transition-all ${
                           amount === qa
                             ? mode === 'spend' ? 'bg-orange-500 text-gray-900' : 'bg-emerald-500 text-gray-900'
                             : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                        }`}
-                      >
-                        {formatCurrency(qa)}
-                      </button>
+                        }`}>{formatCurrency(qa)}</button>
                     ))}
                   </div>
 
@@ -777,30 +657,19 @@
                     <div className="text-gray-400 text-sm mb-2 text-center">分類（選填）</div>
                     <div className="flex gap-2 justify-center flex-wrap">
                       {(mode === 'spend' ? spendCategories : saveCategories).map((cat) => (
-                        <button
-                          key={cat}
-                          onClick={() => setCategory(category === cat ? '' : cat)}
+                        <button key={cat} onClick={() => setCategory(category === cat ? '' : cat)}
                           className={`px-3 py-1.5 rounded-lg text-sm transition-all ${
-                            category === cat
-                              ? 'bg-gray-600 text-white'
-                              : 'bg-gray-800/50 text-gray-500 hover:text-gray-300'
-                          }`}
-                        >
-                          {cat}
-                        </button>
+                            category === cat ? 'bg-gray-600 text-white' : 'bg-gray-800/50 text-gray-500 hover:text-gray-300'
+                          }`}>{cat}</button>
                       ))}
                     </div>
                   </div>
 
                   {/* Note Input */}
                   <div className="mb-6">
-                    <input
-                      type="text"
-                      placeholder="備註（選填）"
-                      value={note}
+                    <input type="text" placeholder="備註（選填）" value={note}
                       onChange={(e) => setNote(e.target.value)}
-                      className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-gray-600"
-                    />
+                      className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-gray-600" />
                   </div>
 
                   {/* Impact Preview */}
@@ -825,9 +694,6 @@
                             <div className={`text-sm ${mode === 'spend' ? 'text-orange-400' : 'text-emerald-400'}`}>
                               {mode === 'spend' ? '⚠️ 每月訂閱的威力驚人' : '✨ 定期儲蓄的複利威力'}
                             </div>
-                            <div className={`text-xs mt-1 ${mode === 'spend' ? 'text-orange-300/70' : 'text-emerald-300/70'}`}>
-                              {yearsToRetire} 年後累積影響 = {formatCurrencyFull(Math.round(timeCost * hourlyRate))}
-                            </div>
                           </div>
                         )}
                       </div>
@@ -835,17 +701,10 @@
                   )}
 
                   {/* Submit Button */}
-                  <button
-                    onClick={handleSubmit}
-                    disabled={amount <= 0 || isSaving}
-                    className={`w-full py-4 rounded-2xl font-bold text-lg transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${
-                      mode === 'spend'
-                        ? 'bg-orange-500 hover:bg-orange-400 text-gray-900'
-                        : 'bg-emerald-500 hover:bg-emerald-400 text-gray-900'
-                    }`}
-                  >
-                    {isSaving ? '記錄中...' : mode === 'spend' ? '記錄花費' : '記錄儲蓄'}
-                  </button>
+                  <button onClick={handleSubmit} disabled={amount <= 0 || isSaving}
+                    className={`w-full py-4 rounded-2xl font-bold text-lg transition-all duration-300 active:scale-95 disabled:opacity-50 ${
+                      mode === 'spend' ? 'bg-orange-500 hover:bg-orange-400 text-gray-900' : 'bg-emerald-500 hover:bg-emerald-400 text-gray-900'
+                    }`}>{isSaving ? '記錄中...' : mode === 'spend' ? '記錄花費' : '記錄儲蓄'}</button>
                 </>
               ) : (
                 <div className="bg-gray-800/60 backdrop-blur-sm rounded-3xl p-8 text-center animate-slide-up">
@@ -854,31 +713,21 @@
                       <div className="text-5xl mb-4">😅</div>
                       <div className="text-2xl text-orange-400 font-bold mb-2">已記錄</div>
                       <div className="text-gray-300 mb-4">
-                        這筆花費讓退休延後了
-                        <br />
-                        <span className="text-orange-400 font-bold text-xl">
-                          {timeFormatted.value} {timeFormatted.unit}
-                        </span>
+                        這筆花費讓退休延後了<br />
+                        <span className="text-orange-400 font-bold text-xl">{timeFormatted.value} {timeFormatted.unit}</span>
                       </div>
-                      <div className="text-gray-500 text-sm">
-                        沒關係，知道代價就好，繼續加油！
-                      </div>
+                      <div className="text-gray-500 text-sm">沒關係，知道代價就好，繼續加油！</div>
                     </>
                   ) : (
                     <>
                       <div className="text-5xl mb-4">🎉</div>
                       <div className="text-2xl text-emerald-400 font-bold mb-2">太棒了！</div>
                       <div className="text-gray-300 mb-4">
-                        你剛剛為自己贏回了
-                        <br />
-                        <span className="text-emerald-400 font-bold text-xl">
-                          {timeFormatted.value} {timeFormatted.unit}
-                        </span>
+                        你剛剛為自己贏回了<br />
+                        <span className="text-emerald-400 font-bold text-xl">{timeFormatted.value} {timeFormatted.unit}</span>
                         的自由！
                       </div>
-                      <div className="text-gray-500 text-sm italic">
-                        {getMotivationalQuote()}
-                      </div>
+                      <div className="text-gray-500 text-sm italic">{getMotivationalQuote()}</div>
                     </>
                   )}
                 </div>
@@ -916,23 +765,16 @@
 
     // ==================== HISTORY PAGE ====================
     const HistoryPage = ({ records, userData, onClose }) => {
-      const { age, retireAge, salary } = userData;
-      const hourlyRate = salary / WORKING_DAYS_PER_MONTH / WORKING_HOURS_PER_DAY;
+      const { age, retireAge, salary, inflationRate = DEFAULT_INFLATION_RATE, roiRate = DEFAULT_ROI_RATE } = userData;
 
-      const totalSaved = records.filter(r => r.type === 'save').reduce((sum, r) => sum + r.amount, 0);
-      const totalSpent = records.filter(r => r.type === 'spend').reduce((sum, r) => sum + r.amount, 0);
-      const totalSavedHours = records.filter(r => r.type === 'save').reduce((sum, r) => sum + r.timeCost, 0);
-      const totalSpentHours = records.filter(r => r.type === 'spend').reduce((sum, r) => sum + r.timeCost, 0);
-      const netHours = totalSavedHours - totalSpentHours;
-      const netDays = Math.round(netHours / 24);
+      const totalSaved = records.filter(r => r.type === 'save').reduce((s, r) => s + r.amount, 0);
+      const totalSpent = records.filter(r => r.type === 'spend').reduce((s, r) => s + r.amount, 0);
+      const netSavingsImpact = totalSaved - totalSpent;
 
-      const now = new Date();
-      const originalRetireYear = now.getFullYear() + (retireAge - age);
-      const newRetireDate = new Date(originalRetireYear, now.getMonth(), now.getDate());
-      newRetireDate.setDate(newRetireDate.getDate() - netDays);
+      const estimatedAge = FinanceCalc.estimatedRetireAge(userData, netSavingsImpact);
+      const ageDiff = retireAge - estimatedAge;
 
       const sortedRecords = [...records].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-
       const groupedRecords = sortedRecords.reduce((groups, record) => {
         const date = new Date(record.timestamp);
         const key = `${date.getFullYear()}-${date.getMonth() + 1}`;
@@ -955,6 +797,7 @@
           </div>
 
           <div className="max-w-lg mx-auto px-4 pt-4">
+            {/* GPS Summary */}
             <div className="bg-gradient-to-br from-gray-800/80 to-gray-800/40 rounded-3xl p-6 mb-6 border border-gray-700/50">
               <div className="grid grid-cols-2 gap-6 mb-6">
                 <div className="text-center">
@@ -969,37 +812,43 @@
               
               <div className="h-px bg-gray-700 mb-6" />
               
+              {/* GPS Timeline */}
               <div className="text-center mb-4">
-                <div className="text-gray-400 text-sm mb-2">退休時間軸</div>
+                <div className="text-gray-400 text-sm mb-3">退休 GPS</div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-gray-500 text-xs">原訂</div>
-                    <div className="text-white font-bold">{originalRetireYear}年</div>
+                    <div className="text-gray-500 text-xs">🎯 目標</div>
+                    <div className="text-white font-bold text-lg">{retireAge} 歲</div>
                   </div>
                   <div className="flex-1 mx-4">
-                    <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-                      <div 
-                        className={`h-full rounded-full transition-all ${netDays >= 0 ? 'bg-emerald-500' : 'bg-red-500'}`}
-                        style={{ width: `${Math.min(100, Math.abs(netDays) / 365 * 100 + 10)}%` }}
-                      />
+                    <div className="h-3 bg-gray-700 rounded-full overflow-hidden relative">
+                      <div className={`h-full rounded-full transition-all ${ageDiff >= 0 ? 'bg-emerald-500' : 'bg-orange-500'}`}
+                        style={{ width: `${Math.min(100, 50 + ageDiff * 5)}%` }} />
+                      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-white rounded-full" />
                     </div>
                   </div>
                   <div>
-                    <div className={`text-xs ${netDays >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                      {netDays >= 0 ? '提早' : '延後'}
+                    <div className={`text-xs ${ageDiff >= 0 ? 'text-emerald-400' : 'text-orange-400'}`}>
+                      📍 預估
                     </div>
-                    <div className={`font-bold ${netDays >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                      {Math.abs(netDays)}天
+                    <div className={`font-bold text-lg ${ageDiff >= 0 ? 'text-emerald-400' : 'text-orange-400'}`}>
+                      {estimatedAge.toFixed(1)} 歲
                     </div>
                   </div>
                 </div>
               </div>
               
-              <div className="text-center text-gray-500 text-sm">
-                新目標退休日：{newRetireDate.getFullYear()}年{newRetireDate.getMonth() + 1}月
+              <div className={`text-center text-sm px-4 py-2 rounded-xl ${
+                ageDiff >= 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-orange-500/20 text-orange-400'
+              }`}>
+                {ageDiff >= 0 
+                  ? `🎉 比目標提早 ${ageDiff.toFixed(1)} 年！`
+                  : `📈 需要再努力 ${Math.abs(ageDiff).toFixed(1)} 年`
+                }
               </div>
             </div>
 
+            {/* Records List */}
             {Object.keys(groupedRecords).length === 0 ? (
               <div className="text-center py-16">
                 <div className="text-5xl mb-4">📝</div>
@@ -1026,15 +875,10 @@
                         const time = formatTime(record.timeCost);
                         const date = new Date(record.timestamp);
                         return (
-                          <div 
-                            key={record.id} 
-                            className={`flex items-center gap-3 p-4 ${i > 0 ? 'border-t border-gray-700/50' : ''}`}
-                          >
+                          <div key={record.id} className={`flex items-center gap-3 p-4 ${i > 0 ? 'border-t border-gray-700/50' : ''}`}>
                             <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${
                               record.type === 'save' ? 'bg-emerald-500/20' : 'bg-orange-500/20'
-                            }`}>
-                              {record.type === 'save' ? '💰' : '💸'}
-                            </div>
+                            }`}>{record.type === 'save' ? '💰' : '💸'}</div>
                             <div className="flex-1 min-w-0">
                               <div className="flex justify-between items-start">
                                 <div className="min-w-0">
@@ -1042,7 +886,7 @@
                                     {record.note || record.category || (record.type === 'save' ? '儲蓄' : '消費')}
                                   </div>
                                   <div className="text-gray-500 text-xs">
-                                    {record.isRecurring ? '🔄 每月' : ''} {date.getMonth() + 1}/{date.getDate()}
+                                    {record.isRecurring ? '🔄 ' : ''}{date.getMonth() + 1}/{date.getDate()}
                                   </div>
                                 </div>
                                 <div className="text-right ml-2">
@@ -1074,13 +918,19 @@
       const [salary, setSalary] = useState(userData.salary);
       const [retireAge, setRetireAge] = useState(userData.retireAge);
       const [currentSavings, setCurrentSavings] = useState(userData.currentSavings || 0);
+      const [monthlySavings, setMonthlySavings] = useState(userData.monthlySavings || Math.round(userData.salary * 0.2));
       const [inflationRate, setInflationRate] = useState(userData.inflationRate || DEFAULT_INFLATION_RATE);
       const [roiRate, setRoiRate] = useState(userData.roiRate || DEFAULT_ROI_RATE);
       const [showConfirm, setShowConfirm] = useState(false);
       const [isClearing, setIsClearing] = useState(false);
+      const [calculatorMode, setCalculatorMode] = useState('age'); // age, fund, lifestyle
+      const [targetFund, setTargetFund] = useState(30000000);
+      const [monthlyRetirement, setMonthlyRetirement] = useState(50000);
 
       const handleSave = () => {
-        onUpdateUser({ age, salary, retireAge, currentSavings, inflationRate, roiRate });
+        onUpdateUser({ age, salary, retireAge, currentSavings, monthlySavings, inflationRate, roiRate,
+          targetRetirementFund: Math.round(FinanceCalc.targetFundByAge(currentSavings, monthlySavings, retireAge - age, realRate))
+        });
         onClose();
       };
 
@@ -1091,7 +941,25 @@
       };
 
       const hourlyRate = Math.round(salary / WORKING_DAYS_PER_MONTH / WORKING_HOURS_PER_DAY);
-      const realRate = calculateRealRate(inflationRate, roiRate);
+      const realRate = FinanceCalc.realRate(inflationRate, roiRate);
+      const yearsToRetire = retireAge - age;
+
+      // Calculator results
+      const calcResults = useMemo(() => {
+        if (calculatorMode === 'age') {
+          const fund = FinanceCalc.targetFundByAge(currentSavings, monthlySavings, yearsToRetire, realRate);
+          const monthly = FinanceCalc.fundToMonthly(fund);
+          return { fund, monthly };
+        } else if (calculatorMode === 'fund') {
+          const years = FinanceCalc.yearsToTarget(currentSavings, monthlySavings, targetFund, realRate);
+          return { years, retireAge: age + years };
+        } else {
+          const requiredFund = FinanceCalc.monthlyToFund(monthlyRetirement);
+          const years = FinanceCalc.yearsToTarget(currentSavings, monthlySavings, requiredFund, realRate);
+          const requiredSavings = FinanceCalc.requiredMonthlySavings(currentSavings, requiredFund, yearsToRetire, realRate);
+          return { requiredFund, years, retireAge: age + years, requiredSavings };
+        }
+      }, [calculatorMode, currentSavings, monthlySavings, yearsToRetire, realRate, age, targetFund, monthlyRetirement]);
 
       return (
         <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800 pb-8">
@@ -1105,10 +973,8 @@
                 </button>
                 <h1 className="text-xl font-bold text-white">設定</h1>
               </div>
-              <button
-                onClick={handleSave}
-                className="bg-emerald-500 hover:bg-emerald-400 text-gray-900 font-bold py-2 px-4 rounded-xl text-sm"
-              >
+              <button onClick={handleSave}
+                className="bg-emerald-500 hover:bg-emerald-400 text-gray-900 font-bold py-2 px-4 rounded-xl text-sm">
                 儲存
               </button>
             </div>
@@ -1118,115 +984,165 @@
             {/* User Settings */}
             <div className="bg-gray-800/50 rounded-3xl p-6 mb-6">
               <h2 className="text-white font-bold mb-6">個人資料</h2>
-              
               <div className="space-y-6">
                 <div>
                   <div className="flex justify-between mb-2">
                     <span className="text-gray-400">年齡</span>
                     <span className="text-white font-bold">{age} 歲</span>
                   </div>
-                  <input
-                    type="range" min="18" max="60" value={age}
-                    onChange={(e) => setAge(parseInt(e.target.value))}
-                    className="slider w-full"
-                  />
+                  <input type="range" min="18" max="60" value={age}
+                    onChange={(e) => setAge(parseInt(e.target.value))} className="slider w-full" />
                 </div>
-
                 <div>
                   <div className="flex justify-between mb-2">
                     <span className="text-gray-400">月薪</span>
                     <span className="text-white font-bold">{formatCurrencyFull(salary)}</span>
                   </div>
-                  <input
-                    type="range" min="25000" max="500000" step="5000" value={salary}
-                    onChange={(e) => setSalary(parseInt(e.target.value))}
-                    className="slider w-full"
-                  />
-                  <div className="text-gray-500 text-sm mt-1">
-                    時薪約 ${hourlyRate}
-                  </div>
+                  <input type="range" min="25000" max="500000" step="5000" value={salary}
+                    onChange={(e) => setSalary(parseInt(e.target.value))} className="slider w-full" />
+                  <div className="text-gray-500 text-sm mt-1">時薪約 ${hourlyRate}</div>
                 </div>
-
                 <div>
                   <div className="flex justify-between mb-2">
-                    <span className="text-gray-400">目標退休年齡</span>
+                    <span className="text-gray-400">🎯 目標退休年齡</span>
                     <span className="text-white font-bold">{retireAge} 歲</span>
                   </div>
-                  <input
-                    type="range" min={age + 5} max="75" value={retireAge}
-                    onChange={(e) => setRetireAge(parseInt(e.target.value))}
-                    className="slider w-full"
-                  />
-                  <div className="text-emerald-400 text-sm mt-1">
-                    還有 {retireAge - age} 年
-                  </div>
+                  <input type="range" min={age + 5} max="75" value={retireAge}
+                    onChange={(e) => setRetireAge(parseInt(e.target.value))} className="slider w-full" />
+                  <div className="text-emerald-400 text-sm mt-1">還有 {yearsToRetire} 年</div>
                 </div>
-
                 <div>
                   <div className="flex justify-between mb-2">
                     <span className="text-gray-400">目前存款</span>
                     <span className="text-white font-bold">{formatCurrencyFull(currentSavings)}</span>
                   </div>
-                  <input
-                    type="range" min="0" max="20000000" step="100000" value={currentSavings}
-                    onChange={(e) => setCurrentSavings(parseInt(e.target.value))}
-                    className="slider w-full"
-                  />
+                  <input type="range" min="0" max="20000000" step="100000" value={currentSavings}
+                    onChange={(e) => setCurrentSavings(parseInt(e.target.value))} className="slider w-full" />
+                </div>
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <span className="text-gray-400">每月儲蓄</span>
+                    <span className="text-white font-bold">{formatCurrencyFull(monthlySavings)}</span>
+                  </div>
+                  <input type="range" min="0" max={Math.min(salary, 200000)} step="1000" value={monthlySavings}
+                    onChange={(e) => setMonthlySavings(parseInt(e.target.value))} className="slider w-full" />
+                  <div className="text-gray-500 text-sm mt-1">佔月薪 {Math.round(monthlySavings / salary * 100)}%</div>
                 </div>
               </div>
+            </div>
+
+            {/* Retirement Calculator */}
+            <div className="bg-gray-800/50 rounded-3xl p-6 mb-6">
+              <h2 className="text-white font-bold mb-2">🧮 退休計算機</h2>
+              <p className="text-gray-500 text-xs mb-4">換個角度看你的退休計畫</p>
+              
+              {/* Mode Tabs */}
+              <div className="flex gap-2 mb-6 overflow-x-auto hide-scrollbar">
+                {[
+                  { id: 'age', label: '年齡導向' },
+                  { id: 'fund', label: '金額導向' },
+                  { id: 'lifestyle', label: '生活品質' },
+                ].map(m => (
+                  <button key={m.id} onClick={() => setCalculatorMode(m.id)}
+                    className={`px-3 py-2 rounded-lg text-sm whitespace-nowrap transition-all ${
+                      calculatorMode === m.id ? 'bg-emerald-500 text-gray-900 font-semibold' : 'bg-gray-700 text-gray-400'
+                    }`}>{m.label}</button>
+                ))}
+              </div>
+
+              {/* Calculator Content */}
+              {calculatorMode === 'age' && (
+                <div className="space-y-4">
+                  <div className="text-gray-400 text-sm">
+                    按目前設定，{retireAge} 歲退休時...
+                  </div>
+                  <div className="bg-emerald-500/10 rounded-xl p-4 border border-emerald-500/20">
+                    <div className="text-emerald-400 text-sm mb-1">可累積退休金</div>
+                    <div className="text-emerald-400 text-2xl font-bold">{formatCurrency(Math.round(calcResults.fund))}</div>
+                    <div className="text-emerald-400/70 text-xs mt-2">
+                      退休後每月可領約 {formatCurrency(Math.round(calcResults.monthly))}（4%法則）
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {calculatorMode === 'fund' && (
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between mb-2">
+                      <span className="text-gray-400">目標退休金</span>
+                      <span className="text-white font-bold">{formatCurrency(targetFund)}</span>
+                    </div>
+                    <input type="range" min="5000000" max="100000000" step="1000000" value={targetFund}
+                      onChange={(e) => setTargetFund(parseInt(e.target.value))} className="slider w-full" />
+                  </div>
+                  <div className="bg-blue-500/10 rounded-xl p-4 border border-blue-500/20">
+                    <div className="text-blue-400 text-sm mb-1">預計達成年齡</div>
+                    <div className="text-blue-400 text-2xl font-bold">{calcResults.retireAge.toFixed(1)} 歲</div>
+                    <div className="text-blue-400/70 text-xs mt-2">
+                      還需要 {calcResults.years.toFixed(1)} 年
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {calculatorMode === 'lifestyle' && (
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between mb-2">
+                      <span className="text-gray-400">退休後每月想領</span>
+                      <span className="text-white font-bold">{formatCurrencyFull(monthlyRetirement)}</span>
+                    </div>
+                    <input type="range" min="20000" max="200000" step="5000" value={monthlyRetirement}
+                      onChange={(e) => setMonthlyRetirement(parseInt(e.target.value))} className="slider w-full" />
+                  </div>
+                  <div className="bg-purple-500/10 rounded-xl p-4 border border-purple-500/20">
+                    <div className="text-purple-400 text-sm mb-1">需要累積</div>
+                    <div className="text-purple-400 text-2xl font-bold">{formatCurrency(calcResults.requiredFund)}</div>
+                    <div className="text-purple-400/70 text-xs mt-2">
+                      按目前進度需 {calcResults.years.toFixed(1)} 年（{calcResults.retireAge.toFixed(0)}歲）
+                    </div>
+                    {yearsToRetire > 0 && (
+                      <div className="text-purple-400/70 text-xs mt-1">
+                        若要 {retireAge} 歲達成，每月需存 {formatCurrency(Math.round(Math.max(0, calcResults.requiredSavings)))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Financial Parameters */}
             <div className="bg-gray-800/50 rounded-3xl p-6 mb-6">
               <h2 className="text-white font-bold mb-2">計算參數</h2>
               <p className="text-gray-500 text-xs mb-6">可依個人預期調整</p>
-              
               <div className="space-y-6">
                 <div>
                   <div className="flex justify-between mb-2">
                     <span className="text-gray-400">通膨率</span>
                     <span className="text-white font-bold">{inflationRate}%</span>
                   </div>
-                  <input
-                    type="range" min="0" max="10" step="0.5" value={inflationRate}
-                    onChange={(e) => setInflationRate(parseFloat(e.target.value))}
-                    className="slider w-full"
-                  />
-                  <div className="flex justify-between text-gray-600 text-xs mt-1">
-                    <span>0%</span><span>10%</span>
-                  </div>
+                  <input type="range" min="0" max="10" step="0.5" value={inflationRate}
+                    onChange={(e) => setInflationRate(parseFloat(e.target.value))} className="slider w-full" />
                 </div>
-
                 <div>
                   <div className="flex justify-between mb-2">
                     <span className="text-gray-400">投資報酬率</span>
                     <span className="text-white font-bold">{roiRate}%</span>
                   </div>
-                  <input
-                    type="range" min="0" max="15" step="0.5" value={roiRate}
-                    onChange={(e) => setRoiRate(parseFloat(e.target.value))}
-                    className="slider w-full"
-                  />
-                  <div className="flex justify-between text-gray-600 text-xs mt-1">
-                    <span>0%</span><span>15%</span>
-                  </div>
+                  <input type="range" min="0" max="15" step="0.5" value={roiRate}
+                    onChange={(e) => setRoiRate(parseFloat(e.target.value))} className="slider w-full" />
                 </div>
-
                 <div className="bg-emerald-500/10 rounded-xl p-4 border border-emerald-500/20">
                   <div className="flex justify-between">
                     <span className="text-emerald-400">實質報酬率</span>
-                    <span className="text-emerald-400 font-bold">
-                      ≈ {(realRate * 100).toFixed(2)}%
-                    </span>
-                  </div>
-                  <div className="text-emerald-400/60 text-xs mt-1">
-                    (1 + {roiRate}%) ÷ (1 + {inflationRate}%) - 1
+                    <span className="text-emerald-400 font-bold">≈ {(realRate * 100).toFixed(2)}%</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Cloud Sync Status */}
+            {/* Cloud Status */}
             <div className="bg-gray-800/50 rounded-3xl p-6 mb-6">
               <h2 className="text-white font-bold mb-4">資料同步</h2>
               <div className="flex items-center gap-3">
@@ -1235,52 +1151,31 @@
                   {GAS_WEB_APP_URL ? 'Google Sheets 已連接' : 'Google Sheets 未設定'}
                 </span>
               </div>
-              {!GAS_WEB_APP_URL && (
-                <p className="text-gray-500 text-sm mt-2">
-                  目前資料僅存在本機。設定 Google Sheets 後可雲端備份。
-                </p>
-              )}
             </div>
 
             {/* Danger Zone */}
             <div className="bg-red-900/20 rounded-3xl p-6 border border-red-900/30">
               <h2 className="text-red-400 font-bold mb-4">危險區域</h2>
               {!showConfirm ? (
-                <button
-                  onClick={() => setShowConfirm(true)}
-                  className="text-red-400 text-sm hover:text-red-300"
-                >
+                <button onClick={() => setShowConfirm(true)} className="text-red-400 text-sm hover:text-red-300">
                   清除所有資料
                 </button>
               ) : (
                 <div>
-                  <p className="text-gray-400 text-sm mb-3">
-                    確定要清除所有資料嗎？此動作無法復原。
-                    {GAS_WEB_APP_URL && <span className="text-red-400">（包含雲端資料）</span>}
-                  </p>
+                  <p className="text-gray-400 text-sm mb-3">確定要清除所有資料嗎？</p>
                   <div className="flex gap-3">
-                    <button
-                      onClick={handleClear}
-                      disabled={isClearing}
-                      className="bg-red-500 text-white px-4 py-2 rounded-xl text-sm font-medium disabled:opacity-50"
-                    >
+                    <button onClick={handleClear} disabled={isClearing}
+                      className="bg-red-500 text-white px-4 py-2 rounded-xl text-sm font-medium disabled:opacity-50">
                       {isClearing ? '清除中...' : '確定清除'}
                     </button>
-                    <button
-                      onClick={() => setShowConfirm(false)}
-                      className="bg-gray-700 text-gray-300 px-4 py-2 rounded-xl text-sm"
-                    >
-                      取消
-                    </button>
+                    <button onClick={() => setShowConfirm(false)}
+                      className="bg-gray-700 text-gray-300 px-4 py-2 rounded-xl text-sm">取消</button>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Version */}
-            <div className="text-center text-gray-600 text-sm mt-8">
-              TimeBar v2.1
-            </div>
+            <div className="text-center text-gray-600 text-sm mt-8">TimeBar v2.2</div>
           </div>
         </div>
       );
@@ -1292,20 +1187,18 @@
       const [userData, setUserData] = useState(null);
       const [records, setRecords] = useState([]);
 
-      // Load data
       useEffect(() => {
         const timer = setTimeout(() => {
-          const savedUserData = Storage.load('userData');
+          const saved = Storage.load('userData');
           const savedRecords = Storage.load('records', []);
           
-          if (savedUserData) {
-            // Ensure default values for new fields
-            const completeUserData = {
-              ...savedUserData,
-              inflationRate: savedUserData.inflationRate ?? DEFAULT_INFLATION_RATE,
-              roiRate: savedUserData.roiRate ?? DEFAULT_ROI_RATE,
-            };
-            setUserData(completeUserData);
+          if (saved) {
+            setUserData({
+              ...saved,
+              inflationRate: saved.inflationRate ?? DEFAULT_INFLATION_RATE,
+              roiRate: saved.roiRate ?? DEFAULT_ROI_RATE,
+              monthlySavings: saved.monthlySavings ?? Math.round(saved.salary * 0.2),
+            });
             setRecords(savedRecords);
             setScreen('main');
           } else {
@@ -1315,7 +1208,6 @@
         return () => clearTimeout(timer);
       }, []);
 
-      // Save data whenever it changes
       useEffect(() => {
         if (userData) {
           Storage.save('userData', userData);
@@ -1324,47 +1216,24 @@
       }, [userData]);
 
       useEffect(() => {
-        if (records.length > 0) {
-          Storage.save('records', records);
-        }
+        if (records.length > 0) Storage.save('records', records);
       }, [records]);
 
-      const handleOnboardingComplete = (data) => {
-        setUserData(data);
-        setScreen('main');
-      };
-
-      const handleAddRecord = async (record) => {
-        setRecords(prev => [...prev, record]);
-        await GoogleSheetsAPI.saveRecord(record);
-      };
-
-      const handleUpdateUser = (newData) => {
-        setUserData(newData);
-      };
-
+      const handleOnboardingComplete = (data) => { setUserData(data); setScreen('main'); };
+      const handleAddRecord = async (record) => { setRecords(prev => [...prev, record]); await GoogleSheetsAPI.saveRecord(record); };
+      const handleUpdateUser = (data) => { setUserData(data); };
       const handleReset = async () => {
-        // Clear cloud data
         await GoogleSheetsAPI.clearAllData();
-        
-        // Clear local data
         Storage.clear();
-        
-        // Reset state
         setUserData(null);
         setRecords([]);
-        
-        // Navigate to onboarding
         setScreen('onboarding');
       };
 
-      // Loading
       if (screen === 'loading') {
         return (
           <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center">
-            <div className="text-4xl font-black text-white mb-4">
-              Time<span className="text-emerald-400">Bar</span>
-            </div>
+            <div className="text-4xl font-black text-white mb-4">Time<span className="text-emerald-400">Bar</span></div>
             <div className="spinner" />
           </div>
         );
@@ -1372,41 +1241,22 @@
 
       return (
         <div>
-          {screen === 'onboarding' && (
-            <OnboardingScreen onComplete={handleOnboardingComplete} />
-          )}
-          
+          {screen === 'onboarding' && <OnboardingScreen onComplete={handleOnboardingComplete} />}
           {screen === 'main' && userData && (
-            <MainTracker
-              userData={userData}
-              records={records}
-              onAddRecord={handleAddRecord}
-              onOpenHistory={() => setScreen('history')}
-              onOpenSettings={() => setScreen('settings')}
-            />
+            <MainTracker userData={userData} records={records} onAddRecord={handleAddRecord}
+              onOpenHistory={() => setScreen('history')} onOpenSettings={() => setScreen('settings')} />
           )}
-          
           {screen === 'history' && userData && (
-            <HistoryPage
-              records={records}
-              userData={userData}
-              onClose={() => setScreen('main')}
-            />
+            <HistoryPage records={records} userData={userData} onClose={() => setScreen('main')} />
           )}
-          
           {screen === 'settings' && userData && (
-            <SettingsPage
-              userData={userData}
-              onUpdateUser={handleUpdateUser}
-              onClose={() => setScreen('main')}
-              onReset={handleReset}
-            />
+            <SettingsPage userData={userData} onUpdateUser={handleUpdateUser}
+              onClose={() => setScreen('main')} onReset={handleReset} />
           )}
         </div>
       );
     }
 
-    // Mount app
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<App />);
   </script>
