@@ -71,6 +71,7 @@
     const DEFAULT_ROI_RATE = 6;
     const WORKING_DAYS_PER_MONTH = 22;
     const WORKING_HOURS_PER_DAY = 8;
+    const WORKING_HOURS_PER_YEAR = WORKING_DAYS_PER_MONTH * WORKING_HOURS_PER_DAY * 12;
 
     // ==================== FINANCIAL CALCULATIONS ====================
     const FinanceCalc = {
@@ -466,15 +467,17 @@
       const monthlyRate = realRate / 12;
       const monthsToRetire = yearsToRetire * 12;
 
-      // 計算累積影響
+      // 計算累積影響（金額用於顯示，timeCost用於GPS計算）
       const totalSaved = records.filter(r => r.type === 'save').reduce((s, r) => s + r.amount, 0);
       const totalSpent = records.filter(r => r.type === 'spend').reduce((s, r) => s + r.amount, 0);
-      const netSavingsImpact = totalSaved - totalSpent;
+      const totalSavedHours = records.filter(r => r.type === 'save').reduce((s, r) => s + r.timeCost, 0);
+      const totalSpentHours = records.filter(r => r.type === 'spend').reduce((s, r) => s + r.timeCost, 0);
 
-      // GPS: 計算預估退休年齡
+      // GPS: 計算預估退休年齡（直接用 timeCost，已包含 isRecurring 的複利計算）
       const estimatedAge = useMemo(() => {
-        return FinanceCalc.estimatedRetireAge(userData, netSavingsImpact);
-      }, [userData, netSavingsImpact]);
+        const netHoursImpact = totalSpentHours - totalSavedHours; // 正=延後，負=提早
+        return retireAge + netHoursImpact / WORKING_HOURS_PER_YEAR;
+      }, [retireAge, totalSpentHours, totalSavedHours]);
 
       const ageDiff = retireAge - estimatedAge;
       const ageDiffDays = Math.round(ageDiff * 365);
@@ -788,11 +791,16 @@
     const HistoryPage = ({ records, userData, onClose }) => {
       const { age, retireAge, salary, inflationRate = DEFAULT_INFLATION_RATE, roiRate = DEFAULT_ROI_RATE } = userData;
 
+      // 計算累積影響（金額用於顯示，timeCost用於GPS計算）
       const totalSaved = records.filter(r => r.type === 'save').reduce((s, r) => s + r.amount, 0);
       const totalSpent = records.filter(r => r.type === 'spend').reduce((s, r) => s + r.amount, 0);
-      const netSavingsImpact = totalSaved - totalSpent;
+      const totalSavedHours = records.filter(r => r.type === 'save').reduce((s, r) => s + r.timeCost, 0);
+      const totalSpentHours = records.filter(r => r.type === 'spend').reduce((s, r) => s + r.timeCost, 0);
 
-      const estimatedAge = FinanceCalc.estimatedRetireAge(userData, netSavingsImpact);
+      // GPS: 計算預估退休年齡（直接用 timeCost）
+      const netHoursImpact = totalSpentHours - totalSavedHours;
+      const estimatedAge = retireAge + netHoursImpact / WORKING_HOURS_PER_YEAR;
+      
       const ageDiff = retireAge - estimatedAge;
       const isAhead = ageDiff > 0.001;
       const isBehind = ageDiff < -0.001;
@@ -1215,7 +1223,7 @@
               )}
             </div>
 
-            <div className="text-center text-gray-600 text-sm mt-8">TimeBar v2.2.1</div>
+            <div className="text-center text-gray-600 text-sm mt-8">TimeBar v2.3</div>
           </div>
         </div>
       );
