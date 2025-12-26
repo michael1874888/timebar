@@ -60,138 +60,27 @@
 <body>
   <div id="root"></div>
   
+  <!-- 核心計算模組（獨立可測試） -->
+  <script src="financeCalc.js"></script>
+  
   <script type="text/babel">
     const { useState, useEffect, useCallback, useMemo } = React;
+    
+    // ==================== 從 financeCalc.js 載入模組 ====================
+    const { CONSTANTS, FinanceCalc, Formatters, GPSCalc } = TimeBarFinance;
+    const { 
+      DEFAULT_INFLATION_RATE, 
+      DEFAULT_ROI_RATE, 
+      WORKING_DAYS_PER_MONTH, 
+      WORKING_HOURS_PER_DAY,
+      WORKING_HOURS_PER_YEAR 
+    } = CONSTANTS;
+    const { formatTime, formatCurrency, formatCurrencyFull, formatAgeDiff } = Formatters;
 
     // ==================== CONFIG ====================
     const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzZi4pEbKa_bEKtyKppVw9Ls_jmx8QdgP6zlarNiWI4ylXWJb5qpvcC-a9flq5Jvxnm/exec'; // 例如: 'https://script.google.com/macros/s/xxx/exec'
     
-    // ==================== CONSTANTS ====================
-    const DEFAULT_INFLATION_RATE = 2.5;
-    const DEFAULT_ROI_RATE = 6;
-    const WORKING_DAYS_PER_MONTH = 22;
-    const WORKING_HOURS_PER_DAY = 8;
-    const WORKING_HOURS_PER_YEAR = WORKING_DAYS_PER_MONTH * WORKING_HOURS_PER_DAY * 12; // 2112 小時/年
-
-    // ==================== FINANCIAL CALCULATIONS ====================
-    const FinanceCalc = {
-      // 計算實質報酬率
-      realRate(inflation, roi) {
-        return (1 + roi / 100) / (1 + inflation / 100) - 1;
-      },
-      
-      // 計算複利終值 (Future Value)
-      futureValue(pv, rate, years) {
-        return pv * Math.pow(1 + rate, years);
-      },
-      
-      // 計算年金終值 (每月投入)
-      annuityFV(monthly, rate, years) {
-        const monthlyRate = rate / 12;
-        const months = years * 12;
-        if (monthlyRate === 0) return monthly * months;
-        return monthly * ((Math.pow(1 + monthlyRate, months) - 1) / monthlyRate);
-      },
-      
-      // 計算達成目標金額需要幾年
-      yearsToTarget(currentSavings, monthlySavings, targetAmount, rate) {
-        if (currentSavings >= targetAmount) return 0;
-        
-        const monthlyRate = rate / 12;
-        
-        // Binary search for years
-        let low = 0, high = 100;
-        while (high - low > 0.01) {
-          const mid = (low + high) / 2;
-          const fv = this.futureValue(currentSavings, rate, mid) + this.annuityFV(monthlySavings, rate, mid);
-          if (fv < targetAmount) {
-            low = mid;
-          } else {
-            high = mid;
-          }
-        }
-        return (low + high) / 2;
-      },
-      
-      // 計算目標退休金（基於目標退休年齡）
-      targetFundByAge(currentSavings, monthlySavings, yearsToRetire, rate) {
-        return this.futureValue(currentSavings, rate, yearsToRetire) + 
-               this.annuityFV(monthlySavings, rate, yearsToRetire);
-      },
-      
-      // 4% 法則：月領金額 → 需要多少退休金
-      monthlyToFund(monthlyExpense) {
-        return monthlyExpense * 300;
-      },
-      
-      // 4% 法則：退休金 → 可以月領多少
-      fundToMonthly(fund) {
-        return fund / 300;
-      },
-      
-      // 計算每月需儲蓄多少才能達成目標
-      requiredMonthlySavings(currentSavings, targetAmount, years, rate) {
-        const monthlyRate = rate / 12;
-        const months = years * 12;
-        const fvCurrent = this.futureValue(currentSavings, rate, years);
-        const remaining = targetAmount - fvCurrent;
-        
-        if (remaining <= 0) return 0;
-        if (monthlyRate === 0) return remaining / months;
-        
-        return remaining / ((Math.pow(1 + monthlyRate, months) - 1) / monthlyRate);
-      },
-      
-      // 計算預估退休年齡 (ETA)
-      estimatedRetireAge(userData, netSavingsImpact = 0) {
-        const { age, currentSavings, monthlySavings, retireAge, inflationRate, roiRate } = userData;
-        const realRate = this.realRate(inflationRate, roiRate);
-        
-        // 目標退休金 = 按原計畫能存到的金額
-        const yearsToRetire = retireAge - age;
-        const targetFund = this.targetFundByAge(currentSavings, monthlySavings, yearsToRetire, realRate);
-        
-        // 考慮實際行為後的調整
-        const adjustedSavings = currentSavings + netSavingsImpact;
-        
-        // 計算需要幾年才能達到目標
-        const yearsNeeded = this.yearsToTarget(adjustedSavings, monthlySavings, targetFund, realRate);
-        
-        return age + yearsNeeded;
-      }
-    };
-
-    // ==================== UTILITIES ====================
-    // 將工作小時轉換成易讀的時間格式
-    const formatTime = (workingHours) => {
-      const absHours = Math.abs(workingHours);
-      const hoursPerDay = WORKING_HOURS_PER_DAY; // 8
-      const hoursPerMonth = WORKING_HOURS_PER_DAY * WORKING_DAYS_PER_MONTH; // 176
-      const hoursPerYear = WORKING_HOURS_PER_YEAR; // 2112
-      
-      if (absHours < 1) {
-        return { value: Math.round(absHours * 60), unit: '分鐘', color: 'text-emerald-400' };
-      } else if (absHours < hoursPerDay) {
-        return { value: Math.round(absHours * 10) / 10, unit: '小時', color: 'text-emerald-400' };
-      } else if (absHours < hoursPerDay * 5) {
-        return { value: Math.round(absHours / hoursPerDay * 10) / 10, unit: '天', color: 'text-yellow-400' };
-      } else if (absHours < hoursPerMonth) {
-        return { value: Math.round(absHours / hoursPerDay * 10) / 10, unit: '天', color: 'text-orange-400' };
-      } else if (absHours < hoursPerYear) {
-        return { value: Math.round(absHours / hoursPerMonth * 10) / 10, unit: '個月', color: 'text-orange-500' };
-      } else {
-        return { value: Math.round(absHours / hoursPerYear * 100) / 100, unit: '年', color: 'text-red-500' };
-      }
-    };
-
-    const formatCurrency = (amount) => {
-      if (Math.abs(amount) >= 100000000) return `${(amount / 100000000).toFixed(2)}億`;
-      if (Math.abs(amount) >= 10000) return `${(amount / 10000).toFixed(amount % 10000 === 0 ? 0 : 1)}萬`;
-      return amount.toLocaleString();
-    };
-
-    const formatCurrencyFull = (amount) => `NT$ ${amount.toLocaleString()}`;
-
+    // ==================== UTILITIES (UI 相關) ====================
     const getRandomItem = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
     const getEquivalent = (workingHours, isSpend) => {
@@ -351,7 +240,7 @@
         setMonthlySavings(Math.round(salary * 0.2));
       }, [salary]);
 
-      const hourlyRate = Math.round(salary / WORKING_DAYS_PER_MONTH / WORKING_HOURS_PER_DAY);
+      const hourlyRate = Math.round(FinanceCalc.hourlyRate(salary));
       const realRate = FinanceCalc.realRate(DEFAULT_INFLATION_RATE, DEFAULT_ROI_RATE);
       const yearsToRetire = retireAge - age;
       const projectedFund = FinanceCalc.targetFundByAge(currentSavings, monthlySavings, yearsToRetire, realRate);
@@ -521,38 +410,19 @@
               inflationRate = DEFAULT_INFLATION_RATE, roiRate = DEFAULT_ROI_RATE } = userData;
       
       const yearsToRetire = retireAge - age;
-      const hourlyRate = salary / WORKING_DAYS_PER_MONTH / WORKING_HOURS_PER_DAY;
+      const hourlyRate = FinanceCalc.hourlyRate(salary);
       const realRate = FinanceCalc.realRate(inflationRate, roiRate);
       const monthlyRate = realRate / 12;
       const monthsToRetire = yearsToRetire * 12;
 
-      // 計算累積影響（金額用於顯示，timeCost用於GPS計算）
-      const totalSaved = records.filter(r => r.type === 'save').reduce((s, r) => s + r.amount, 0);
-      const totalSpent = records.filter(r => r.type === 'spend').reduce((s, r) => s + r.amount, 0);
-      const totalSavedHours = records.filter(r => r.type === 'save').reduce((s, r) => s + r.timeCost, 0);
-      const totalSpentHours = records.filter(r => r.type === 'spend').reduce((s, r) => s + r.timeCost, 0);
-
-      // GPS: 計算預估退休年齡（直接用 timeCost，已包含 isRecurring 的複利計算）
-      const estimatedAge = useMemo(() => {
-        const netHoursImpact = totalSpentHours - totalSavedHours; // 正=延後，負=提早
-        return retireAge + netHoursImpact / WORKING_HOURS_PER_YEAR;
-      }, [retireAge, totalSpentHours, totalSavedHours]);
-
-      const ageDiff = retireAge - estimatedAge;
-      const ageDiffDays = Math.round(ageDiff * 365);
-      const isAhead = ageDiff > 0.001; // 小於約半天視為持平
-      const isBehind = ageDiff < -0.001;
-      const isOnTrack = !isAhead && !isBehind;
-
-      // 格式化差異顯示
-      const formatAgeDiff = (diff) => {
-        const absDiff = Math.abs(diff);
-        const absDays = Math.round(absDiff * 365);
-        if (absDays < 1) return { value: '0', unit: '天', isSmall: true };
-        if (absDays < 30) return { value: absDays.toString(), unit: '天', isSmall: true };
-        if (absDays < 365) return { value: Math.round(absDays / 30).toString(), unit: '個月', isSmall: false };
-        return { value: absDiff.toFixed(1), unit: '年', isSmall: false };
-      };
+      // 使用 GPSCalc 計算累積影響和預估退休年齡
+      const { totalSaved, totalSpent } = useMemo(() => GPSCalc.calculateTotals(records), [records]);
+      
+      const gpsResult = useMemo(() => {
+        return GPSCalc.calculateEstimatedAge(retireAge, records);
+      }, [retireAge, records]);
+      
+      const { estimatedAge, ageDiff, ageDiffDays, isAhead, isBehind, isOnTrack } = gpsResult;
       const diffDisplay = formatAgeDiff(ageDiff);
 
       // 計算目標退休金
@@ -560,14 +430,8 @@
 
       // 計算當前花費/儲蓄的時間成本
       const calculateTimeCost = useCallback(() => {
-        let futureValue;
-        if (isRecurring) {
-          futureValue = amount * ((Math.pow(1 + monthlyRate, monthsToRetire) - 1) / monthlyRate);
-        } else {
-          futureValue = amount * Math.pow(1 + realRate, yearsToRetire);
-        }
-        return futureValue / hourlyRate;
-      }, [amount, isRecurring, monthsToRetire, yearsToRetire, hourlyRate, monthlyRate, realRate]);
+        return FinanceCalc.calculateTimeCost(amount, isRecurring, hourlyRate, realRate, yearsToRetire);
+      }, [amount, isRecurring, hourlyRate, realRate, yearsToRetire]);
 
       const timeCost = calculateTimeCost();
       const timeFormatted = formatTime(timeCost);
@@ -850,30 +714,9 @@
     const HistoryPage = ({ records, userData, onClose }) => {
       const { age, retireAge, salary, inflationRate = DEFAULT_INFLATION_RATE, roiRate = DEFAULT_ROI_RATE } = userData;
 
-      // 計算累積影響（金額用於顯示，timeCost用於GPS計算）
-      const totalSaved = records.filter(r => r.type === 'save').reduce((s, r) => s + r.amount, 0);
-      const totalSpent = records.filter(r => r.type === 'spend').reduce((s, r) => s + r.amount, 0);
-      const totalSavedHours = records.filter(r => r.type === 'save').reduce((s, r) => s + r.timeCost, 0);
-      const totalSpentHours = records.filter(r => r.type === 'spend').reduce((s, r) => s + r.timeCost, 0);
-
-      // GPS: 計算預估退休年齡（直接用 timeCost）
-      const netHoursImpact = totalSpentHours - totalSavedHours;
-      const estimatedAge = retireAge + netHoursImpact / WORKING_HOURS_PER_YEAR;
-      
-      const ageDiff = retireAge - estimatedAge;
-      const isAhead = ageDiff > 0.001;
-      const isBehind = ageDiff < -0.001;
-      const isOnTrack = !isAhead && !isBehind;
-
-      // 格式化差異顯示
-      const formatAgeDiff = (diff) => {
-        const absDiff = Math.abs(diff);
-        const absDays = Math.round(absDiff * 365);
-        if (absDays < 1) return { value: '0', unit: '天' };
-        if (absDays < 30) return { value: absDays.toString(), unit: '天' };
-        if (absDays < 365) return { value: Math.round(absDays / 30).toString(), unit: '個月' };
-        return { value: absDiff.toFixed(1), unit: '年' };
-      };
+      // 使用 GPSCalc 計算
+      const { totalSaved, totalSpent } = GPSCalc.calculateTotals(records);
+      const { estimatedAge, ageDiff, isAhead, isBehind, isOnTrack } = GPSCalc.calculateEstimatedAge(retireAge, records);
       const diffDisplay = formatAgeDiff(ageDiff);
 
       const sortedRecords = [...records].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
@@ -1047,7 +890,7 @@
         setIsClearing(false);
       };
 
-      const hourlyRate = Math.round(salary / WORKING_DAYS_PER_MONTH / WORKING_HOURS_PER_DAY);
+      const hourlyRate = Math.round(FinanceCalc.hourlyRate(salary));
       const realRate = FinanceCalc.realRate(inflationRate, roiRate);
       const yearsToRetire = retireAge - age;
 
@@ -1282,7 +1125,7 @@
               )}
             </div>
 
-            <div className="text-center text-gray-600 text-sm mt-8">TimeBar v2.4</div>
+            <div className="text-center text-gray-600 text-sm mt-8">TimeBar v2.5</div>
           </div>
         </div>
       );

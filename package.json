@@ -1,0 +1,18 @@
+{
+  "name": "timebar",
+  "version": "2.5.0",
+  "description": "把每一筆消費轉換成「退休時間成本」的財務工具",
+  "main": "financeCalc.js",
+  "scripts": {
+    "test": "node financeCalc.test.js",
+    "test:watch": "node --watch financeCalc.test.js"
+  },
+  "keywords": [
+    "finance",
+    "retirement",
+    "calculator",
+    "fire"
+  ],
+  "author": "",
+  "license": "MIT"
+}
