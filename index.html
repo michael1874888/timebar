@@ -232,6 +232,49 @@
     const GoogleSheetsAPI = {
       isConfigured: () => !!GAS_WEB_APP_URL,
       
+      // 讀取使用者資料
+      async getUserData() {
+        if (!this.isConfigured()) return { success: false, data: null };
+        try {
+          const response = await fetch(`${GAS_WEB_APP_URL}?action=getUserData`);
+          const result = await response.json();
+          return { success: true, data: result.userData };
+        } catch (e) { 
+          console.error('getUserData error:', e);
+          return { success: false, data: null }; 
+        }
+      },
+      
+      // 讀取所有消費紀錄
+      async getRecords() {
+        if (!this.isConfigured()) return { success: false, data: [] };
+        try {
+          const response = await fetch(`${GAS_WEB_APP_URL}?action=getRecords`);
+          const result = await response.json();
+          return { success: true, data: result.records || [] };
+        } catch (e) { 
+          console.error('getRecords error:', e);
+          return { success: false, data: [] }; 
+        }
+      },
+      
+      // 讀取全部資料（一次請求）
+      async getAll() {
+        if (!this.isConfigured()) return { success: false, userData: null, records: [] };
+        try {
+          const response = await fetch(`${GAS_WEB_APP_URL}?action=getAll`);
+          const result = await response.json();
+          return { 
+            success: true, 
+            userData: result.userData, 
+            records: result.records || [] 
+          };
+        } catch (e) { 
+          console.error('getAll error:', e);
+          return { success: false, userData: null, records: [] }; 
+        }
+      },
+      
       async saveRecord(record) {
         if (!this.isConfigured()) return { success: false };
         try {
@@ -1239,7 +1282,7 @@
               )}
             </div>
 
-            <div className="text-center text-gray-600 text-sm mt-8">TimeBar v2.3.1</div>
+            <div className="text-center text-gray-600 text-sm mt-8">TimeBar v2.4</div>
           </div>
         </div>
       );
@@ -1250,28 +1293,69 @@
       const [screen, setScreen] = useState('loading');
       const [userData, setUserData] = useState(null);
       const [records, setRecords] = useState([]);
+      const [syncStatus, setSyncStatus] = useState(''); // '', 'syncing', 'synced', 'offline'
 
+      // 載入資料：優先從雲端讀取
       useEffect(() => {
-        const timer = setTimeout(() => {
-          const saved = Storage.load('userData');
-          const savedRecords = Storage.load('records', []);
+        const loadData = async () => {
+          // 先讀取本地資料作為備用
+          const localUserData = Storage.load('userData');
+          const localRecords = Storage.load('records', []);
           
-          if (saved) {
+          // 嘗試從雲端讀取
+          if (GoogleSheetsAPI.isConfigured()) {
+            setSyncStatus('syncing');
+            try {
+              const cloudData = await GoogleSheetsAPI.getAll();
+              
+              if (cloudData.success && cloudData.userData) {
+                // 雲端有資料，使用雲端資料
+                const cloudUserData = {
+                  ...cloudData.userData,
+                  inflationRate: cloudData.userData.inflationRate ?? DEFAULT_INFLATION_RATE,
+                  roiRate: cloudData.userData.roiRate ?? DEFAULT_ROI_RATE,
+                  monthlySavings: cloudData.userData.monthlySavings ?? Math.round(cloudData.userData.salary * 0.2),
+                };
+                
+                setUserData(cloudUserData);
+                setRecords(cloudData.records || []);
+                
+                // 同步到本地
+                Storage.save('userData', cloudUserData);
+                Storage.save('records', cloudData.records || []);
+                
+                setSyncStatus('synced');
+                setScreen('main');
+                return;
+              }
+            } catch (e) {
+              console.error('Cloud sync failed:', e);
+            }
+            setSyncStatus('offline');
+          }
+          
+          // 雲端沒資料或讀取失敗，使用本地資料
+          if (localUserData) {
             setUserData({
-              ...saved,
-              inflationRate: saved.inflationRate ?? DEFAULT_INFLATION_RATE,
-              roiRate: saved.roiRate ?? DEFAULT_ROI_RATE,
-              monthlySavings: saved.monthlySavings ?? Math.round(saved.salary * 0.2),
+              ...localUserData,
+              inflationRate: localUserData.inflationRate ?? DEFAULT_INFLATION_RATE,
+              roiRate: localUserData.roiRate ?? DEFAULT_ROI_RATE,
+              monthlySavings: localUserData.monthlySavings ?? Math.round(localUserData.salary * 0.2),
             });
-            setRecords(savedRecords);
+            setRecords(localRecords);
             setScreen('main');
           } else {
+            // 都沒資料，進入 onboarding
             setScreen('onboarding');
           }
-        }, 800);
+        };
+        
+        // 延遲一下讓 loading 畫面顯示
+        const timer = setTimeout(loadData, 500);
         return () => clearTimeout(timer);
       }, []);
 
+      // 當 userData 更新時，同步到本地和雲端
       useEffect(() => {
         if (userData) {
           Storage.save('userData', userData);
@@ -1279,6 +1363,7 @@
         }
       }, [userData]);
 
+      // 當 records 更新時，同步到本地
       useEffect(() => {
         if (records.length > 0) Storage.save('records', records);
       }, [records]);
@@ -1298,7 +1383,10 @@
         return (
           <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center">
             <div className="text-4xl font-black text-white mb-4">Time<span className="text-emerald-400">Bar</span></div>
-            <div className="spinner" />
+            <div className="spinner mb-4" />
+            <div className="text-gray-500 text-sm">
+              {syncStatus === 'syncing' ? '☁️ 正在同步雲端資料...' : '載入中...'}
+            </div>
           </div>
         );
       }
