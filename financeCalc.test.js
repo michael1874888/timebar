@@ -228,6 +228,41 @@ describe('FinanceCalc.calculateTimeCost', () => {
     const recurring = FinanceCalc.calculateTimeCost(1000, true, hourlyRate, realRate, yearsToRetire);
     expect(recurring).toBeGreaterThan(oneTime * 100); // 每月消費影響至少是一次性的100倍
   });
+
+  test('實質報酬率為0且每月固定時，不應回傳NaN', () => {
+    const zeroRealRate = 0;
+    const timeCost = FinanceCalc.calculateTimeCost(1000, true, hourlyRate, zeroRealRate, yearsToRetire);
+    // 0 報酬率下：未來價值 = 1000 * (35*12)
+    const expectedFV = 1000 * (yearsToRetire * 12);
+    expect(Number.isNaN(timeCost)).toBe(false);
+    expect(timeCost).toBeCloseTo(expectedFV / hourlyRate, 6);
+  });
+});
+
+describe('FinanceCalc.requiredMonthlySavings', () => {
+  test('已達標或超標時，應回傳0', () => {
+    const required = FinanceCalc.requiredMonthlySavings(1000000, 500000, 10, 0.05);
+    expect(required).toBe(0);
+  });
+
+  test('0利率時，應等於(目標-現有)/月數', () => {
+    const currentSavings = 100000;
+    const targetAmount = 220000;
+    const years = 1;
+    const required = FinanceCalc.requiredMonthlySavings(currentSavings, targetAmount, years, 0);
+    // remaining = 120000, months = 12
+    expect(required).toBeCloseTo(10000, 6);
+  });
+
+  test('有利率時，所需每月儲蓄應小於0利率情況', () => {
+    const currentSavings = 0;
+    const targetAmount = 120000;
+    const years = 1;
+    const noRate = FinanceCalc.requiredMonthlySavings(currentSavings, targetAmount, years, 0);
+    const withRate = FinanceCalc.requiredMonthlySavings(currentSavings, targetAmount, years, 0.06);
+    expect(withRate).toBeLessThan(noRate);
+    expect(withRate).toBeGreaterThan(0);
+  });
 });
 
 describe('FinanceCalc.hourlyRate', () => {
@@ -295,6 +330,12 @@ describe('Formatters.formatCurrency', () => {
 
   test('100000000應顯示為1億', () => {
     expect(Formatters.formatCurrency(100000000)).toBe('1.00億');
+  });
+});
+
+describe('Formatters.formatCurrencyFull', () => {
+  test('應包含NT$前綴並正確千分位', () => {
+    expect(Formatters.formatCurrencyFull(1234567)).toBe('NT$ 1,234,567');
   });
 });
 
@@ -374,6 +415,14 @@ describe('GPSCalc.calculateTotals', () => {
     const result = GPSCalc.calculateTotals([]);
     expect(result.totalSaved).toBe(0);
     expect(result.totalSpent).toBe(0);
+  });
+});
+
+describe('FinanceCalc.yearsToTarget (更多邊界案例)', () => {
+  test('每月不儲蓄時，應能只靠複利達標', () => {
+    const years = FinanceCalc.yearsToTarget(100000, 0, 200000, 0.05);
+    expect(years).toBeGreaterThan(10);
+    expect(years).toBeLessThan(20);
   });
 });
 

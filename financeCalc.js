@@ -162,10 +162,20 @@
       
       if (isRecurring) {
         // 年金終值：每月持續支出的複利累積
-        futureValue = amount * ((Math.pow(1 + monthlyRate, monthsToRetire) - 1) / monthlyRate);
+        if (monthsToRetire <= 0) {
+          futureValue = 0;
+        } else if (monthlyRate === 0) {
+          futureValue = amount * monthsToRetire;
+        } else {
+          futureValue = amount * ((Math.pow(1 + monthlyRate, monthsToRetire) - 1) / monthlyRate);
+        }
       } else {
         // 單筆複利終值
-        futureValue = amount * Math.pow(1 + realRate, yearsToRetire);
+        if (yearsToRetire <= 0) {
+          futureValue = amount;
+        } else {
+          futureValue = amount * Math.pow(1 + realRate, yearsToRetire);
+        }
       }
       
       return futureValue / hourlyRate;
