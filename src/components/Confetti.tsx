@@ -1,5 +1,9 @@
 // 慶祝動畫元件
-export function Confetti({ active }) {
+interface ConfettiProps {
+  active: boolean;
+}
+
+export function Confetti({ active }: ConfettiProps) {
   if (!active) return null;
 
   const particles = Array.from({ length: 50 }, (_, i) => ({

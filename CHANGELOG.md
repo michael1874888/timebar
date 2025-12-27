@@ -19,27 +19,34 @@ All notable changes to this project will be documented in this file.
 - 🔄 移除 CDN 依賴，使用 npm packages
 - 🔄 Tailwind CSS 改用 PostCSS 處理
 - 🔄 React 改用 npm 安裝版本
+- 🔄 全面遷移至 **TypeScript**，增強類型安全
+- 🔄 核心計算模組採用 UMD + ES Module 雙重模式（相容 Node.js 測試）
+- 🔄 從 npm 原生單元測試改用 **Vitest** 框架
 - 🔄 版本號從 2.5.0 升級至 3.0.0
 
 #### 技術棧更新
 - ⚡ Vite 5.4.21
 - ⚛️ React 18.3.1
 - 🎨 Tailwind CSS 3.4.19
-- 📦 ES Module 模組系統
+- 📦 TypeScript 5.x（完整類型安全）
+- 🧪 Vitest 1.x（單元測試框架）
+- 📝 ES Module + UMD 混合模式
 
 #### 檔案結構
 ```
 src/
-├── components/      # 6 個 React 元件
-│   ├── App.jsx
-│   ├── Confetti.jsx
-│   ├── onboarding/OnboardingScreen.jsx
-│   ├── tracker/MainTracker.jsx
-│   ├── history/HistoryPage.jsx
-│   └── settings/SettingsPage.jsx
-├── services/        # API 服務層
-├── utils/           # 工具函數
-├── constants/       # 常數定義
+├── components/      # 6 個 React 元件 (TypeScript)
+│   ├── App.tsx
+│   ├── Confetti.tsx
+│   ├── onboarding/OnboardingScreen.tsx
+│   ├── tracker/MainTracker.tsx
+│   ├── history/HistoryPage.tsx
+│   └── settings/SettingsPage.tsx
+├── services/        # API 服務層 (TypeScript)
+├── utils/           # 工具函數 (TypeScript)
+├── constants/       # 常數定義 (TypeScript)
+├── types/           # 類型定義
+├── tests/           # 單元測試
 └── styles/          # 樣式檔案
 ```
 

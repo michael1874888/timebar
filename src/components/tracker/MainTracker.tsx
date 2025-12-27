@@ -2,28 +2,34 @@ import { useState, useCallback, useMemo } from 'react';
 import { FinanceCalc, GPSCalc, Formatters } from '@/utils/financeCalc';
 import { getEquivalent, getMotivationalQuote } from '@/utils/helpers';
 import { Confetti } from '../Confetti';
+import { UserData, Record as RecordType } from '@/types';
 
 const { formatTime, formatCurrency, formatCurrencyFull, formatAgeDiff } = Formatters;
 
-export function MainTracker({ userData, records, onAddRecord, onOpenHistory, onOpenSettings }) {
-  const [mode, setMode] = useState('spend');
-  const [amount, setAmount] = useState(500);
-  const [isRecurring, setIsRecurring] = useState(false);
-  const [category, setCategory] = useState('');
-  const [note, setNote] = useState('');
-  const [showResult, setShowResult] = useState(false);
-  const [resultType, setResultType] = useState(null);
-  const [showConfetti, setShowConfetti] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+interface MainTrackerProps {
+  userData: UserData;
+  records: RecordType[];
+  onAddRecord: (record: RecordType) => void;
+  onOpenHistory: () => void;
+  onOpenSettings: () => void;
+}
 
-  const { age, salary, retireAge, currentSavings, monthlySavings,
-          inflationRate, roiRate } = userData;
+export function MainTracker({ userData, records, onAddRecord, onOpenHistory, onOpenSettings }: MainTrackerProps) {
+  const [mode, setMode] = useState<'spend' | 'save'>('spend');
+  const [amount, setAmount] = useState<number>(500);
+  const [isRecurring, setIsRecurring] = useState<boolean>(false);
+  const [category, setCategory] = useState<string>('');
+  const [note, setNote] = useState<string>('');
+  const [showResult, setShowResult] = useState<boolean>(false);
+  const [resultType, setResultType] = useState<'spend' | 'save' | null>(null);
+  const [showConfetti, setShowConfetti] = useState<boolean>(false);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
 
-  const yearsToRetire = retireAge - age;
+  const { salary, retireAge, inflationRate, roiRate } = userData;
+
+  const yearsToRetire = retireAge - userData.age;
   const hourlyRate = FinanceCalc.hourlyRate(salary);
   const realRate = FinanceCalc.realRate(inflationRate, roiRate);
-  const monthlyRate = realRate / 12;
-  const monthsToRetire = yearsToRetire * 12;
 
   // 使用 GPSCalc 計算累積影響和預估退休年齡
   const { totalSaved, totalSpent } = useMemo(() => GPSCalc.calculateTotals(records), [records]);
@@ -32,11 +38,8 @@ export function MainTracker({ userData, records, onAddRecord, onOpenHistory, onO
     return GPSCalc.calculateEstimatedAge(retireAge, records);
   }, [retireAge, records]);
 
-  const { estimatedAge, ageDiff, ageDiffDays, isAhead, isBehind, isOnTrack } = gpsResult;
+  const { estimatedAge, ageDiff, ageDiffDays, isAhead, isOnTrack } = gpsResult;
   const diffDisplay = formatAgeDiff(ageDiff);
-
-  // 計算目標退休金
-  const targetFund = FinanceCalc.targetFundByAge(currentSavings, monthlySavings, yearsToRetire, realRate);
 
   // 計算當前花費/儲蓄的時間成本
   const calculateTimeCost = useCallback(() => {
@@ -46,11 +49,11 @@ export function MainTracker({ userData, records, onAddRecord, onOpenHistory, onO
   const timeCost = calculateTimeCost();
   const timeFormatted = formatTime(timeCost);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (): Promise<void> => {
     if (amount <= 0) return;
     setIsSaving(true);
 
-    const record = {
+    const record: RecordType = {
       id: Date.now().toString(),
       type: mode,
       amount,
@@ -59,6 +62,7 @@ export function MainTracker({ userData, records, onAddRecord, onOpenHistory, onO
       category: category || (mode === 'spend' ? '一般消費' : '儲蓄'),
       note,
       timestamp: new Date().toISOString(),
+      date: new Date().toISOString().split('T')[0],
     };
 
     await onAddRecord(record);

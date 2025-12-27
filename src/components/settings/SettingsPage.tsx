@@ -1,32 +1,40 @@
 import { useState, useMemo } from 'react';
 import { FinanceCalc, Formatters, CONSTANTS } from '@/utils/financeCalc';
 import { GAS_WEB_APP_URL } from '@/constants';
+import { UserData } from '@/types';
 
 const { formatCurrency, formatCurrencyFull } = Formatters;
 const { DEFAULT_INFLATION_RATE, DEFAULT_ROI_RATE } = CONSTANTS;
 
-export function SettingsPage({ userData, onUpdateUser, onClose, onReset }) {
-  const [age, setAge] = useState(userData.age);
-  const [salary, setSalary] = useState(userData.salary);
-  const [retireAge, setRetireAge] = useState(userData.retireAge);
-  const [currentSavings, setCurrentSavings] = useState(userData.currentSavings || 0);
-  const [monthlySavings, setMonthlySavings] = useState(userData.monthlySavings || Math.round(userData.salary * 0.2));
-  const [inflationRate, setInflationRate] = useState(userData.inflationRate || DEFAULT_INFLATION_RATE);
-  const [roiRate, setRoiRate] = useState(userData.roiRate || DEFAULT_ROI_RATE);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [isClearing, setIsClearing] = useState(false);
-  const [calculatorMode, setCalculatorMode] = useState('age'); // age, fund, lifestyle
-  const [targetFund, setTargetFund] = useState(30000000);
-  const [monthlyRetirement, setMonthlyRetirement] = useState(50000);
+interface SettingsPageProps {
+  userData: UserData;
+  onUpdateUser: (data: UserData) => void;
+  onClose: () => void;
+  onReset: () => void;
+}
 
-  const handleSave = () => {
+export function SettingsPage({ userData, onUpdateUser, onClose, onReset }: SettingsPageProps) {
+  const [age, setAge] = useState<number>(userData.age);
+  const [salary, setSalary] = useState<number>(userData.salary);
+  const [retireAge, setRetireAge] = useState<number>(userData.retireAge);
+  const [currentSavings, setCurrentSavings] = useState<number>(userData.currentSavings || 0);
+  const [monthlySavings, setMonthlySavings] = useState<number>(userData.monthlySavings || Math.round(userData.salary * 0.2));
+  const [inflationRate, setInflationRate] = useState<number>(userData.inflationRate || DEFAULT_INFLATION_RATE);
+  const [roiRate, setRoiRate] = useState<number>(userData.roiRate || DEFAULT_ROI_RATE);
+  const [showConfirm, setShowConfirm] = useState<boolean>(false);
+  const [isClearing, setIsClearing] = useState<boolean>(false);
+  const [calculatorMode, setCalculatorMode] = useState<'age' | 'fund' | 'lifestyle'>('age');
+  const [targetFund, setTargetFund] = useState<number>(30000000);
+  const [monthlyRetirement, setMonthlyRetirement] = useState<number>(50000);
+
+  const handleSave = (): void => {
     onUpdateUser({ age, salary, retireAge, currentSavings, monthlySavings, inflationRate, roiRate,
       targetRetirementFund: Math.round(FinanceCalc.targetFundByAge(currentSavings, monthlySavings, retireAge - age, realRate))
     });
     onClose();
   };
 
-  const handleClear = async () => {
+  const handleClear = async (): Promise<void> => {
     setIsClearing(true);
     await onReset();
     setIsClearing(false);
@@ -130,11 +138,11 @@ export function SettingsPage({ userData, onUpdateUser, onClose, onReset }) {
 
           {/* Mode Tabs */}
           <div className="flex gap-2 mb-6 overflow-x-auto hide-scrollbar">
-            {[
-              { id: 'age', label: '年齡導向' },
-              { id: 'fund', label: '金額導向' },
-              { id: 'lifestyle', label: '生活品質' },
-            ].map(m => (
+            {([
+              { id: 'age' as const, label: '年齡導向' },
+              { id: 'fund' as const, label: '金額導向' },
+              { id: 'lifestyle' as const, label: '生活品質' },
+            ]).map(m => (
               <button key={m.id} onClick={() => setCalculatorMode(m.id)}
                 className={`px-3 py-2 rounded-lg text-sm whitespace-nowrap transition-all ${
                   calculatorMode === m.id ? 'bg-emerald-500 text-gray-900 font-semibold' : 'bg-gray-700 text-gray-400'

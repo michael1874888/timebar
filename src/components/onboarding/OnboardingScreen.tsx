@@ -1,18 +1,23 @@
 // 初始設定流程（5步驟）
 import { useState, useEffect } from 'react';
 import { FinanceCalc, Formatters, CONSTANTS } from '@/utils/financeCalc';
+import { UserData } from '@/types';
 
 const { DEFAULT_INFLATION_RATE, DEFAULT_ROI_RATE } = CONSTANTS;
 const { formatCurrency, formatCurrencyFull } = Formatters;
 
-export function OnboardingScreen({ onComplete }) {
-  const [step, setStep] = useState(0);
-  const [age, setAge] = useState(30);
-  const [salary, setSalary] = useState(50000);
-  const [retireAge, setRetireAge] = useState(65);
-  const [currentSavings, setCurrentSavings] = useState(0);
-  const [monthlySavings, setMonthlySavings] = useState(10000);
-  const [isAnimating, setIsAnimating] = useState(false);
+interface OnboardingScreenProps {
+  onComplete: (data: UserData) => void;
+}
+
+export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
+  const [step, setStep] = useState<number>(0);
+  const [age, setAge] = useState<number>(30);
+  const [salary, setSalary] = useState<number>(50000);
+  const [retireAge, setRetireAge] = useState<number>(65);
+  const [currentSavings, setCurrentSavings] = useState<number>(0);
+  const [monthlySavings, setMonthlySavings] = useState<number>(10000);
+  const [isAnimating, setIsAnimating] = useState<boolean>(false);
 
   useEffect(() => {
     setMonthlySavings(Math.round(salary * 0.2));
@@ -24,7 +29,7 @@ export function OnboardingScreen({ onComplete }) {
   const projectedFund = FinanceCalc.targetFundByAge(currentSavings, monthlySavings, yearsToRetire, realRate);
   const monthlyRetirement = FinanceCalc.fundToMonthly(projectedFund);
 
-  const handleNext = () => {
+  const handleNext = (): void => {
     setIsAnimating(true);
     setTimeout(() => {
       if (step < 4) {

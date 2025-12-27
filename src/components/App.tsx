@@ -6,21 +6,24 @@ import { SettingsPage } from './settings/SettingsPage';
 import { GoogleSheetsAPI } from '@/services/googleSheets';
 import { Storage } from '@/utils/storage';
 import { CONSTANTS } from '@/utils/financeCalc';
+import { UserData, Record as RecordType, Screen } from '@/types';
 
 const { DEFAULT_INFLATION_RATE, DEFAULT_ROI_RATE } = CONSTANTS;
 
+type SyncStatus = '' | 'syncing' | 'synced' | 'offline';
+
 export default function App() {
-  const [screen, setScreen] = useState('loading');
-  const [userData, setUserData] = useState(null);
-  const [records, setRecords] = useState([]);
-  const [syncStatus, setSyncStatus] = useState(''); // '', 'syncing', 'synced', 'offline'
+  const [screen, setScreen] = useState<Screen>('loading');
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [records, setRecords] = useState<RecordType[]>([]);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('');
 
   // 載入資料：優先從雲端讀取
   useEffect(() => {
     const loadData = async () => {
       // 先讀取本地資料作為備用
-      const localUserData = Storage.load('userData');
-      const localRecords = Storage.load('records', []);
+      const localUserData = Storage.load('userData') as UserData | null;
+      const localRecords = Storage.load('records', []) as RecordType[];
 
       // 嘗試從雲端讀取
       if (GoogleSheetsAPI.isConfigured()) {
@@ -56,13 +59,14 @@ export default function App() {
 
       // 雲端沒資料或讀取失敗，使用本地資料
       if (localUserData) {
-        setUserData({
+        const userData: UserData = {
           ...localUserData,
           inflationRate: localUserData.inflationRate ?? DEFAULT_INFLATION_RATE,
           roiRate: localUserData.roiRate ?? DEFAULT_ROI_RATE,
           monthlySavings: localUserData.monthlySavings ?? Math.round(localUserData.salary * 0.2),
-        });
-        setRecords(localRecords);
+        };
+        setUserData(userData);
+        setRecords(localRecords || []);
         setScreen('main');
       } else {
         // 都沒資料，進入 onboarding
@@ -88,10 +92,10 @@ export default function App() {
     if (records.length > 0) Storage.save('records', records);
   }, [records]);
 
-  const handleOnboardingComplete = (data) => { setUserData(data); setScreen('main'); };
-  const handleAddRecord = async (record) => { setRecords(prev => [...prev, record]); await GoogleSheetsAPI.saveRecord(record); };
-  const handleUpdateUser = (data) => { setUserData(data); };
-  const handleReset = async () => {
+  const handleOnboardingComplete = (data: UserData): void => { setUserData(data); setScreen('main'); };
+  const handleAddRecord = async (record: RecordType): Promise<void> => { setRecords(prev => [...prev, record]); await GoogleSheetsAPI.saveRecord(record); };
+  const handleUpdateUser = (data: UserData): void => { setUserData(data); };
+  const handleReset = async (): Promise<void> => {
     await GoogleSheetsAPI.clearAllData();
     Storage.clear();
     setUserData(null);

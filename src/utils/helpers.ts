@@ -3,9 +3,9 @@ import { CONSTANTS } from './financeCalc';
 
 const { WORKING_HOURS_PER_DAY, WORKING_DAYS_PER_MONTH, WORKING_HOURS_PER_YEAR } = CONSTANTS;
 
-export const getRandomItem = (arr) => arr[Math.floor(Math.random() * arr.length)];
+export const getRandomItem = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 
-export const getEquivalent = (workingHours, isSpend) => {
+export const getEquivalent = (workingHours: number, isSpend: boolean): string => {
   const absHours = Math.abs(workingHours);
   const hoursPerDay = WORKING_HOURS_PER_DAY; // 8
   const hoursPerWeek = hoursPerDay * 5; // 40
@@ -30,7 +30,7 @@ export const getEquivalent = (workingHours, isSpend) => {
   return getRandomItem((items.find(i => absHours <= i.max) || items[items.length - 1]).texts);
 };
 
-export const getMotivationalQuote = () => getRandomItem([
+export const getMotivationalQuote = (): string => getRandomItem([
   '每一分錢都是你未來自由的磚塊 🧱',
   '今天的忍耐，是明天的自由 ✨',
   '少買一個，多活一天 💪',

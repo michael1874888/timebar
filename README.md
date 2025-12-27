@@ -62,35 +62,43 @@ npm test
 ```
 timebar/
 ├── src/
-│   ├── components/              # React 元件
-│   │   ├── App.jsx              # 主應用
-│   │   ├── Confetti.jsx         # 慶祝動畫
+│   ├── components/              # React 元件 (TypeScript)
+│   │   ├── App.tsx              # 主應用
+│   │   ├── Confetti.tsx         # 慶祝動畫
 │   │   ├── onboarding/
-│   │   │   └── OnboardingScreen.jsx
+│   │   │   └── OnboardingScreen.tsx
 │   │   ├── tracker/
-│   │   │   └── MainTracker.jsx
+│   │   │   └── MainTracker.tsx
 │   │   ├── history/
-│   │   │   └── HistoryPage.jsx
+│   │   │   └── HistoryPage.tsx
 │   │   └── settings/
-│   │       └── SettingsPage.jsx
+│   │       └── SettingsPage.tsx
 │   ├── services/
-│   │   └── googleSheets.js      # API 服務
+│   │   └── googleSheets.ts      # API 服務
 │   ├── utils/
-│   │   ├── financeCalc.js       # 核心計算
-│   │   ├── storage.js           # localStorage
-│   │   └── helpers.js           # 工具函數
+│   │   ├── financeCalc.ts       # 核心計算（UMD + ES Module）
+│   │   ├── storage.ts           # localStorage 封裝
+│   │   └── helpers.ts           # UI 工具函數
 │   ├── constants/
-│   │   └── index.js             # 環境變數
+│   │   └── index.ts             # 環境變數
+│   ├── types/
+│   │   └── index.ts             # 類型定義
+│   ├── tests/
+│   │   ├── financeCalc.test.ts  # 財務計算測試（56 個）
+│   │   └── setup.ts             # 測試環境設定
 │   ├── styles/
 │   │   ├── index.css            # Tailwind + 全域樣式
 │   │   └── animations.css       # 動畫定義
-│   └── main.jsx                 # 入口點
+│   ├── main.tsx                 # React 入口點
+│   └── vite-env.d.ts            # Vite 環境類型
 ├── google-apps-script/
 │   └── Code.gs                  # Google Apps Script 後端
 ├── index.html                   # Vite 開發入口
 ├── vite.config.js               # Vite 設定
 ├── tailwind.config.js           # Tailwind 設定
-├── financeCalc.test.cjs         # 單元測試（56 個）
+├── tsconfig.json                # TypeScript 配置
+├── tsconfig.node.json           # TypeScript Node 配置
+├── vitest.config.ts             # Vitest 單元測試設定
 ├── package.json                 # 專案設定
 ├── .env.local                   # 環境變數（不提交）
 └── README.md

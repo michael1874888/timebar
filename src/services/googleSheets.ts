@@ -1,11 +1,12 @@
 // Google Sheets API 服務
 import { GAS_WEB_APP_URL } from '@/constants';
+import type { UserData, Record } from '@/types';
 
 export const GoogleSheetsAPI = {
-  isConfigured: () => !!GAS_WEB_APP_URL,
+  isConfigured: (): boolean => !!GAS_WEB_APP_URL,
 
   // 讀取使用者資料
-  async getUserData() {
+  async getUserData(): Promise<{ success: boolean; data: UserData | null }> {
     if (!this.isConfigured()) return { success: false, data: null };
     try {
       const response = await fetch(`${GAS_WEB_APP_URL}?action=getUserData`);
@@ -18,7 +19,7 @@ export const GoogleSheetsAPI = {
   },
 
   // 讀取所有消費紀錄
-  async getRecords() {
+  async getRecords(): Promise<{ success: boolean; data: Record[] }> {
     if (!this.isConfigured()) return { success: false, data: [] };
     try {
       const response = await fetch(`${GAS_WEB_APP_URL}?action=getRecords`);
@@ -31,7 +32,7 @@ export const GoogleSheetsAPI = {
   },
 
   // 讀取全部資料（一次請求）
-  async getAll() {
+  async getAll(): Promise<{ success: boolean; userData: UserData | null; records: Record[] }> {
     if (!this.isConfigured()) return { success: false, userData: null, records: [] };
     try {
       const response = await fetch(`${GAS_WEB_APP_URL}?action=getAll`);
@@ -47,7 +48,7 @@ export const GoogleSheetsAPI = {
     }
   },
 
-  async saveRecord(record) {
+  async saveRecord(record: Record): Promise<{ success: boolean }> {
     if (!this.isConfigured()) return { success: false };
     try {
       await fetch(GAS_WEB_APP_URL, {
@@ -61,7 +62,7 @@ export const GoogleSheetsAPI = {
     }
   },
 
-  async saveUserData(userData) {
+  async saveUserData(userData: UserData): Promise<{ success: boolean }> {
     if (!this.isConfigured()) return { success: false };
     try {
       await fetch(GAS_WEB_APP_URL, {
@@ -75,7 +76,7 @@ export const GoogleSheetsAPI = {
     }
   },
 
-  async clearAllData() {
+  async clearAllData(): Promise<{ success: boolean }> {
     if (!this.isConfigured()) return { success: false };
     try {
       await fetch(GAS_WEB_APP_URL, {
