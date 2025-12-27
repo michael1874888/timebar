@@ -1,11 +1,14 @@
 {
   "name": "timebar",
-  "version": "2.5.0",
+  "version": "3.0.0",
+  "type": "module",
   "description": "把每一筆消費轉換成「退休時間成本」的財務工具",
-  "main": "financeCalc.js",
   "scripts": {
-    "test": "node financeCalc.test.js",
-    "test:watch": "node --watch financeCalc.test.js"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node financeCalc.test.cjs",
+    "test:watch": "node --watch financeCalc.test.cjs"
   },
   "keywords": [
     "finance",
@@ -14,5 +17,16 @@
     "fire"
   ],
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "@vitejs/plugin-react": "^4.7.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "vite": "^5.4.21"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.23",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.19"
+  }
 }

@@ -4,7 +4,7 @@
  * 執行方式：npm test
  */
 
-const { CONSTANTS, FinanceCalc, Formatters, GPSCalc } = require('./financeCalc');
+const { CONSTANTS, FinanceCalc, Formatters, GPSCalc } = require('./financeCalc.cjs');
 
 // ==================== 測試工具 ====================
 let testsPassed = 0;
