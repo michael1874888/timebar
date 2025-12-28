@@ -40,31 +40,27 @@ export default function App() {
               monthlySavings: cloudData.userData.monthlySavings ?? Math.round(cloudData.userData.salary * 0.2),
             };
 
-            // 合併記錄：使用 id 去重，保留兩邊的記錄
+            // 合併記錄：雲端優先策略（雲端是 source of truth）
+            // 只合併雲端和本地的記錄，不自動上傳本地記錄
             const cloudRecords = cloudData.records || [];
-            const mergedRecords = [...localRecords];
-            const existingIds = new Set(localRecords.map(r => r.id));
 
-            cloudRecords.forEach(cloudRecord => {
-              if (!existingIds.has(cloudRecord.id)) {
-                mergedRecords.push(cloudRecord);
-              }
-            });
+            // 統一轉換為字串，避免 Google Sheets 將數字 ID 轉換為 number 型別導致比對失敗
+            const cloudRecordIds = new Set(cloudRecords.map(r => String(r.id)));
+
+            // 保留本地有但雲端沒有的記錄（可能是離線時記錄的，或上傳失敗的）
+            const localOnlyRecords = localRecords.filter(r => !cloudRecordIds.has(String(r.id)));
+
+            // 合併：雲端記錄 + 本地獨有記錄
+            const mergedRecords = [...cloudRecords, ...localOnlyRecords];
 
             // 按時間戳排序（最新的在前）
             mergedRecords.sort((a, b) =>
               new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
             );
 
-            // 如果本地有額外的記錄，需要同步到雲端
-            if (mergedRecords.length > cloudRecords.length) {
-              const newRecords = mergedRecords.filter(r =>
-                !cloudRecords.some(cr => cr.id === r.id)
-              );
-              for (const record of newRecords) {
-                await GoogleSheetsAPI.saveRecord(record);
-              }
-            }
+            // 注意：不再自動上傳本地記錄到雲端
+            // 原因：1) 避免重複上傳 2) 記錄應該只在用戶主動新增時上傳
+            // 如果有本地獨有記錄，會保留在 UI 中，但不會自動上傳
 
             setUserData(cloudUserData);
             setRecords(mergedRecords);
@@ -122,7 +118,10 @@ export default function App() {
   }, [records, userData]);
 
   const handleOnboardingComplete = (data: UserData): void => { setUserData(data); setScreen('main'); };
-  const handleAddRecord = async (record: RecordType): Promise<void> => { setRecords(prev => [...prev, record]); await GoogleSheetsAPI.saveRecord(record); };
+  const handleAddRecord = async (record: RecordType): Promise<void> => {
+    setRecords(prev => [...prev, record]);
+    await GoogleSheetsAPI.saveRecord(record);
+  };
   const handleUpdateUser = (data: UserData): void => { setUserData(data); };
   const handleReset = async (): Promise<void> => {
     await GoogleSheetsAPI.clearAllData();

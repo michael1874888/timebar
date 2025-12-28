@@ -19,7 +19,8 @@
       "Bash(npx tsc:*)",
       "Bash(npm run type-check:*)",
       "Bash(npm uninstall:*)",
-      "Bash(npx vitest:*)"
+      "Bash(npx vitest:*)",
+      "Bash(git add:*)"
     ]
   }
 }
