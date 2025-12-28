@@ -18,12 +18,12 @@ export default function App() {
   const [records, setRecords] = useState<RecordType[]>([]);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('');
 
-  // 載入資料：優先從雲端讀取
+  // 載入資料：智能合併本地與雲端資料
   useEffect(() => {
     const loadData = async () => {
-      // 先讀取本地資料作為備用
+      // 先讀取本地資料
       const localUserData = Storage.load('userData') as UserData | null;
-      const localRecords = Storage.load('records', []) as RecordType[];
+      const localRecords = (Storage.load('records', []) as RecordType[]) || [];
 
       // 嘗試從雲端讀取
       if (GoogleSheetsAPI.isConfigured()) {
@@ -32,7 +32,7 @@ export default function App() {
           const cloudData = await GoogleSheetsAPI.getAll();
 
           if (cloudData.success && cloudData.userData) {
-            // 雲端有資料，使用雲端資料
+            // 雲端有資料，需要智能合併
             const cloudUserData = {
               ...cloudData.userData,
               inflationRate: cloudData.userData.inflationRate ?? DEFAULT_INFLATION_RATE,
@@ -40,12 +40,38 @@ export default function App() {
               monthlySavings: cloudData.userData.monthlySavings ?? Math.round(cloudData.userData.salary * 0.2),
             };
 
+            // 合併記錄：使用 id 去重，保留兩邊的記錄
+            const cloudRecords = cloudData.records || [];
+            const mergedRecords = [...localRecords];
+            const existingIds = new Set(localRecords.map(r => r.id));
+
+            cloudRecords.forEach(cloudRecord => {
+              if (!existingIds.has(cloudRecord.id)) {
+                mergedRecords.push(cloudRecord);
+              }
+            });
+
+            // 按時間戳排序（最新的在前）
+            mergedRecords.sort((a, b) =>
+              new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+            );
+
+            // 如果本地有額外的記錄，需要同步到雲端
+            if (mergedRecords.length > cloudRecords.length) {
+              const newRecords = mergedRecords.filter(r =>
+                !cloudRecords.some(cr => cr.id === r.id)
+              );
+              for (const record of newRecords) {
+                await GoogleSheetsAPI.saveRecord(record);
+              }
+            }
+
             setUserData(cloudUserData);
-            setRecords(cloudData.records || []);
+            setRecords(mergedRecords);
 
             // 同步到本地
             Storage.save('userData', cloudUserData);
-            Storage.save('records', cloudData.records || []);
+            Storage.save('records', mergedRecords);
 
             setSyncStatus('synced');
             setScreen('main');
@@ -87,10 +113,13 @@ export default function App() {
     }
   }, [userData]);
 
-  // 當 records 更新時，同步到本地
+  // 當 records 更新時，同步到本地（包括空陣列）
   useEffect(() => {
-    if (records.length > 0) Storage.save('records', records);
-  }, [records]);
+    if (userData) {
+      // 只在有 userData 時才儲存 records（避免初始載入時覆蓋）
+      Storage.save('records', records);
+    }
+  }, [records, userData]);
 
   const handleOnboardingComplete = (data: UserData): void => { setUserData(data); setScreen('main'); };
   const handleAddRecord = async (record: RecordType): Promise<void> => { setRecords(prev => [...prev, record]); await GoogleSheetsAPI.saveRecord(record); };

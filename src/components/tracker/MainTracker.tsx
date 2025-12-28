@@ -27,9 +27,9 @@ export function MainTracker({ userData, records, onAddRecord, onOpenHistory, onO
 
   const { salary, retireAge, inflationRate, roiRate } = userData;
 
-  const yearsToRetire = retireAge - userData.age;
-  const hourlyRate = FinanceCalc.hourlyRate(salary);
-  const realRate = FinanceCalc.realRate(inflationRate, roiRate);
+  const yearsToRetire = useMemo(() => retireAge - userData.age, [retireAge, userData.age]);
+  const hourlyRate = useMemo(() => FinanceCalc.hourlyRate(salary), [salary]);
+  const realRate = useMemo(() => FinanceCalc.realRate(inflationRate, roiRate), [inflationRate, roiRate]);
 
   // 使用 GPSCalc 計算累積影響和預估退休年齡
   const { totalSaved, totalSpent } = useMemo(() => GPSCalc.calculateTotals(records), [records]);
@@ -39,7 +39,7 @@ export function MainTracker({ userData, records, onAddRecord, onOpenHistory, onO
   }, [retireAge, records]);
 
   const { estimatedAge, ageDiff, ageDiffDays, isAhead, isOnTrack } = gpsResult;
-  const diffDisplay = formatAgeDiff(ageDiff);
+  const diffDisplay = useMemo(() => formatAgeDiff(ageDiff), [ageDiff]);
 
   // 計算當前花費/儲蓄的時間成本
   const calculateTimeCost = useCallback(() => {
@@ -69,7 +69,8 @@ export function MainTracker({ userData, records, onAddRecord, onOpenHistory, onO
     setResultType(mode);
     setShowResult(true);
 
-    if (mode === 'save') {
+    // 只在儲蓄金額 >= 1000 時顯示慶祝動畫
+    if (mode === 'save' && amount >= 1000) {
       setShowConfetti(true);
       setTimeout(() => setShowConfetti(false), 2000);
     }
@@ -109,7 +110,7 @@ export function MainTracker({ userData, records, onAddRecord, onOpenHistory, onO
               </div>
             </div>
             <button onClick={onOpenSettings} className="text-right">
-              <div className="text-xs text-gray-500">📍 預估</div>
+              <div className={`text-xs ${isOnTrack ? 'text-gray-400' : isAhead ? 'text-emerald-400' : 'text-orange-400'}`}>📍 預估</div>
               <div className={`font-bold text-xl ${isOnTrack ? 'text-white' : isAhead ? 'text-emerald-400' : 'text-orange-400'}`}>
                 {estimatedAge.toFixed(1)} 歲
               </div>

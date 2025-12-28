@@ -18,10 +18,14 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
   const [currentSavings, setCurrentSavings] = useState<number>(0);
   const [monthlySavings, setMonthlySavings] = useState<number>(10000);
   const [isAnimating, setIsAnimating] = useState<boolean>(false);
+  const [hasManuallySetSavings, setHasManuallySetSavings] = useState<boolean>(false);
 
+  // 只在未手動設定時，才根據薪水自動更新每月儲蓄
   useEffect(() => {
-    setMonthlySavings(Math.round(salary * 0.2));
-  }, [salary]);
+    if (!hasManuallySetSavings) {
+      setMonthlySavings(Math.round(salary * 0.2));
+    }
+  }, [salary, hasManuallySetSavings]);
 
   const hourlyRate = Math.round(FinanceCalc.hourlyRate(salary));
   const realRate = FinanceCalc.realRate(DEFAULT_INFLATION_RATE, DEFAULT_ROI_RATE);
@@ -125,7 +129,10 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
           <div className="text-gray-400 mb-4">/每月</div>
           <div className="text-gray-500 text-xs mb-6">佔月薪 {Math.round(monthlySavings / salary * 100)}%</div>
           <input type="range" min="0" max={Math.min(salary, 200000)} step="1000" value={monthlySavings}
-            onChange={(e) => setMonthlySavings(parseInt(e.target.value))} className="slider w-72" />
+            onChange={(e) => {
+              setMonthlySavings(parseInt(e.target.value));
+              setHasManuallySetSavings(true);
+            }} className="slider w-72" />
           <div className="flex justify-between w-72 text-gray-500 text-sm mt-2">
             <span>$0</span><span>{formatCurrency(Math.min(salary, 200000))}</span>
           </div>

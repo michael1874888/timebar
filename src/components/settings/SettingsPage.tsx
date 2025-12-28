@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { FinanceCalc, Formatters, CONSTANTS } from '@/utils/financeCalc';
 import { GAS_WEB_APP_URL } from '@/constants';
 import { UserData } from '@/types';
@@ -22,42 +22,67 @@ export function SettingsPage({ userData, onUpdateUser, onClose, onReset }: Setti
   const [inflationRate, setInflationRate] = useState<number>(userData.inflationRate || DEFAULT_INFLATION_RATE);
   const [roiRate, setRoiRate] = useState<number>(userData.roiRate || DEFAULT_ROI_RATE);
   const [showConfirm, setShowConfirm] = useState<boolean>(false);
+  const [confirmText, setConfirmText] = useState<string>('');
   const [isClearing, setIsClearing] = useState<boolean>(false);
   const [calculatorMode, setCalculatorMode] = useState<'age' | 'fund' | 'lifestyle'>('age');
-  const [targetFund, setTargetFund] = useState<number>(30000000);
+  const [targetFund, setTargetFund] = useState<number>(userData.targetRetirementFund || 30000000);
   const [monthlyRetirement, setMonthlyRetirement] = useState<number>(50000);
 
+  // 確保退休年齡不小於當前年齡 + 5
+  useEffect(() => {
+    const minRetireAge = age + 5;
+    if (retireAge < minRetireAge) {
+      setRetireAge(minRetireAge);
+    }
+  }, [age, retireAge]);
+
   const handleSave = (): void => {
-    onUpdateUser({ age, salary, retireAge, currentSavings, monthlySavings, inflationRate, roiRate,
-      targetRetirementFund: Math.round(FinanceCalc.targetFundByAge(currentSavings, monthlySavings, retireAge - age, realRate))
+    // 只保留用戶修改過的欄位，不強制覆蓋 targetRetirementFund
+    onUpdateUser({
+      age,
+      salary,
+      retireAge,
+      currentSavings,
+      monthlySavings,
+      inflationRate,
+      roiRate,
+      // 保留原有的 targetRetirementFund，除非在計算機中明確修改
+      targetRetirementFund: userData.targetRetirementFund
     });
     onClose();
   };
 
   const handleClear = async (): Promise<void> => {
+    if (confirmText !== 'DELETE') {
+      return;
+    }
     setIsClearing(true);
     await onReset();
     setIsClearing(false);
   };
 
-  const hourlyRate = Math.round(FinanceCalc.hourlyRate(salary));
-  const realRate = FinanceCalc.realRate(inflationRate, roiRate);
-  const yearsToRetire = retireAge - age;
+  const hourlyRate = useMemo(() => Math.round(FinanceCalc.hourlyRate(salary)), [salary]);
+  const realRate = useMemo(() => FinanceCalc.realRate(inflationRate, roiRate), [inflationRate, roiRate]);
+  const yearsToRetire = useMemo(() => retireAge - age, [retireAge, age]);
 
   // Calculator results
   const calcResults = useMemo(() => {
     if (calculatorMode === 'age') {
-      const fund = FinanceCalc.targetFundByAge(currentSavings, monthlySavings, yearsToRetire, realRate);
+      const fund = FinanceCalc.targetFundByAge(currentSavings, monthlySavings, Math.max(1, yearsToRetire), realRate);
       const monthly = FinanceCalc.fundToMonthly(fund);
       return { fund, monthly };
     } else if (calculatorMode === 'fund') {
       const years = FinanceCalc.yearsToTarget(currentSavings, monthlySavings, targetFund, realRate);
-      return { years, retireAge: age + years };
+      const validYears = !isFinite(years) || years < 0 ? Infinity : years;
+      return { years: validYears, retireAge: age + validYears };
     } else {
       const requiredFund = FinanceCalc.monthlyToFund(monthlyRetirement);
       const years = FinanceCalc.yearsToTarget(currentSavings, monthlySavings, requiredFund, realRate);
-      const requiredSavings = FinanceCalc.requiredMonthlySavings(currentSavings, requiredFund, yearsToRetire, realRate);
-      return { requiredFund, years, retireAge: age + years, requiredSavings };
+      const validYears = !isFinite(years) || years < 0 ? Infinity : years;
+      const requiredSavings = yearsToRetire > 0
+        ? FinanceCalc.requiredMonthlySavings(currentSavings, requiredFund, yearsToRetire, realRate)
+        : 0;
+      return { requiredFund, years: validYears, retireAge: age + validYears, requiredSavings };
     }
   }, [calculatorMode, currentSavings, monthlySavings, yearsToRetire, realRate, age, targetFund, monthlyRetirement]);
 
@@ -178,10 +203,21 @@ export function SettingsPage({ userData, onUpdateUser, onClose, onReset }: Setti
               </div>
               <div className="bg-blue-500/10 rounded-xl p-4 border border-blue-500/20">
                 <div className="text-blue-400 text-sm mb-1">預計達成年齡</div>
-                <div className="text-blue-400 text-2xl font-bold">{calcResults.retireAge.toFixed(1)} 歲</div>
-                <div className="text-blue-400/70 text-xs mt-2">
-                  還需要 {calcResults.years.toFixed(1)} 年
-                </div>
+                {isFinite(calcResults.years) ? (
+                  <>
+                    <div className="text-blue-400 text-2xl font-bold">{calcResults.retireAge.toFixed(1)} 歲</div>
+                    <div className="text-blue-400/70 text-xs mt-2">
+                      還需要 {calcResults.years.toFixed(1)} 年
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-orange-400 text-xl font-bold">無法達成</div>
+                    <div className="text-orange-400/70 text-xs mt-2">
+                      目前儲蓄進度不足，請增加每月儲蓄額
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           )}
@@ -200,9 +236,13 @@ export function SettingsPage({ userData, onUpdateUser, onClose, onReset }: Setti
                 <div className="text-purple-400 text-sm mb-1">需要累積</div>
                 <div className="text-purple-400 text-2xl font-bold">{formatCurrency(calcResults.requiredFund)}</div>
                 <div className="text-purple-400/70 text-xs mt-2">
-                  按目前進度需 {calcResults.years.toFixed(1)} 年（{calcResults.retireAge.toFixed(0)}歲）
+                  {isFinite(calcResults.years) ? (
+                    <>按目前進度需 {calcResults.years.toFixed(1)} 年（{calcResults.retireAge.toFixed(0)}歲）</>
+                  ) : (
+                    <span className="text-orange-400">目前儲蓄進度不足，無法達成目標</span>
+                  )}
                 </div>
-                {yearsToRetire > 0 && (
+                {yearsToRetire > 0 && isFinite(calcResults.requiredSavings) && (
                   <div className="text-purple-400/70 text-xs mt-1">
                     若要 {retireAge} 歲達成，每月需存 {formatCurrency(Math.round(Math.max(0, calcResults.requiredSavings)))}
                   </div>
@@ -262,14 +302,31 @@ export function SettingsPage({ userData, onUpdateUser, onClose, onReset }: Setti
             </button>
           ) : (
             <div>
-              <p className="text-gray-400 text-sm mb-3">確定要清除所有資料嗎？</p>
+              <p className="text-gray-400 text-sm mb-2">
+                ⚠️ 這將刪除所有記錄和設定，且<span className="text-red-400 font-bold">無法復原</span>！
+              </p>
+              <p className="text-gray-500 text-xs mb-3">
+                請輸入 <span className="text-red-400 font-mono">DELETE</span> 以確認
+              </p>
+              <input
+                type="text"
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value)}
+                placeholder="輸入 DELETE"
+                className="w-full bg-gray-800 text-white px-3 py-2 rounded-xl text-sm mb-3 border border-gray-700 focus:border-red-500 focus:outline-none"
+              />
               <div className="flex gap-3">
-                <button onClick={handleClear} disabled={isClearing}
-                  className="bg-red-500 text-white px-4 py-2 rounded-xl text-sm font-medium disabled:opacity-50">
+                <button
+                  onClick={handleClear}
+                  disabled={isClearing || confirmText !== 'DELETE'}
+                  className="bg-red-500 text-white px-4 py-2 rounded-xl text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
                   {isClearing ? '清除中...' : '確定清除'}
                 </button>
-                <button onClick={() => setShowConfirm(false)}
-                  className="bg-gray-700 text-gray-300 px-4 py-2 rounded-xl text-sm">取消</button>
+                <button
+                  onClick={() => { setShowConfirm(false); setConfirmText(''); }}
+                  className="bg-gray-700 text-gray-300 px-4 py-2 rounded-xl text-sm">
+                  取消
+                </button>
               </div>
             </div>
           )}

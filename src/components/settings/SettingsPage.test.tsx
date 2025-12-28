@@ -558,16 +558,22 @@ describe('SettingsPage', () => {
       fireEvent.click(screen.getByRole('button', { name: '金額導向' }))
 
       const realRate = FinanceCalc.realRate(mockUserData.inflationRate, mockUserData.roiRate)
-      const targetFund = 30000000 // 預設目標退休金
+      // 使用 mockUserData.targetRetirementFund，而不是假設的預設值
+      const targetFund = mockUserData.targetRetirementFund || 30000000
       const years = FinanceCalc.yearsToTarget(
         mockUserData.currentSavings,
         mockUserData.monthlySavings,
         targetFund,
         realRate
       )
-      const retireAge = mockUserData.age + years
 
-      expect(screen.getByText(`${retireAge.toFixed(1)} 歲`)).toBeInTheDocument()
+      if (isFinite(years) && years >= 0) {
+        const retireAge = mockUserData.age + years
+        expect(screen.getByText(`${retireAge.toFixed(1)} 歲`)).toBeInTheDocument()
+      } else {
+        // 當無法達成時應該顯示警告訊息
+        expect(screen.getByText('無法達成')).toBeInTheDocument()
+      }
     })
 
     test('金額導向模式應該顯示還需要幾年', () => {
@@ -851,13 +857,16 @@ describe('SettingsPage', () => {
       expect(screen.getByRole('button', { name: '清除所有資料' })).toBeInTheDocument()
     })
 
-    test('點擊清除按鈕應該顯示確認對話框', () => {
+    test('點擊清除按鈕應該顯示確認對話框（需要輸入 DELETE）', () => {
       renderSettingsPage()
 
       const clearButton = screen.getByRole('button', { name: '清除所有資料' })
       fireEvent.click(clearButton)
 
-      expect(screen.getByText('確定要清除所有資料嗎？')).toBeInTheDocument()
+      // 新的確認機制：需要輸入 DELETE
+      expect(screen.getByText(/請輸入/)).toBeInTheDocument()
+      expect(screen.getByText(/DELETE/)).toBeInTheDocument()
+      expect(screen.getByPlaceholderText('輸入 DELETE')).toBeInTheDocument()
       expect(screen.getByRole('button', { name: '確定清除' })).toBeInTheDocument()
       expect(screen.getByRole('button', { name: '取消' })).toBeInTheDocument()
     })
@@ -871,14 +880,18 @@ describe('SettingsPage', () => {
       const cancelButton = screen.getByRole('button', { name: '取消' })
       fireEvent.click(cancelButton)
 
-      expect(screen.queryByText('確定要清除所有資料嗎？')).not.toBeInTheDocument()
+      expect(screen.queryByPlaceholderText('輸入 DELETE')).not.toBeInTheDocument()
     })
 
-    test('點擊確定清除應該呼叫 onReset', async () => {
+    test('點擊確定清除應該呼叫 onReset（輸入 DELETE 後）', async () => {
       renderSettingsPage()
 
       const clearButton = screen.getByRole('button', { name: '清除所有資料' })
       fireEvent.click(clearButton)
+
+      // 輸入 DELETE
+      const input = screen.getByPlaceholderText('輸入 DELETE')
+      fireEvent.change(input, { target: { value: 'DELETE' } })
 
       const confirmButton = screen.getByRole('button', { name: '確定清除' })
       fireEvent.click(confirmButton)
@@ -893,6 +906,10 @@ describe('SettingsPage', () => {
 
       const clearButton = screen.getByRole('button', { name: '清除所有資料' })
       fireEvent.click(clearButton)
+
+      // 輸入 DELETE
+      const input = screen.getByPlaceholderText('輸入 DELETE')
+      fireEvent.change(input, { target: { value: 'DELETE' } })
 
       const confirmButton = screen.getByRole('button', { name: '確定清除' })
       fireEvent.click(confirmButton)
@@ -910,6 +927,10 @@ describe('SettingsPage', () => {
       const clearButton = screen.getByRole('button', { name: '清除所有資料' })
       fireEvent.click(clearButton)
 
+      // 輸入 DELETE
+      const input = screen.getByPlaceholderText('輸入 DELETE')
+      fireEvent.change(input, { target: { value: 'DELETE' } })
+
       const confirmButton = screen.getByRole('button', { name: '確定清除' })
       fireEvent.click(confirmButton)
 
@@ -918,6 +939,16 @@ describe('SettingsPage', () => {
       await waitFor(() => {
         expect(mockOnReset).toHaveBeenCalled()
       })
+    })
+
+    test('未輸入 DELETE 時確認按鈕應該被禁用', () => {
+      renderSettingsPage()
+
+      const clearButton = screen.getByRole('button', { name: '清除所有資料' })
+      fireEvent.click(clearButton)
+
+      const confirmButton = screen.getByRole('button', { name: '確定清除' })
+      expect(confirmButton).toBeDisabled()
     })
   })
 
@@ -970,26 +1001,16 @@ describe('SettingsPage', () => {
       )
     })
 
-    test('儲存時應該包含計算後的目標退休金', () => {
+    test('儲存時應該保留原有的目標退休金（不重新計算）', () => {
       renderSettingsPage()
 
       const saveButton = screen.getByRole('button', { name: '儲存' })
       fireEvent.click(saveButton)
 
-      const realRate = FinanceCalc.realRate(mockUserData.inflationRate, mockUserData.roiRate)
-      const yearsToRetire = mockUserData.retireAge - mockUserData.age
-      const targetRetirementFund = Math.round(
-        FinanceCalc.targetFundByAge(
-          mockUserData.currentSavings,
-          mockUserData.monthlySavings,
-          yearsToRetire,
-          realRate
-        )
-      )
-
+      // P1-4 修正：應該保留使用者原本設定的目標退休金，而不是重新計算
       expect(mockOnUpdateUser).toHaveBeenCalledWith(
         expect.objectContaining({
-          targetRetirementFund,
+          targetRetirementFund: mockUserData.targetRetirementFund,
         })
       )
     })

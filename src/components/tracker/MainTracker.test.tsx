@@ -869,10 +869,14 @@ describe('MainTracker', () => {
   })
 
   describe('Confetti Animation', () => {
-    test('儲蓄提交後應該顯示慶祝動畫', async () => {
+    test('儲蓄提交後應該顯示慶祝動畫（金額 >= 1000）', async () => {
       const { container } = renderMainTracker()
 
       fireEvent.click(screen.getByRole('button', { name: '💰 儲蓄' }))
+
+      // 設定金額 >= 1000 才會顯示慶祝動畫（P2-8 改善）
+      const slider = screen.getByRole('slider')
+      fireEvent.change(slider, { target: { value: '1500' } })
 
       const submitButton = screen.getByRole('button', { name: '記錄儲蓄' })
       fireEvent.click(submitButton)
@@ -1009,10 +1013,14 @@ describe('MainTracker', () => {
       )
     })
 
-    test('儲蓄提交後應該顯示慶祝動畫', async () => {
+    test('儲蓄提交後應該顯示慶祝動畫（金額 >= 1000）', async () => {
       const { container } = renderMainTracker()
 
       fireEvent.click(screen.getByRole('button', { name: '💰 儲蓄' }))
+
+      // 設定金額 >= 1000 才會顯示慶祝動畫（P2-8 改善）
+      const slider = screen.getByRole('slider')
+      fireEvent.change(slider, { target: { value: '2000' } })
 
       const submitButton = screen.getByRole('button', { name: '記錄儲蓄' })
       fireEvent.click(submitButton)

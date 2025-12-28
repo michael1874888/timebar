@@ -1199,7 +1199,7 @@ describe('App Component Integration Tests', () => {
       })
     })
 
-    test('空記錄列表不應該儲存', async () => {
+    test('空記錄列表應該儲存（防止刪除的記錄重新出現）', async () => {
       const mockUserData: UserData = {
         age: 30,
         salary: 50000,
@@ -1220,9 +1220,12 @@ describe('App Component Integration Tests', () => {
 
       await screen.findByTestId('main-tracker')
 
-      // 檢查是否沒有儲存空的 records
+      // 檢查應該儲存空的 records（修正後的行為）
       const recordsSaveCalls = mockStorage.save.mock.calls.filter((call) => call[0] === 'records')
-      expect(recordsSaveCalls.length).toBe(0)
+      expect(recordsSaveCalls.length).toBeGreaterThanOrEqual(1)
+      // 確認儲存的是空陣列
+      const lastRecordsSave = recordsSaveCalls[recordsSaveCalls.length - 1]
+      expect(lastRecordsSave[1]).toEqual([])
     })
   })
 

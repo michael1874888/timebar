@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { GPSCalc, Formatters } from '@/utils/financeCalc';
 import { UserData, Record as RecordType } from '@/types';
 
@@ -13,18 +14,26 @@ export function HistoryPage({ records, userData, onClose }: HistoryPageProps) {
   const { retireAge } = userData;
 
   // 使用 GPSCalc 計算
-  const { totalSaved, totalSpent } = GPSCalc.calculateTotals(records);
-  const { estimatedAge, ageDiff, isAhead, isOnTrack } = GPSCalc.calculateEstimatedAge(retireAge, records);
-  const diffDisplay = formatAgeDiff(ageDiff);
+  const { totalSaved, totalSpent } = useMemo(() => GPSCalc.calculateTotals(records), [records]);
+  const gpsResult = useMemo(() => GPSCalc.calculateEstimatedAge(retireAge, records), [retireAge, records]);
+  const { estimatedAge, ageDiff, isAhead, isOnTrack } = gpsResult;
+  const diffDisplay = useMemo(() => formatAgeDiff(ageDiff), [ageDiff]);
 
-  const sortedRecords = [...records].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  const groupedRecords = sortedRecords.reduce((groups: { [key: string]: RecordType[] }, record) => {
-    const date = new Date(record.timestamp);
-    const key = `${date.getFullYear()}-${date.getMonth() + 1}`;
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(record);
-    return groups;
-  }, {} as { [key: string]: RecordType[] });
+  const sortedRecords = useMemo(() =>
+    [...records].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
+    [records]
+  );
+
+  const groupedRecords = useMemo(() =>
+    sortedRecords.reduce((groups: { [key: string]: RecordType[] }, record) => {
+      const date = new Date(record.timestamp);
+      const key = `${date.getFullYear()}-${date.getMonth() + 1}`;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(record);
+      return groups;
+    }, {} as { [key: string]: RecordType[] }),
+    [sortedRecords]
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800 pb-8">
