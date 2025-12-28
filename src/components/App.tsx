@@ -105,7 +105,10 @@ export default function App() {
   useEffect(() => {
     if (userData) {
       Storage.save('userData', userData);
-      GoogleSheetsAPI.saveUserData(userData);
+      GoogleSheetsAPI.saveUserData(userData).catch((error) => {
+        console.error('Failed to sync userData to cloud:', error);
+        // 即使雲端同步失敗，本地資料已儲存，不影響使用
+      });
     }
   }, [userData]);
 
@@ -120,11 +123,21 @@ export default function App() {
   const handleOnboardingComplete = (data: UserData): void => { setUserData(data); setScreen('main'); };
   const handleAddRecord = async (record: RecordType): Promise<void> => {
     setRecords(prev => [...prev, record]);
-    await GoogleSheetsAPI.saveRecord(record);
+    try {
+      await GoogleSheetsAPI.saveRecord(record);
+    } catch (error) {
+      console.error('Failed to save record to cloud:', error);
+      // 記錄已加入本地，即使雲端同步失敗也不影響使用
+    }
   };
   const handleUpdateUser = (data: UserData): void => { setUserData(data); };
   const handleReset = async (): Promise<void> => {
-    await GoogleSheetsAPI.clearAllData();
+    try {
+      await GoogleSheetsAPI.clearAllData();
+    } catch (error) {
+      console.error('Failed to clear cloud data:', error);
+      // 繼續清除本地資料
+    }
     Storage.clear();
     setUserData(null);
     setRecords([]);
