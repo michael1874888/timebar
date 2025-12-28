@@ -1,6 +1,13 @@
-# TimeBar v2.5 ⏱️💰
+# TimeBar v3.0 ⏱️💰
 
 > 把每一筆消費轉換成「退休時間成本」，讓你更清楚每個財務決策對未來的影響。
+
+## 🎉 v3.0 重大更新
+
+- ⚡ **現代化技術棧**：Vite + React + Tailwind CSS
+- 📦 **模組化架構**：元件化開發，易於維護
+- 🔥 **快速熱重載**：開發體驗大幅提升
+- ✅ **所有功能保留**：100% 相容，56 個測試全部通過
 
 ## ✨ 功能特色
 
@@ -32,17 +39,21 @@
 
 ## 🧪 測試
 
-v2.5 起，核心計算邏輯已抽離成獨立模組，可進行單元測試：
+核心計算邏輯已抽離成獨立模組，可進行單元測試：
 
 ```bash
-# 執行 50 個單元測試
+# 執行 56 個單元測試
 npm test
+
+# 執行結果
+# ✅ 56 通過, 0 失敗
 ```
 
 測試涵蓋：
 - 財務計算（複利、年金、4% 法則）
 - 時間格式化
 - GPS 預估退休年齡計算
+- 邊界案例和整合測試
 
 ---
 
@@ -50,12 +61,46 @@ npm test
 
 ```
 timebar/
-├── index.html           # 前端 UI
-├── financeCalc.js       # 核心計算模組（可獨立測試）
-├── financeCalc.test.js  # 單元測試（50 個）
-├── package.json         # 專案設定
+├── src/
+│   ├── components/              # React 元件 (TypeScript)
+│   │   ├── App.tsx              # 主應用
+│   │   ├── Confetti.tsx         # 慶祝動畫
+│   │   ├── onboarding/
+│   │   │   └── OnboardingScreen.tsx
+│   │   ├── tracker/
+│   │   │   └── MainTracker.tsx
+│   │   ├── history/
+│   │   │   └── HistoryPage.tsx
+│   │   └── settings/
+│   │       └── SettingsPage.tsx
+│   ├── services/
+│   │   └── googleSheets.ts      # API 服務
+│   ├── utils/
+│   │   ├── financeCalc.ts       # 核心計算（UMD + ES Module）
+│   │   ├── storage.ts           # localStorage 封裝
+│   │   └── helpers.ts           # UI 工具函數
+│   ├── constants/
+│   │   └── index.ts             # 環境變數
+│   ├── types/
+│   │   └── index.ts             # 類型定義
+│   ├── tests/
+│   │   ├── financeCalc.test.ts  # 財務計算測試（56 個）
+│   │   └── setup.ts             # 測試環境設定
+│   ├── styles/
+│   │   ├── index.css            # Tailwind + 全域樣式
+│   │   └── animations.css       # 動畫定義
+│   ├── main.tsx                 # React 入口點
+│   └── vite-env.d.ts            # Vite 環境類型
 ├── google-apps-script/
-│   └── Code.gs          # Google Apps Script 後端
+│   └── Code.gs                  # Google Apps Script 後端
+├── index.html                   # Vite 開發入口
+├── vite.config.js               # Vite 設定
+├── tailwind.config.js           # Tailwind 設定
+├── tsconfig.json                # TypeScript 配置
+├── tsconfig.node.json           # TypeScript Node 配置
+├── vitest.config.ts             # Vitest 單元測試設定
+├── package.json                 # 專案設定
+├── .env.local                   # 環境變數（不提交）
 └── README.md
 ```
 
@@ -63,16 +108,55 @@ timebar/
 
 ## 🚀 快速開始
 
-### 方法一：GitHub Pages 部署
+### 方法一：本地開發（推薦）
+
+**環境需求**：
+- Node.js 18+ (建議 20 LTS)
+- npm 9+
+
+**安裝步驟**：
+
+```bash
+# 1. 安裝依賴
+npm install
+
+# 2. 設定環境變數（可選，用於 Google Sheets 同步）
+cp .env.example .env.local
+# 編輯 .env.local，填入你的 Google Apps Script URL
+
+# 3. 啟動開發伺服器
+npm run dev
+
+# 4. 開啟瀏覽器
+# http://localhost:5173/timebar/
+```
+
+**開發指令**：
+
+```bash
+npm run dev      # 啟動開發伺服器（含熱重載）
+npm run build    # 打包生產版本
+npm run preview  # 預覽打包結果
+npm test         # 執行測試
+```
+
+### 方法二：GitHub Pages 部署
 
 1. **Fork 這個專案**
-2. **啟用 GitHub Pages**
-   - `Settings` → `Pages` → Source 選 `main` → Save
-3. **完成！** 訪問 `https://你的帳號.github.io/timebar/`
+2. **設定環境變數**
+   - 在 Repo → Settings → Secrets → Actions
+   - 新增 `VITE_GAS_URL`（你的 Google Apps Script URL）
+3. **啟用 GitHub Pages**
+   - Settings → Pages → Source 選 **GitHub Actions**
+4. **Push 到 main** → 自動建置並部署
+5. **完成！** 訪問 `https://你的帳號.github.io/timebar/`
 
-### 方法二：本地使用
+### 方法三：手動部署
 
-直接用瀏覽器開啟 `index.html` 即可。
+```bash
+npm run build
+# 將 dist/ 資料夾內容部署到任何靜態網站服務
+```
 
 ---
 
@@ -118,16 +202,19 @@ timebar/
 
 ### 步驟 5：連接到 TimeBar
 
-1. 開啟 `index.html`
-2. 找到約第 165 行：
-   ```javascript
-   const GAS_WEB_APP_URL = '';
+**本地開發環境**：
+1. 編輯 `.env.local` 檔案
+2. 設定你的 URL：
+   ```bash
+   VITE_GAS_URL=https://script.google.com/macros/s/xxx.../exec
    ```
-3. 貼上你的網址：
-   ```javascript
-   const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/xxx.../exec';
-   ```
-4. 儲存並部署到 GitHub Pages（或直接本地開啟）
+3. 重新啟動開發伺服器：`npm run dev`
+
+**GitHub Pages 部署**：
+1. Repo → Settings → Secrets → Actions
+2. 新增 Secret：`VITE_GAS_URL`
+3. 值填入你的 Google Apps Script URL
+4. Push 到 main 分支，自動建置並部署
 
 ### 驗證成功
 
