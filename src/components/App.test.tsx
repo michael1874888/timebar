@@ -944,6 +944,100 @@ describe('App Component Integration Tests', () => {
         )
       })
     })
+
+    test('應該正確處理雲端數字 ID 與本地字串 ID 的型別不匹配（防止重複記錄）', async () => {
+      // 模擬真實場景：
+      // 1. 用戶新增記錄，localStorage 儲存字串 ID '1766920653559'
+      // 2. 上傳到 Google Sheets
+      // 3. Google Sheets 將數字字串轉為 number 型別 1766920653559
+      // 4. 重新整理頁面時，應該正確去重，不產生重複記錄
+
+      const recordId = '1766920653559'
+      const timestamp = new Date().toISOString()
+
+      const cloudUserData: UserData = {
+        age: 30,
+        salary: 50000,
+        retireAge: 65,
+        currentSavings: 1000000,
+        monthlySavings: 30000,
+        inflationRate: DEFAULT_INFLATION_RATE,
+        roiRate: DEFAULT_ROI_RATE,
+      }
+
+      // 本地記錄：ID 是字串
+      const localRecords: RecordType[] = [
+        {
+          id: recordId, // 字串 '1766920653559'
+          type: 'spend',
+          amount: 1000,
+          isRecurring: true,
+          timeCost: 2843.13,
+          category: '一般消費',
+          note: '',
+          timestamp,
+          date: timestamp.split('T')[0],
+        },
+      ]
+
+      // 雲端記錄：ID 被轉換為數字（模擬 Google Sheets 行為）
+      const cloudRecords: RecordType[] = [
+        {
+          id: 1766920653559 as any, // 數字 1766920653559（Google Sheets 會自動轉換）
+          type: 'spend',
+          amount: 1000,
+          isRecurring: true,
+          timeCost: 2843.13,
+          category: '一般消費',
+          note: '',
+          timestamp,
+          date: timestamp.split('T')[0],
+        },
+      ]
+
+      mockStorage.load.mockImplementation((key: string) => {
+        if (key === 'userData') return cloudUserData
+        if (key === 'records') return localRecords
+        return null
+      })
+
+      mockGoogleSheetsAPI.isConfigured.mockReturnValue(true)
+      mockGoogleSheetsAPI.getAll.mockResolvedValue({
+        success: true,
+        userData: cloudUserData,
+        records: cloudRecords,
+      })
+
+      render(<App />)
+
+      // 等待資料載入完成
+      await screen.findByText('Age: 30')
+
+      // 驗證：合併後的記錄應該只儲存 1 筆（不是 2 筆）
+      await waitFor(() => {
+        const saveRecordsCalls = mockStorage.save.mock.calls.filter(
+          (call) => call[0] === 'records'
+        )
+
+        if (saveRecordsCalls.length > 0) {
+          const lastSavedRecords = saveRecordsCalls[saveRecordsCalls.length - 1][1]
+
+          // 關鍵驗證：合併後應該只有 1 筆記錄
+          expect(lastSavedRecords).toHaveLength(1)
+
+          // 驗證記錄內容正確
+          expect(lastSavedRecords[0]).toMatchObject({
+            type: 'spend',
+            amount: 1000,
+            isRecurring: true,
+          })
+        }
+      })
+
+      // 額外驗證：UI 應該顯示 1 筆記錄（不是重複的 2 筆）
+      const recordsText = await screen.findByText('Records: 1')
+      expect(recordsText).toBeInTheDocument()
+    })
   })
 
   describe('Sync Status States', () => {
