@@ -40,37 +40,33 @@ export default function App() {
               monthlySavings: cloudData.userData.monthlySavings ?? Math.round(cloudData.userData.salary * 0.2),
             };
 
-            // 合併記錄：雲端優先策略（雲端是 source of truth）
-            // 只合併雲端和本地的記錄，不自動上傳本地記錄
+            // 完全以雲端為準（source of truth），不合併本地記錄
+            // 這樣可以確保跨裝置資料同步的一致性，避免資料重置後出現舊資料
             const cloudRecords = cloudData.records || [];
 
-            // 統一轉換為字串，避免 Google Sheets 將數字 ID 轉換為 number 型別導致比對失敗
-            const cloudRecordIds = new Set(cloudRecords.map(r => String(r.id)));
-
-            // 保留本地有但雲端沒有的記錄（可能是離線時記錄的，或上傳失敗的）
-            const localOnlyRecords = localRecords.filter(r => !cloudRecordIds.has(String(r.id)));
-
-            // 合併：雲端記錄 + 本地獨有記錄
-            const mergedRecords = [...cloudRecords, ...localOnlyRecords];
-
             // 按時間戳排序（最新的在前）
-            mergedRecords.sort((a, b) =>
+            cloudRecords.sort((a, b) =>
               new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
             );
 
-            // 注意：不再自動上傳本地記錄到雲端
-            // 原因：1) 避免重複上傳 2) 記錄應該只在用戶主動新增時上傳
-            // 如果有本地獨有記錄，會保留在 UI 中，但不會自動上傳
-
             setUserData(cloudUserData);
-            setRecords(mergedRecords);
+            setRecords(cloudRecords);
 
             // 同步到本地
             Storage.save('userData', cloudUserData);
-            Storage.save('records', mergedRecords);
+            Storage.save('records', cloudRecords);
 
             setSyncStatus('synced');
             setScreen('main');
+            return;
+          } else if (cloudData.success && !cloudData.userData) {
+            // 雲端成功回應但沒有資料 = 資料已被其他裝置清除
+            // 清除本地資料以保持同步
+            Storage.clear();
+            setUserData(null);
+            setRecords([]);
+            setSyncStatus('synced');
+            setScreen('onboarding');
             return;
           }
         } catch (e) {

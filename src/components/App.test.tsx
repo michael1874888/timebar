@@ -1092,7 +1092,7 @@ describe('App Component Integration Tests', () => {
       expect(mainTracker).toBeInTheDocument()
     })
 
-    test('雲端無資料時應該使用本地資料', async () => {
+    test('雲端無資料時應該清除本地資料並導向 onboarding', async () => {
       const localUserData: UserData = {
         age: 30,
         salary: 50000,
@@ -1118,8 +1118,12 @@ describe('App Component Integration Tests', () => {
 
       render(<App />)
 
-      const ageText = await screen.findByText('Age: 30')
-      expect(ageText).toBeInTheDocument()
+      // 應該導向 onboarding screen（資料已被其他裝置清除）
+      const onboardingScreen = await screen.findByTestId('onboarding-screen')
+      expect(onboardingScreen).toBeInTheDocument()
+
+      // 應該清除本地資料
+      expect(mockStorage.clear).toHaveBeenCalled()
     })
   })
 
