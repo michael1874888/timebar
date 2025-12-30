@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Confetti } from '../Confetti';
 import { FinanceCalc } from '@/utils/financeCalc';
 import { UserData } from '@/types';
+import { PositiveMessaging } from '@/utils/positiveMessaging';
 
 interface CelebrationSystemProps {
   trigger: boolean;
@@ -59,20 +60,12 @@ export function CelebrationSystem({ trigger, amount, userData }: CelebrationSyst
     }
   };
 
-  // 激勵語錄
-  const getMotivationalQuote = () => {
-    const quotes = [
-      '每一次忍住，都是在買回自己的自由',
-      '省下的不是錢，是時間',
-      '你正在用行動改變未來',
-      '自律帶來自由',
-      '小小的決定，大大的改變',
-      '你比昨天的自己更自由了',
-      '堅持下去，終點不遠了'
-    ];
-
-    return quotes[Math.floor(Math.random() * quotes.length)];
-  };
+  // 激勵語錄 - 使用正向訊息框架
+  const motivationalQuote = useMemo(() => {
+    const days = Math.floor(timeCost / 24);
+    const saveMessage = PositiveMessaging.afterSaving(amount, days);
+    return saveMessage.quote;
+  }, [amount, timeCost]);
 
   return (
     <>
@@ -110,7 +103,7 @@ export function CelebrationSystem({ trigger, amount, userData }: CelebrationSyst
 
             {/* 激勵語 */}
             <p className="text-emerald-200/80 text-sm italic">
-              "{getMotivationalQuote()}"
+              "{motivationalQuote}"
             </p>
           </div>
         </div>

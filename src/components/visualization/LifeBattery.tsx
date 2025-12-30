@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { GPSCalc } from '@/utils/financeCalc';
 import { UserData, Record as RecordType } from '@/types';
+import { PositiveMessaging } from '@/utils/positiveMessaging';
 
 interface LifeBatteryProps {
   userData: UserData;
@@ -37,26 +38,32 @@ export function LifeBattery({ userData, records }: LifeBatteryProps) {
     };
   }, [age, estimatedAge, lifeExpectancy]);
 
-  // 動態訊息
+  // 動態訊息 - 使用正向訊息框架
   const message = useMemo(() => {
-    if (estimatedAge < retireAge) {
-      const savedYears = retireAge - estimatedAge;
+    const ageDiff = estimatedAge - retireAge;
+
+    if (ageDiff < 0) {
+      // 領先
+      const msg = PositiveMessaging.gpsStatus.ahead(Math.abs(ageDiff));
       return {
-        text: `太棒了！你提前了 ${savedYears.toFixed(1)} 年`,
-        emoji: '🎉',
+        text: msg.message,
+        emoji: msg.emoji,
         color: 'emerald'
       };
-    } else if (estimatedAge > retireAge) {
-      const delayedYears = estimatedAge - retireAge;
+    } else if (ageDiff > 0) {
+      // 落後 - 使用正向語氣
+      const msg = PositiveMessaging.gpsStatus.behind(ageDiff, 2000);
       return {
-        text: `還需努力 ${delayedYears.toFixed(1)} 年`,
-        emoji: '💪',
+        text: msg.message,
+        emoji: msg.emoji,
         color: 'orange'
       };
     } else {
+      // 正好
+      const msg = PositiveMessaging.gpsStatus.onTrack();
       return {
-        text: '完美！正按計畫進行',
-        emoji: '✓',
+        text: msg.message,
+        emoji: msg.emoji,
         color: 'blue'
       };
     }
