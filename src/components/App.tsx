@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { OnboardingScreen } from './onboarding/OnboardingScreen';
-import { MainTracker } from './tracker/MainTracker';
+import { LifeCostCalculator } from './calculator/LifeCostCalculator';
+import { FreedomTracker } from './freedom/FreedomTracker';
+import { LifeBattery } from './visualization/LifeBattery';
 import { HistoryPage } from './history/HistoryPage';
 import { SettingsPage } from './settings/SettingsPage';
+import { CelebrationSystem } from './feedback/CelebrationSystem';
 import { GoogleSheetsAPI } from '@/services/googleSheets';
 import { Storage } from '@/utils/storage';
-import { CONSTANTS } from '@/utils/financeCalc';
+import { CONSTANTS, GPSCalc } from '@/utils/financeCalc';
 import { UserData, Record as RecordType, Screen } from '@/types';
 
 const { DEFAULT_INFLATION_RATE, DEFAULT_ROI_RATE } = CONSTANTS;
@@ -17,6 +20,8 @@ export default function App() {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [records, setRecords] = useState<RecordType[]>([]);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('');
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [lastSavedAmount, setLastSavedAmount] = useState(0);
 
   // 載入資料：智能合併本地與雲端資料
   useEffect(() => {
@@ -116,17 +121,46 @@ export default function App() {
     }
   }, [records, userData]);
 
-  const handleOnboardingComplete = (data: UserData): void => { setUserData(data); setScreen('main'); };
-  const handleAddRecord = async (record: RecordType): Promise<void> => {
-    setRecords(prev => [...prev, record]);
+  const handleOnboardingComplete = (data: UserData): void => {
+    setUserData(data);
+    setScreen('main');
+  };
+
+  const handleDecision = async (action: 'buy' | 'save', amount: number): Promise<void> => {
+    if (!userData) return;
+
+    const record: RecordType = {
+      id: Date.now().toString(),
+      type: action === 'save' ? 'save' : 'spend',
+      amount,
+      isRecurring: false,
+      timeCost: 0, // 這裡可以計算，但不是必須
+      category: action === 'save' ? '主動儲蓄' : '消費',
+      note: '',
+      timestamp: new Date().toISOString(),
+      date: new Date().toISOString().split('T')[0]
+    };
+
+    setRecords((prev) => [record, ...prev]);
+
     try {
       await GoogleSheetsAPI.saveRecord(record);
     } catch (error) {
-      console.error('Failed to save record to cloud:', error);
-      // 記錄已加入本地，即使雲端同步失敗也不影響使用
+      console.error('Failed to save record:', error);
+    }
+
+    // 只有「不買」才觸發慶祝
+    if (action === 'save') {
+      setLastSavedAmount(amount);
+      setShowCelebration(true);
+      setTimeout(() => setShowCelebration(false), 3000);
     }
   };
-  const handleUpdateUser = (data: UserData): void => { setUserData(data); };
+
+  const handleUpdateUser = (data: UserData): void => {
+    setUserData(data);
+  };
+
   const handleReset = async (): Promise<void> => {
     try {
       await GoogleSheetsAPI.clearAllData();
@@ -140,10 +174,15 @@ export default function App() {
     setScreen('onboarding');
   };
 
+  // 計算累積數據
+  const { totalSaved, totalSpent } = GPSCalc.calculateTotals(records);
+
   if (screen === 'loading') {
     return (
       <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center">
-        <div className="text-4xl font-black text-white mb-4">Time<span className="text-emerald-400">Bar</span></div>
+        <div className="text-4xl font-black text-white mb-4">
+          Time<span className="text-emerald-400">Bar</span>
+        </div>
         <div className="spinner mb-4" />
         <div className="text-gray-500 text-sm">
           {syncStatus === 'syncing' ? '☁️ 正在同步雲端資料...' : '載入中...'}
@@ -154,18 +193,108 @@ export default function App() {
 
   return (
     <div>
-      {screen === 'onboarding' && <OnboardingScreen onComplete={handleOnboardingComplete} />}
+      {/* 慶祝系統 */}
+      {userData && (
+        <CelebrationSystem
+          trigger={showCelebration}
+          amount={lastSavedAmount}
+          userData={userData}
+        />
+      )}
+
+      {screen === 'onboarding' && (
+        <OnboardingScreen onComplete={handleOnboardingComplete} />
+      )}
+
       {screen === 'main' && userData && (
-        <MainTracker userData={userData} records={records} onAddRecord={handleAddRecord}
-          onOpenHistory={() => setScreen('history')} onOpenSettings={() => setScreen('settings')} />
+        <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800">
+          {/* 頂部導航 */}
+          <div className="sticky top-0 z-10 bg-gray-900/95 backdrop-blur border-b border-gray-800">
+            <div className="max-w-lg mx-auto px-4 py-3 flex justify-between items-center">
+              <button
+                onClick={() => setScreen('dashboard')}
+                className="text-gray-400 hover:text-white"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </button>
+              <div className="text-white font-bold">Time<span className="text-emerald-400">Bar</span></div>
+              <button
+                onClick={() => setScreen('settings')}
+                className="text-gray-400 hover:text-white"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          {/* 主要內容 */}
+          <LifeCostCalculator
+            userData={userData}
+            onDecision={handleDecision}
+          />
+        </div>
       )}
+
+      {screen === 'dashboard' && userData && (
+        <DashboardScreen
+          userData={userData}
+          records={records}
+          totalSaved={totalSaved}
+          onClose={() => setScreen('main')}
+        />
+      )}
+
       {screen === 'history' && userData && (
-        <HistoryPage records={records} userData={userData} onClose={() => setScreen('main')} />
+        <HistoryPage
+          records={records}
+          userData={userData}
+          onClose={() => setScreen('main')}
+        />
       )}
+
       {screen === 'settings' && userData && (
-        <SettingsPage userData={userData} onUpdateUser={handleUpdateUser}
-          onClose={() => setScreen('main')} onReset={handleReset} />
+        <SettingsPage
+          userData={userData}
+          onUpdateUser={handleUpdateUser}
+          onClose={() => setScreen('main')}
+          onReset={handleReset}
+        />
       )}
+    </div>
+  );
+}
+
+// Dashboard Screen
+interface DashboardScreenProps {
+  userData: UserData;
+  records: RecordType[];
+  totalSaved: number;
+  onClose: () => void;
+}
+
+function DashboardScreen({ userData, records, totalSaved, onClose }: DashboardScreenProps) {
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800 pb-8">
+      <div className="sticky top-0 bg-gray-900/95 backdrop-blur border-b border-gray-800 z-10">
+        <div className="max-w-lg mx-auto px-4 py-4 flex items-center">
+          <button onClick={onClose} className="text-gray-400 hover:text-white mr-4">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <h1 className="text-xl font-bold text-white">自由儀表板</h1>
+        </div>
+      </div>
+
+      <div className="max-w-lg mx-auto px-4 pt-6 space-y-6">
+        <FreedomTracker userData={userData} totalSaved={totalSaved} />
+        <LifeBattery userData={userData} records={records} />
+      </div>
     </div>
   );
 }

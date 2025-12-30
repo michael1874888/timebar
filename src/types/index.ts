@@ -23,7 +23,7 @@ export interface Record {
   date: string;
 }
 
-export type Screen = 'loading' | 'onboarding' | 'main' | 'history' | 'settings';
+export type Screen = 'loading' | 'onboarding' | 'main' | 'dashboard' | 'history' | 'settings';
 
 export interface GPSResult {
   estimatedAge: number;

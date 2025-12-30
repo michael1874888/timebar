@@ -55,45 +55,76 @@ vi.mock('./onboarding/OnboardingScreen', () => ({
   ),
 }))
 
-vi.mock('./tracker/MainTracker', () => ({
-  MainTracker: ({
+vi.mock('./calculator/LifeCostCalculator', () => ({
+  LifeCostCalculator: ({
+    userData,
+    onDecision,
+  }: {
+    userData: UserData
+    onDecision: (action: 'buy' | 'save', amount: number) => void
+  }) => (
+    <div data-testid="main-tracker">
+      <h1>Life Cost Calculator</h1>
+      <div>Age: {userData.age}</div>
+      <button
+        onClick={() => onDecision('save', 1000)}
+      >
+        Save Decision
+      </button>
+      <button
+        onClick={() => onDecision('buy', 500)}
+      >
+        Buy Decision
+      </button>
+    </div>
+  ),
+}))
+
+vi.mock('./freedom/FreedomTracker', () => ({
+  FreedomTracker: ({
+    userData,
+    totalSaved,
+  }: {
+    userData: UserData
+    totalSaved: number
+  }) => (
+    <div data-testid="freedom-tracker">
+      <h1>Freedom Tracker</h1>
+      <div>Total Saved: {totalSaved}</div>
+    </div>
+  ),
+}))
+
+vi.mock('./visualization/LifeBattery', () => ({
+  LifeBattery: ({
     userData,
     records,
-    onAddRecord,
-    onOpenHistory,
-    onOpenSettings,
   }: {
     userData: UserData
     records: RecordType[]
-    onAddRecord: (record: RecordType) => void
-    onOpenHistory: () => void
-    onOpenSettings: () => void
   }) => (
-    <div data-testid="main-tracker">
-      <h1>Main Tracker</h1>
-      <div>Age: {userData.age}</div>
+    <div data-testid="life-battery">
+      <h1>Life Battery</h1>
       <div>Records: {records.length}</div>
-      <button
-        onClick={() =>
-          onAddRecord({
-            id: `record-${Date.now()}`,
-            type: 'spend',
-            amount: 1000,
-            isRecurring: false,
-            timeCost: 2,
-            category: 'food',
-            note: 'Test',
-            timestamp: new Date().toISOString(),
-            date: new Date().toISOString().split('T')[0],
-          })
-        }
-      >
-        Add Record
-      </button>
-      <button onClick={onOpenHistory}>Open History</button>
-      <button onClick={onOpenSettings}>Open Settings</button>
     </div>
   ),
+}))
+
+vi.mock('./feedback/CelebrationSystem', () => ({
+  CelebrationSystem: ({
+    trigger,
+    amount,
+    userData,
+  }: {
+    trigger: boolean
+    amount: number
+    userData: UserData
+  }) => trigger && amount > 0 ? (
+    <div data-testid="celebration-system">
+      <h1>Celebration!</h1>
+      <div>Amount: {amount}</div>
+    </div>
+  ) : null,
 }))
 
 vi.mock('./history/HistoryPage', () => ({
@@ -529,7 +560,7 @@ describe('App Component Integration Tests', () => {
 
       expect(screen.getByText('Records: 0')).toBeInTheDocument()
 
-      const addButton = screen.getByRole('button', { name: 'Add Record' })
+      const addButton = screen.getByRole('button', { name: 'Save Decision' })
       fireEvent.click(addButton)
 
       const recordsText = await screen.findByText('Records: 1')
@@ -541,7 +572,7 @@ describe('App Component Integration Tests', () => {
 
       await screen.findByTestId('main-tracker')
 
-      const addButton = screen.getByRole('button', { name: 'Add Record' })
+      const addButton = screen.getByRole('button', { name: 'Save Decision' })
       fireEvent.click(addButton)
 
       await waitFor(() => {
@@ -563,7 +594,7 @@ describe('App Component Integration Tests', () => {
 
       await screen.findByTestId('main-tracker')
 
-      const addButton = screen.getByRole('button', { name: 'Add Record' })
+      const addButton = screen.getByRole('button', { name: 'Save Decision' })
       fireEvent.click(addButton)
 
       await waitFor(() => {
@@ -581,7 +612,7 @@ describe('App Component Integration Tests', () => {
 
       await screen.findByTestId('main-tracker')
 
-      const addButton = screen.getByRole('button', { name: 'Add Record' })
+      const addButton = screen.getByRole('button', { name: 'Save Decision' })
 
       fireEvent.click(addButton)
       await screen.findByText('Records: 1')
@@ -754,7 +785,7 @@ describe('App Component Integration Tests', () => {
       await screen.findByTestId('main-tracker')
 
       // 新增一些記錄
-      fireEvent.click(screen.getByRole('button', { name: 'Add Record' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Save Decision' }))
       await screen.findByText('Records: 1')
 
       fireEvent.click(screen.getByRole('button', { name: 'Open Settings' }))
@@ -1147,10 +1178,10 @@ describe('App Component Integration Tests', () => {
       expect(screen.getByText('Records: 0')).toBeInTheDocument()
 
       // Step 4: 新增記錄
-      fireEvent.click(screen.getByRole('button', { name: 'Add Record' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Save Decision' }))
       await screen.findByText('Records: 1')
 
-      fireEvent.click(screen.getByRole('button', { name: 'Add Record' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Save Decision' }))
       await screen.findByText('Records: 2')
 
       // Step 5: 查看歷史
@@ -1201,7 +1232,7 @@ describe('App Component Integration Tests', () => {
       await screen.findByText('Age: 35')
 
       // Step 2: 新增記錄
-      fireEvent.click(screen.getByRole('button', { name: 'Add Record' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Save Decision' }))
       await screen.findByText('Records: 1')
 
       // Step 3: 清除資料
@@ -1290,7 +1321,7 @@ describe('App Component Integration Tests', () => {
 
       mockStorage.save.mockClear()
 
-      fireEvent.click(screen.getByRole('button', { name: 'Add Record' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Save Decision' }))
 
       await waitFor(() => {
         expect(mockStorage.save).toHaveBeenCalledWith('records', expect.any(Array))
@@ -1369,7 +1400,7 @@ describe('App Component Integration Tests', () => {
       await screen.findByTestId('main-tracker')
 
       // 新增記錄也應該能運作（即使雲端失敗）
-      fireEvent.click(screen.getByRole('button', { name: 'Add Record' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Save Decision' }))
 
       const recordsText = await screen.findByText('Records: 1')
       expect(recordsText).toBeInTheDocument()
