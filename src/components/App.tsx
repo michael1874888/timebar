@@ -125,6 +125,17 @@ export default function App() {
     }
   }, [records, userData]);
 
+  // 自動關閉慶祝系統
+  useEffect(() => {
+    if (!showCelebration) return;
+
+    const timer = setTimeout(() => {
+      setShowCelebration(false);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [showCelebration]);
+
   const handleOnboardingComplete = (data: UserData): void => {
     setUserData(data);
     setScreen('main');
@@ -157,7 +168,6 @@ export default function App() {
     if (action === 'save') {
       setLastSavedAmount(amount);
       setShowCelebration(true);
-      setTimeout(() => setShowCelebration(false), 3000);
     }
   };
 
@@ -179,7 +189,7 @@ export default function App() {
   };
 
   // 計算累積數據
-  const { totalSaved, totalSpent } = GPSCalc.calculateTotals(records);
+  const { totalSaved } = GPSCalc.calculateTotals(records);
 
   if (screen === 'loading') {
     return (

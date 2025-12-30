@@ -3,7 +3,7 @@ import { FinanceCalc, Formatters } from '@/utils/financeCalc';
 import { Storage } from '@/utils/storage';
 import { UserData } from '@/types';
 
-const { formatTime, formatCurrency } = Formatters;
+const { formatTime } = Formatters;
 
 interface Challenge {
   id: string;

@@ -401,7 +401,6 @@ describe('整合測試：完整退休計算情境', () => {
 
     // 消費1000元的時間成本
     const timeCost = FinanceCalc.calculateTimeCost(1000, false, hourlyRate, realRate, yearsToRetire)
-    const formatted = Formatters.formatTime(timeCost)
 
     // 應該在合理範圍內
     expect(timeCost).toBeGreaterThan(0)

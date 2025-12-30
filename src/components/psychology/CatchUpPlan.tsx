@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { FinanceCalc, Formatters } from '@/utils/financeCalc';
+import { Formatters } from '@/utils/financeCalc';
 import { UserData } from '@/types';
 
 const { formatCurrency, formatYearMonth } = Formatters;
@@ -13,9 +13,7 @@ export function CatchUpPlan({ userData, ageDiff }: CatchUpPlanProps) {
   // 如果領先或剛好，不顯示追趕計劃
   if (ageDiff <= 0) return null;
 
-  const { salary, age, retireAge, currentSavings, monthlySavings, inflationRate, roiRate } = userData;
-  const realRate = FinanceCalc.realRate(inflationRate, roiRate);
-  const yearsToRetire = retireAge - age;
+  const { monthlySavings } = userData;
 
   // 計算不同方案需要多久才能追上
   const scenarios = useMemo(() => {

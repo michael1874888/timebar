@@ -31,7 +31,7 @@ export const PositiveMessaging = {
   }),
 
   // 儲蓄記錄後
-  afterSaving: (amount: number, days: number) => ({
+  afterSaving: (_amount: number, days: number) => ({
     celebration: '太棒了！',
     impact: `你剛剛買回了 ${days} 天自由`,
     quote: getRandomQuote('save')

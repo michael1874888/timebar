@@ -28,13 +28,13 @@ export function SettingsPage({ userData, onUpdateUser, onClose, onReset }: Setti
   const [targetFund, setTargetFund] = useState<number>(userData.targetRetirementFund || 30000000);
   const [monthlyRetirement, setMonthlyRetirement] = useState<number>(50000);
 
-  // 確保退休年齡不小於當前年齡 + 5
+  // 確保退休年齡不小於當前年齡 + 5 (只在 age 改變時檢查，避免無限循環)
   useEffect(() => {
     const minRetireAge = age + 5;
     if (retireAge < minRetireAge) {
       setRetireAge(minRetireAge);
     }
-  }, [age, retireAge]);
+  }, [age]); // 移除 retireAge 依賴，避免無限循環
 
   const handleSave = (): void => {
     // 只保留用戶修改過的欄位，不強制覆蓋 targetRetirementFund

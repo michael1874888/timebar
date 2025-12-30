@@ -1,9 +1,7 @@
 import { useState, useMemo } from 'react';
 import { NumericFormat } from 'react-number-format';
-import { FinanceCalc, Formatters } from '@/utils/financeCalc';
+import { FinanceCalc } from '@/utils/financeCalc';
 import { UserData } from '@/types';
-
-const { formatCurrency } = Formatters;
 
 interface LifeCostCalculatorProps {
   userData: UserData;

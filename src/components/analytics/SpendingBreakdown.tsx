@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { FinanceCalc, Formatters } from '@/utils/financeCalc';
 import { UserData, Record as RecordType } from '@/types';
 
@@ -69,10 +69,12 @@ export function SpendingBreakdown({ records, userData }: SpendingBreakdownProps)
       .sort((a, b) => b.value - a.value);
   }, [spendingRecords, hourlyRate, realRate, yearsToRetire]);
 
-  // 計算百分比
+  // 計算百分比 (防止除以零產生 NaN)
   const totalSpent = categoryData.reduce((sum, item) => sum + item.value, 0);
   categoryData.forEach((item) => {
-    item.percentage = Math.round((item.value / totalSpent) * 100);
+    item.percentage = totalSpent > 0
+      ? Math.round((item.value / totalSpent) * 100)
+      : 0;
   });
 
   // 最大殺手
@@ -92,7 +94,7 @@ export function SpendingBreakdown({ records, userData }: SpendingBreakdownProps)
             cx="50%"
             cy="50%"
             labelLine={false}
-            label={(entry) => `${entry.percentage}%`}
+            label={(entry) => `${entry.percent}%`}
             outerRadius={80}
             fill="#8884d8"
             dataKey="value"

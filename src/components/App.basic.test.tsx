@@ -49,7 +49,6 @@ vi.mock('./onboarding/OnboardingScreen', () => ({
 
 vi.mock('./calculator/LifeCostCalculator', () => ({
   LifeCostCalculator: ({
-    userData,
     onDecision,
   }: {
     userData: UserData
