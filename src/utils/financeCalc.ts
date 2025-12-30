@@ -280,6 +280,24 @@ let _timeBarFinanceExports: TimeBarFinanceModule;
       if (absDays < 365) return { value: Math.round(absDays / 30).toString(), unit: '個月' };
       return { value: absDiff.toFixed(1), unit: '年' };
     },
+
+    /**
+     * 格式化年月（用於追趕計劃）
+     * @param {number} years - 年數（可包含小數）
+     * @returns {string} 格式化字串（例如："2 年 3 個月"）
+     */
+    formatYearMonth(years: number): string {
+      const y = Math.floor(years);
+      const m = Math.round((years - y) * 12);
+
+      if (y === 0) {
+        return `${m} 個月`;
+      } else if (m === 0) {
+        return `${y} 年`;
+      } else {
+        return `${y} 年 ${m} 個月`;
+      }
+    },
   };
 
   // ==================== GPS 計算 ====================
