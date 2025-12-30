@@ -46,6 +46,20 @@ export function LifeCostCalculator({ userData, onDecision }: LifeCostCalculatorP
     };
   }, [amount, hourlyRate, realRate, yearsToRetire]);
 
+  // 計算新的退休年齡顯示（更友善的格式）
+  const retirementAgeDisplay = useMemo(() => {
+    const totalDays = retirementImpact.days + retirementImpact.hours / 24;
+    const years = Math.floor(totalDays / 365);
+    const days = Math.round(totalDays % 365);
+
+    let display = `${retireAge + years} 歲`;
+    if (days > 0) {
+      display += ` ${days} 天`;
+    }
+
+    return display;
+  }, [retirementImpact, retireAge]);
+
   // 生動的比喻
   const lifeEquivalent = useMemo(() => {
     const hours = workTime.totalHours;
@@ -164,8 +178,7 @@ export function LifeCostCalculator({ userData, onDecision }: LifeCostCalculatorP
                   {retirementImpact.hours > 0 && <> {retirementImpact.hours} 小時</>}
                 </div>
                 <div className="text-gray-400 text-sm">
-                  原本 {retireAge} 歲退休，現在要到{' '}
-                  {(retireAge + (retirementImpact.days + retirementImpact.hours / 24) / 365).toFixed(2)} 歲
+                  原本 {retireAge} 歲退休，現在要到 {retirementAgeDisplay}
                 </div>
               </div>
             </div>
