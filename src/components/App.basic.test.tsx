@@ -90,6 +90,21 @@ vi.mock('./settings/SettingsPage', () => ({
   ),
 }))
 
+vi.mock('./challenges/DailyChallenge', () => ({
+  DailyChallenge: ({ onChallengeComplete }: { onChallengeComplete: (challenge: any) => void }) => (
+    <div data-testid="daily-challenge">
+      <button onClick={() => onChallengeComplete({ id: 'test', reward: 100 })}>
+        Complete Challenge
+      </button>
+    </div>
+  ),
+}))
+
+vi.mock('./psychology/CatchUpPlan', () => ({
+  CatchUpPlan: ({ ageDiff }: { ageDiff: number }) =>
+    ageDiff > 0 ? <div data-testid="catch-up-plan">Catch Up Plan</div> : null,
+}))
+
 describe('App Component - Phase 0 Basic Tests', () => {
   beforeEach(() => {
     vi.clearAllMocks()

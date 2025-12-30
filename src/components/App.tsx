@@ -6,6 +6,8 @@ import { LifeBattery } from './visualization/LifeBattery';
 import { HistoryPage } from './history/HistoryPage';
 import { SettingsPage } from './settings/SettingsPage';
 import { CelebrationSystem } from './feedback/CelebrationSystem';
+import { DailyChallenge } from './challenges/DailyChallenge';
+import { CatchUpPlan } from './psychology/CatchUpPlan';
 import { GoogleSheetsAPI } from '@/services/googleSheets';
 import { Storage } from '@/utils/storage';
 import { CONSTANTS, GPSCalc } from '@/utils/financeCalc';
@@ -246,6 +248,12 @@ export default function App() {
           records={records}
           totalSaved={totalSaved}
           onClose={() => setScreen('main')}
+          onChallengeComplete={handleDecision}
+          onShowCelebration={(amount: number) => {
+            setLastSavedAmount(amount);
+            setShowCelebration(true);
+            setTimeout(() => setShowCelebration(false), 3000);
+          }}
         />
       )}
 
@@ -275,9 +283,15 @@ interface DashboardScreenProps {
   records: RecordType[];
   totalSaved: number;
   onClose: () => void;
+  onChallengeComplete: (action: 'buy' | 'save', amount: number) => Promise<void>;
+  onShowCelebration: (amount: number) => void;
 }
 
-function DashboardScreen({ userData, records, totalSaved, onClose }: DashboardScreenProps) {
+function DashboardScreen({ userData, records, totalSaved, onClose, onChallengeComplete, onShowCelebration }: DashboardScreenProps) {
+  // 計算 GPS 狀態，用於 CatchUpPlan
+  const { estimatedAge } = GPSCalc.calculateEstimatedAge(userData.retireAge, records);
+  const ageDiff = estimatedAge - userData.retireAge; // 正數 = 落後
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800 pb-8">
       <div className="sticky top-0 bg-gray-900/95 backdrop-blur border-b border-gray-800 z-10">
@@ -294,6 +308,20 @@ function DashboardScreen({ userData, records, totalSaved, onClose }: DashboardSc
       <div className="max-w-lg mx-auto px-4 pt-6 space-y-6">
         <FreedomTracker userData={userData} totalSaved={totalSaved} />
         <LifeBattery userData={userData} records={records} />
+
+        {/* 每日挑戰系統 */}
+        <DailyChallenge
+          userData={userData}
+          onChallengeComplete={(challenge) => {
+            // 記錄為一筆儲蓄
+            onChallengeComplete('save', challenge.reward);
+            // 觸發慶祝
+            onShowCelebration(challenge.reward);
+          }}
+        />
+
+        {/* 追趕計劃（只在落後時顯示） */}
+        <CatchUpPlan userData={userData} ageDiff={ageDiff} />
       </div>
     </div>
   );
