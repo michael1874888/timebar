@@ -8,6 +8,8 @@ import { SettingsPage } from './settings/SettingsPage';
 import { CelebrationSystem } from './feedback/CelebrationSystem';
 import { DailyChallenge } from './challenges/DailyChallenge';
 import { CatchUpPlan } from './psychology/CatchUpPlan';
+import { SpendingBreakdown } from './analytics/SpendingBreakdown';
+import { ErrorBoundary } from './common/ErrorBoundary';
 import { GoogleSheetsAPI } from '@/services/googleSheets';
 import { Storage } from '@/utils/storage';
 import { CONSTANTS, GPSCalc } from '@/utils/financeCalc';
@@ -194,21 +196,22 @@ export default function App() {
   }
 
   return (
-    <div>
-      {/* 慶祝系統 */}
-      {userData && (
-        <CelebrationSystem
-          trigger={showCelebration}
-          amount={lastSavedAmount}
-          userData={userData}
-        />
-      )}
+    <ErrorBoundary>
+      <div>
+        {/* 慶祝系統 */}
+        {userData && (
+          <CelebrationSystem
+            trigger={showCelebration}
+            amount={lastSavedAmount}
+            userData={userData}
+          />
+        )}
 
-      {screen === 'onboarding' && (
-        <OnboardingScreen onComplete={handleOnboardingComplete} />
-      )}
+        {screen === 'onboarding' && (
+          <OnboardingScreen onComplete={handleOnboardingComplete} />
+        )}
 
-      {screen === 'main' && userData && (
+        {screen === 'main' && userData && (
         <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800">
           {/* 頂部導航 */}
           <div className="sticky top-0 z-10 bg-gray-900/95 backdrop-blur border-b border-gray-800">
@@ -273,7 +276,8 @@ export default function App() {
           onReset={handleReset}
         />
       )}
-    </div>
+      </div>
+    </ErrorBoundary>
   );
 }
 
@@ -291,6 +295,9 @@ function DashboardScreen({ userData, records, totalSaved, onClose, onChallengeCo
   // 計算 GPS 狀態，用於 CatchUpPlan
   const { estimatedAge } = GPSCalc.calculateEstimatedAge(userData.retireAge, records);
   const ageDiff = estimatedAge - userData.retireAge; // 正數 = 落後
+
+  // 統計卡片收合狀態
+  const [showDetailedStats, setShowDetailedStats] = useState(false);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800 pb-8">
@@ -322,6 +329,31 @@ function DashboardScreen({ userData, records, totalSaved, onClose, onChallengeCo
 
         {/* 追趕計劃（只在落後時顯示） */}
         <CatchUpPlan userData={userData} ageDiff={ageDiff} />
+
+        {/* 詳細統計收合按鈕 */}
+        <button
+          onClick={() => setShowDetailedStats(!showDetailedStats)}
+          className="w-full bg-gray-800/40 rounded-2xl p-4 flex justify-between items-center hover:bg-gray-800/60 transition-colors"
+        >
+          <span className="text-gray-400 text-sm">📊 詳細統計</span>
+          <svg
+            className={`w-5 h-5 text-gray-400 transform transition-transform ${
+              showDetailedStats ? 'rotate-180' : ''
+            }`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+
+        {/* 詳細統計區域（可收合） */}
+        {showDetailedStats && (
+          <div className="space-y-4 animate-slide-down">
+            <SpendingBreakdown records={records} userData={userData} />
+          </div>
+        )}
       </div>
     </div>
   );
