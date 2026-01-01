@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { OnboardingScreen } from './onboarding/OnboardingScreen';
+import { DashboardScreen } from './dashboard/DashboardScreen';
 import { MainTracker } from './tracker/MainTracker';
 import { HistoryPage } from './history/HistoryPage';
 import { SettingsPage } from './settings/SettingsPage';
@@ -57,7 +58,7 @@ export default function App() {
             Storage.save('records', cloudRecords);
 
             setSyncStatus('synced');
-            setScreen('main');
+            setScreen('dashboard');
             return;
           } else if (cloudData.success && !cloudData.userData) {
             // 雲端成功回應但沒有資料 = 資料已被其他裝置清除
@@ -85,7 +86,7 @@ export default function App() {
         };
         setUserData(userData);
         setRecords(localRecords || []);
-        setScreen('main');
+        setScreen('dashboard');
       } else {
         // 都沒資料，進入 onboarding
         setScreen('onboarding');
@@ -116,7 +117,7 @@ export default function App() {
     }
   }, [records, userData]);
 
-  const handleOnboardingComplete = (data: UserData): void => { setUserData(data); setScreen('main'); };
+  const handleOnboardingComplete = (data: UserData): void => { setUserData(data); setScreen('dashboard'); };
   const handleAddRecord = async (record: RecordType): Promise<void> => {
     setRecords(prev => [...prev, record]);
     try {
@@ -155,17 +156,33 @@ export default function App() {
   return (
     <div>
       {screen === 'onboarding' && <OnboardingScreen onComplete={handleOnboardingComplete} />}
-      {screen === 'main' && userData && (
-        <MainTracker userData={userData} records={records} onAddRecord={handleAddRecord}
-          onOpenHistory={() => setScreen('history')} onOpenSettings={() => setScreen('settings')} />
+      {screen === 'dashboard' && userData && (
+        <DashboardScreen
+          userData={userData}
+          records={records}
+          onAddRecord={handleAddRecord}
+          onOpenTracker={() => setScreen('tracker')}
+          onOpenHistory={() => setScreen('history')}
+          onOpenSettings={() => setScreen('settings')}
+        />
+      )}
+      {screen === 'tracker' && userData && (
+        <MainTracker
+          userData={userData}
+          records={records}
+          onAddRecord={handleAddRecord}
+          onOpenHistory={() => setScreen('history')}
+          onOpenSettings={() => setScreen('settings')}
+        />
       )}
       {screen === 'history' && userData && (
-        <HistoryPage records={records} userData={userData} onClose={() => setScreen('main')} />
+        <HistoryPage records={records} userData={userData} onClose={() => setScreen('dashboard')} />
       )}
       {screen === 'settings' && userData && (
         <SettingsPage userData={userData} onUpdateUser={handleUpdateUser}
-          onClose={() => setScreen('main')} onReset={handleReset} />
+          onClose={() => setScreen('dashboard')} onReset={handleReset} />
       )}
     </div>
   );
 }
+

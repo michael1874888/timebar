@@ -23,7 +23,7 @@ export interface Record {
   date: string;
 }
 
-export type Screen = 'loading' | 'onboarding' | 'main' | 'history' | 'settings';
+export type Screen = 'loading' | 'onboarding' | 'dashboard' | 'tracker' | 'history' | 'settings';
 
 export interface GPSResult {
   estimatedAge: number;
@@ -41,3 +41,21 @@ export interface TimeFormatted {
   unit: string;
   color: string;
 }
+
+// 里程碑類型
+export interface Milestone {
+  id: string;
+  name: string;
+  hoursNeeded: number;
+  icon: string;
+  isUnlocked?: boolean;
+}
+
+// 節省記錄
+export interface SkippedPurchase {
+  id: string;
+  amount: number;
+  workingHours: number;
+  timestamp: string;
+}
+
