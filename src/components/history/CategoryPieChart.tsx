@@ -149,7 +149,7 @@ export function CategoryPieChart({ records, type = 'spend' }: CategoryPieChartPr
       )}
 
       {/* 圓餅圖 */}
-      <div className="h-48">
+      <div style={{ width: '100%', height: 192 }}>
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -161,7 +161,7 @@ export function CategoryPieChart({ records, type = 'spend' }: CategoryPieChartPr
               paddingAngle={2}
               dataKey="value"
             >
-              {chartData.map((entry, index) => (
+              {chartData.map((_entry, index) => (
                 <Cell 
                   key={`cell-${index}`} 
                   fill={COLORS[index % COLORS.length]}

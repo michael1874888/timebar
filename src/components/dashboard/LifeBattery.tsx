@@ -36,8 +36,10 @@ export function LifeBattery({
   }, [currentAge, estimatedRetireAge, lifeExpectancy]);
 
   // 判斷是否領先/落後
+  // 如果 estimatedRetireAge > retireAge，代表要工作更久，所以是「落後」
+  // 如果 estimatedRetireAge < retireAge，代表可以提早退休，所以是「領先」
   const status = useMemo(() => {
-    const diff = retireAge - estimatedRetireAge;
+    const diff = estimatedRetireAge - retireAge;
     if (Math.abs(diff) < 0.01) return 'onTrack';
     return diff > 0 ? 'behind' : 'ahead';
   }, [retireAge, estimatedRetireAge]);

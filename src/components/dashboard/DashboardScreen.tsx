@@ -186,7 +186,6 @@ export function DashboardScreen({
               };
               onAddRecord(record);
             }}
-            records={records}
           />
         </div>
       </div>

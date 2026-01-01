@@ -1,5 +1,4 @@
 import { useState, useMemo, useCallback } from 'react';
-import { Record as RecordType } from '@/types';
 import { Storage } from '@/utils/storage';
 
 // 每日挑戰定義
@@ -80,10 +79,9 @@ const saveChallengeState = (state: ChallengeState): void => {
 
 interface DailyChallengeProps {
   onCompleteChallenge: (challenge: Challenge) => void;
-  records: RecordType[];
 }
 
-export function DailyChallenge({ onCompleteChallenge, records }: DailyChallengeProps) {
+export function DailyChallenge({ onCompleteChallenge }: DailyChallengeProps) {
   const [challengeState, setChallengeState] = useState<ChallengeState>(loadChallengeState);
 
   // 計算今天完成了幾個
