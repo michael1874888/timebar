@@ -128,7 +128,7 @@ export function HistoryPage({ records, userData, onClose }: HistoryPageProps) {
 
             return (
               <div key={monthKey} className="mb-6">
-                <div className="flex justify-between items-center mb-3 px-1">
+                <div data-testid="month-summary" className="flex justify-between items-center mb-3 px-1">
                   <div className="text-gray-400 font-medium">{year}年{month}月</div>
                   <div className="flex gap-3 text-sm">
                     <span className="text-emerald-400">+{formatCurrency(monthSaved)}</span>

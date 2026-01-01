@@ -602,7 +602,9 @@ describe('HistoryPage', () => {
 
       renderHistoryPage(mockUserData, records)
 
-      expect(screen.getByText('飲食')).toBeInTheDocument()
+      // 「飲食」可能出現多次（記錄 + CategoryPieChart）
+      const elements = screen.getAllByText('飲食')
+      expect(elements.length).toBeGreaterThan(0)
     })
 
     test('無備註且無分類時支出應該顯示「消費」', () => {
@@ -739,7 +741,7 @@ describe('HistoryPage', () => {
       const { container } = renderHistoryPage(mockUserData, records)
 
       // Check month summary has correct totals
-      const monthSummary = container.querySelector('.flex.justify-between.items-center.mb-3')
+      const monthSummary = container.querySelector('[data-testid="month-summary"]')
       expect(monthSummary).toBeInTheDocument()
       expect(monthSummary?.textContent).toContain('+8,000')
       expect(monthSummary?.textContent).toContain('-2,000')
@@ -844,7 +846,7 @@ describe('HistoryPage', () => {
       const { container } = renderHistoryPage(mockUserData, records)
 
       // Check month summary
-      const monthSummary = container.querySelector('.flex.justify-between.items-center.mb-3')
+      const monthSummary = container.querySelector('[data-testid="month-summary"]')
       expect(monthSummary).toBeInTheDocument()
       expect(monthSummary?.textContent).toContain('+5,000')
       expect(monthSummary?.textContent).toContain('-0')
@@ -868,7 +870,7 @@ describe('HistoryPage', () => {
       const { container } = renderHistoryPage(mockUserData, records)
 
       // Check month summary
-      const monthSummary = container.querySelector('.flex.justify-between.items-center.mb-3')
+      const monthSummary = container.querySelector('[data-testid="month-summary"]')
       expect(monthSummary).toBeInTheDocument()
       expect(monthSummary?.textContent).toContain('+0')
       expect(monthSummary?.textContent).toContain('-3,000')
