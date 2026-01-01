@@ -3,6 +3,7 @@ import { FinanceCalc, GPSCalc, Formatters } from '@/utils/financeCalc';
 import { getVividComparison, formatRetirementImpact } from '@/utils/lifeCostCalc';
 import { Confetti } from '../Confetti';
 import { CelebrationModal } from '../common/CelebrationModal';
+import { Toast } from '../common/Toast';
 import { LifeBattery } from './LifeBattery';
 import { MilestoneDisplay } from './MilestoneDisplay';
 import { DailyChallenge, Challenge } from './DailyChallenge';
@@ -34,6 +35,8 @@ export function DashboardScreen({
   const [showConfetti, setShowConfetti] = useState<boolean>(false);
   const [lastSavedAmount, setLastSavedAmount] = useState<number>(0);
   const [lastSavedHours, setLastSavedHours] = useState<number>(0);
+  const [showToast, setShowToast] = useState<boolean>(false);
+  const [toastMessage, setToastMessage] = useState<string>('');
 
   const { salary, retireAge, inflationRate, roiRate, age } = userData;
 
@@ -80,6 +83,8 @@ export function DashboardScreen({
     };
 
     await onAddRecord(record);
+    setToastMessage('已記錄消費 \u{1F4DD}');
+    setShowToast(true);
     setAmount(0);
   }, [amount, isRecurring, timeCost, onAddRecord]);
 
@@ -119,6 +124,15 @@ export function DashboardScreen({
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800">
+      {/* Toast 通知 */}
+      {showToast && (
+        <Toast
+          message={toastMessage}
+          type="success"
+          onClose={() => setShowToast(false)}
+        />
+      )}
+      
       <Confetti active={showConfetti} />
       <CelebrationModal
         isOpen={showCelebration}

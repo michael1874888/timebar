@@ -1,5 +1,5 @@
 // TimeBar - 生命成本計算擴展模組
-import { CONSTANTS, FinanceCalc, Formatters } from './financeCalc';
+import { CONSTANTS } from './financeCalc';
 
 const { WORKING_HOURS_PER_DAY, WORKING_DAYS_PER_MONTH, WORKING_HOURS_PER_YEAR } = CONSTANTS;
 
@@ -22,11 +22,6 @@ export const getVividComparison = (
   
   // 計算工作時間單位
   const workTime = formatWorkTimeDetailed(absHours);
-  
-  // 計算薪資等價
-  const hourlyRate = FinanceCalc.hourlyRate(salary);
-  const dailySalary = salary / WORKING_DAYS_PER_MONTH;
-  const weeklySalary = dailySalary * 5;
   
   const salaryEquivalent = getSalaryEquivalent(absHours, salary);
   
@@ -82,35 +77,39 @@ const formatWorkTimeDetailed = (hours: number): WorkTimeFormat => {
 };
 
 /**
- * 薪資等價描述
+ * 薪資等價描述 - 根據工作小時來判斷
  */
-const getSalaryEquivalent = (hours: number, salary: number): string => {
-  const dailySalary = salary / WORKING_DAYS_PER_MONTH;
-  const weeklySalary = dailySalary * 5;
-  const hourlyRate = FinanceCalc.hourlyRate(salary);
+const getSalaryEquivalent = (hours: number, _salary: number): string => {
+  const hoursPerDay = WORKING_HOURS_PER_DAY; // 8
+  const hoursPerWeek = hoursPerDay * 5;      // 40
+  const hoursPerMonth = hoursPerDay * WORKING_DAYS_PER_MONTH; // 176
 
-  const value = hours * hourlyRate;
-  
-  if (value < dailySalary * 0.5) {
-    return `半天薪水`;
+  if (hours < 1) {
+    return `不到 1 小時的工作`;
   }
-  if (value < dailySalary * 1.5) {
-    return `1 天薪水`;
+  if (hours < hoursPerDay * 0.5) {
+    return `幾小時的工作`;
   }
-  if (value < weeklySalary * 0.8) {
-    const days = Math.round(value / dailySalary);
-    return `${days} 天薪水`;
+  if (hours < hoursPerDay) {
+    return `半天工作`;
   }
-  if (value < salary * 0.8) {
-    const weeks = Math.round(value / weeklySalary * 10) / 10;
-    return `${weeks} 週薪水`;
+  if (hours < hoursPerDay * 1.5) {
+    return `1 天工作`;
   }
-  if (value < salary * 3) {
-    const months = Math.round(value / salary * 10) / 10;
-    return `${months} 個月薪水`;
+  if (hours < hoursPerWeek * 0.8) {
+    const days = Math.round(hours / hoursPerDay);
+    return `${days} 天工作`;
   }
-  const months = Math.round(value / salary);
-  return `${months} 個月薪水`;
+  if (hours < hoursPerMonth * 0.8) {
+    const weeks = Math.round(hours / hoursPerWeek * 10) / 10;
+    return `${weeks} 週工作`;
+  }
+  if (hours < hoursPerMonth * 3) {
+    const months = Math.round(hours / hoursPerMonth * 10) / 10;
+    return `${months} 個月工作`;
+  }
+  const months = Math.round(hours / hoursPerMonth);
+  return `${months} 個月工作`;
 };
 
 /**
