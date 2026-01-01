@@ -5,6 +5,8 @@ import { Confetti } from '../Confetti';
 import { CelebrationModal } from '../common/CelebrationModal';
 import { LifeBattery } from './LifeBattery';
 import { MilestoneDisplay } from './MilestoneDisplay';
+import { DailyChallenge, Challenge } from './DailyChallenge';
+import { CatchUpPlan } from './CatchUpPlan';
 import { UserData, Record as RecordType } from '@/types';
 
 const { formatCurrencyFull, formatCurrency } = Formatters;
@@ -158,6 +160,45 @@ export function DashboardScreen({
           <MilestoneDisplay totalSavedHours={totalSavedHours} />
         </div>
       </div>
+
+      {/* 每日挑戰 */}
+      <div className="px-4 py-2">
+        <div className="max-w-lg mx-auto">
+          <DailyChallenge
+            onCompleteChallenge={(challenge: Challenge) => {
+              // 完成挑戰時建立儲蓄記錄
+              const record: RecordType = {
+                id: Date.now().toString(),
+                type: 'save',
+                amount: challenge.targetAmount,
+                isRecurring: false,
+                timeCost: FinanceCalc.calculateTimeCost(
+                  challenge.targetAmount,
+                  false,
+                  hourlyRate,
+                  realRate,
+                  yearsToRetire
+                ),
+                category: '每日挑戰',
+                note: challenge.name,
+                timestamp: new Date().toISOString(),
+                date: new Date().toISOString().split('T')[0],
+              };
+              onAddRecord(record);
+            }}
+            records={records}
+          />
+        </div>
+      </div>
+
+      {/* 追趕計劃（落後時顯示） */}
+      {gpsResult.isBehind && (
+        <div className="px-4 py-2">
+          <div className="max-w-lg mx-auto">
+            <CatchUpPlan userData={userData} gpsResult={gpsResult} />
+          </div>
+        </div>
+      )}
 
       {/* 金額輸入區 */}
       <div className="px-4 py-4">
