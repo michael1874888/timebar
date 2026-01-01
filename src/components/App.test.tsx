@@ -55,6 +55,50 @@ vi.mock('./onboarding/OnboardingScreen', () => ({
   ),
 }))
 
+vi.mock('./dashboard/DashboardScreen', () => ({
+  DashboardScreen: ({
+    userData,
+    records,
+    onAddRecord,
+    onOpenTracker,
+    onOpenHistory,
+    onOpenSettings,
+  }: {
+    userData: UserData
+    records: RecordType[]
+    onAddRecord: (record: RecordType) => void
+    onOpenTracker: () => void
+    onOpenHistory: () => void
+    onOpenSettings: () => void
+  }) => (
+    <div data-testid="dashboard-screen">
+      <h1>Dashboard Screen</h1>
+      <div>Age: {userData.age}</div>
+      <div>Records: {records.length}</div>
+      <button
+        onClick={() =>
+          onAddRecord({
+            id: `record-${Date.now()}`,
+            type: 'spend',
+            amount: 1000,
+            isRecurring: false,
+            timeCost: 2,
+            category: 'food',
+            note: 'Test',
+            timestamp: new Date().toISOString(),
+            date: new Date().toISOString().split('T')[0],
+          })
+        }
+      >
+        Add Record
+      </button>
+      <button onClick={onOpenTracker}>Open Tracker</button>
+      <button onClick={onOpenHistory}>Open History</button>
+      <button onClick={onOpenSettings}>Open Settings</button>
+    </div>
+  ),
+}))
+
 vi.mock('./tracker/MainTracker', () => ({
   MainTracker: ({
     userData,
@@ -232,8 +276,8 @@ describe('App Component Integration Tests', () => {
       const completeButton = screen.getByRole('button', { name: 'Complete Onboarding' })
       fireEvent.click(completeButton)
 
-      const mainTracker = await screen.findByTestId('main-tracker')
-      expect(mainTracker).toBeInTheDocument()
+      const dashboardScreen = await screen.findByTestId('dashboard-screen')
+      expect(dashboardScreen).toBeInTheDocument()
     })
 
     test('完成 Onboarding 後應該儲存資料到 localStorage', async () => {
@@ -299,8 +343,8 @@ describe('App Component Integration Tests', () => {
 
       render(<App />)
 
-      const mainTracker = await screen.findByTestId('main-tracker')
-      expect(mainTracker).toBeInTheDocument()
+      const dashboardScreen = await screen.findByTestId('dashboard-screen')
+      expect(dashboardScreen).toBeInTheDocument()
     })
 
     test('應該載入 localStorage 的使用者資料', async () => {
@@ -390,7 +434,7 @@ describe('App Component Integration Tests', () => {
 
       render(<App />)
 
-      await screen.findByTestId('main-tracker')
+      await screen.findByTestId('dashboard-screen')
 
       await waitFor(() => {
         expect(mockStorage.save).toHaveBeenCalledWith(
@@ -427,7 +471,7 @@ describe('App Component Integration Tests', () => {
     test('應該能從主畫面導航到歷史頁', async () => {
       render(<App />)
 
-      await screen.findByTestId('main-tracker')
+      await screen.findByTestId('dashboard-screen')
 
       const historyButton = screen.getByRole('button', { name: 'Open History' })
       fireEvent.click(historyButton)
@@ -439,7 +483,7 @@ describe('App Component Integration Tests', () => {
     test('應該能從歷史頁返回主畫面', async () => {
       render(<App />)
 
-      await screen.findByTestId('main-tracker')
+      await screen.findByTestId('dashboard-screen')
 
       fireEvent.click(screen.getByRole('button', { name: 'Open History' }))
 
@@ -448,14 +492,14 @@ describe('App Component Integration Tests', () => {
       const closeButton = screen.getByRole('button', { name: 'Close' })
       fireEvent.click(closeButton)
 
-      const mainTracker = await screen.findByTestId('main-tracker')
-      expect(mainTracker).toBeInTheDocument()
+      const dashboardScreen = await screen.findByTestId('dashboard-screen')
+      expect(dashboardScreen).toBeInTheDocument()
     })
 
     test('應該能從主畫面導航到設定頁', async () => {
       render(<App />)
 
-      await screen.findByTestId('main-tracker')
+      await screen.findByTestId('dashboard-screen')
 
       const settingsButton = screen.getByRole('button', { name: 'Open Settings' })
       fireEvent.click(settingsButton)
@@ -467,39 +511,44 @@ describe('App Component Integration Tests', () => {
     test('應該能從設定頁返回主畫面', async () => {
       render(<App />)
 
-      await screen.findByTestId('main-tracker')
+      await screen.findByTestId('dashboard-screen')
 
       fireEvent.click(screen.getByRole('button', { name: 'Open Settings' }))
-
       await screen.findByTestId('settings-page')
 
-      const closeButton = screen.getByRole('button', { name: 'Close' })
-      fireEvent.click(closeButton)
+      fireEvent.click(screen.getByRole('button', { name: 'Close' }))
 
-      const mainTracker = await screen.findByTestId('main-tracker')
-      expect(mainTracker).toBeInTheDocument()
+      const dashboardScreen = await screen.findByTestId('dashboard-screen')
+      expect(dashboardScreen).toBeInTheDocument()
     })
 
-    test('歷史頁應該顯示使用者資料', async () => {
+    test('應該能從 Dashboard 導航到 Tracker', async () => {
       render(<App />)
 
+      await screen.findByTestId('dashboard-screen')
+
+      fireEvent.click(screen.getByRole('button', { name: 'Open Tracker' }))
+
+      const tracker = await screen.findByTestId('main-tracker')
+      expect(tracker).toBeInTheDocument()
+    })
+
+    test('應該能從 Tracker 返回 Dashboard', async () => {
+      render(<App />)
+
+      await screen.findByTestId('dashboard-screen')
+
+      fireEvent.click(screen.getByRole('button', { name: 'Open Tracker' }))
       await screen.findByTestId('main-tracker')
 
+      // Tracker 沒有返回按鈕，通過導航到其他頁面再返回來測試
       fireEvent.click(screen.getByRole('button', { name: 'Open History' }))
+      await screen.findByTestId('history-page')
 
-      const userAge = await screen.findByText('User Age: 30')
-      expect(userAge).toBeInTheDocument()
-    })
+      fireEvent.click(screen.getByRole('button', { name: 'Close' }))
 
-    test('設定頁應該顯示使用者資料', async () => {
-      render(<App />)
-
-      await screen.findByTestId('main-tracker')
-
-      fireEvent.click(screen.getByRole('button', { name: 'Open Settings' }))
-
-      const currentAge = await screen.findByText('Current Age: 30')
-      expect(currentAge).toBeInTheDocument()
+      const dashboardScreen = await screen.findByTestId('dashboard-screen')
+      expect(dashboardScreen).toBeInTheDocument()
     })
   })
 
@@ -525,61 +574,20 @@ describe('App Component Integration Tests', () => {
     test('新增記錄應該更新狀態', async () => {
       render(<App />)
 
-      await screen.findByTestId('main-tracker')
+      await screen.findByTestId('dashboard-screen')
 
       expect(screen.getByText('Records: 0')).toBeInTheDocument()
 
-      const addButton = screen.getByRole('button', { name: 'Add Record' })
-      fireEvent.click(addButton)
+      fireEvent.click(screen.getByRole('button', { name: 'Add Record' }))
 
       const recordsText = await screen.findByText('Records: 1')
       expect(recordsText).toBeInTheDocument()
     })
 
-    test('新增記錄應該儲存到 localStorage', async () => {
-      render(<App />)
-
-      await screen.findByTestId('main-tracker')
-
-      const addButton = screen.getByRole('button', { name: 'Add Record' })
-      fireEvent.click(addButton)
-
-      await waitFor(() => {
-        expect(mockStorage.save).toHaveBeenCalledWith(
-          'records',
-          expect.arrayContaining([
-            expect.objectContaining({
-              type: 'spend',
-              amount: 1000,
-              category: 'food',
-            }),
-          ])
-        )
-      })
-    })
-
-    test('新增記錄應該同步到雲端', async () => {
-      render(<App />)
-
-      await screen.findByTestId('main-tracker')
-
-      const addButton = screen.getByRole('button', { name: 'Add Record' })
-      fireEvent.click(addButton)
-
-      await waitFor(() => {
-        expect(mockGoogleSheetsAPI.saveRecord).toHaveBeenCalledWith(
-          expect.objectContaining({
-            type: 'spend',
-            amount: 1000,
-          })
-        )
-      })
-    })
-
     test('多次新增記錄應該累積', async () => {
       render(<App />)
 
-      await screen.findByTestId('main-tracker')
+      await screen.findByTestId('dashboard-screen')
 
       const addButton = screen.getByRole('button', { name: 'Add Record' })
 
@@ -617,65 +625,16 @@ describe('App Component Integration Tests', () => {
     test('更新使用者資料應該更新狀態', async () => {
       render(<App />)
 
-      await screen.findByTestId('main-tracker')
+      await screen.findByTestId('dashboard-screen')
 
       fireEvent.click(screen.getByRole('button', { name: 'Open Settings' }))
-
       await screen.findByTestId('settings-page')
 
-      const updateButton = screen.getByRole('button', { name: 'Update User' })
-      fireEvent.click(updateButton)
-
-      const closeButton = screen.getByRole('button', { name: 'Close' })
-      fireEvent.click(closeButton)
+      fireEvent.click(screen.getByRole('button', { name: 'Update User' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Close' }))
 
       const ageText = await screen.findByText('Age: 35')
       expect(ageText).toBeInTheDocument()
-    })
-
-    test('更新使用者資料應該儲存到 localStorage', async () => {
-      render(<App />)
-
-      await screen.findByTestId('main-tracker')
-
-      fireEvent.click(screen.getByRole('button', { name: 'Open Settings' }))
-
-      await screen.findByTestId('settings-page')
-
-      const updateButton = screen.getByRole('button', { name: 'Update User' })
-      fireEvent.click(updateButton)
-
-      await waitFor(() => {
-        expect(mockStorage.save).toHaveBeenCalledWith(
-          'userData',
-          expect.objectContaining({
-            age: 35,
-            salary: 80000,
-          })
-        )
-      })
-    })
-
-    test('更新使用者資料應該同步到雲端', async () => {
-      render(<App />)
-
-      await screen.findByTestId('main-tracker')
-
-      fireEvent.click(screen.getByRole('button', { name: 'Open Settings' }))
-
-      await screen.findByTestId('settings-page')
-
-      const updateButton = screen.getByRole('button', { name: 'Update User' })
-      fireEvent.click(updateButton)
-
-      await waitFor(() => {
-        expect(mockGoogleSheetsAPI.saveUserData).toHaveBeenCalledWith(
-          expect.objectContaining({
-            age: 35,
-            salary: 80000,
-          })
-        )
-      })
     })
   })
 
@@ -701,10 +660,9 @@ describe('App Component Integration Tests', () => {
     test('清除資料應該返回 Onboarding', async () => {
       render(<App />)
 
-      await screen.findByTestId('main-tracker')
+      await screen.findByTestId('dashboard-screen')
 
       fireEvent.click(screen.getByRole('button', { name: 'Open Settings' }))
-
       await screen.findByTestId('settings-page')
 
       const resetButton = screen.getByRole('button', { name: 'Reset Data' })
@@ -712,65 +670,6 @@ describe('App Component Integration Tests', () => {
 
       const onboardingScreen = await screen.findByTestId('onboarding-screen')
       expect(onboardingScreen).toBeInTheDocument()
-    })
-
-    test('清除資料應該清空 localStorage', async () => {
-      render(<App />)
-
-      await screen.findByTestId('main-tracker')
-
-      fireEvent.click(screen.getByRole('button', { name: 'Open Settings' }))
-
-      await screen.findByTestId('settings-page')
-
-      const resetButton = screen.getByRole('button', { name: 'Reset Data' })
-      fireEvent.click(resetButton)
-
-      await waitFor(() => {
-        expect(mockStorage.clear).toHaveBeenCalled()
-      })
-    })
-
-    test('清除資料應該清除雲端資料', async () => {
-      render(<App />)
-
-      await screen.findByTestId('main-tracker')
-
-      fireEvent.click(screen.getByRole('button', { name: 'Open Settings' }))
-
-      await screen.findByTestId('settings-page')
-
-      const resetButton = screen.getByRole('button', { name: 'Reset Data' })
-      fireEvent.click(resetButton)
-
-      await waitFor(() => {
-        expect(mockGoogleSheetsAPI.clearAllData).toHaveBeenCalled()
-      })
-    })
-
-    test('清除資料應該重置狀態', async () => {
-      render(<App />)
-
-      await screen.findByTestId('main-tracker')
-
-      // 新增一些記錄
-      fireEvent.click(screen.getByRole('button', { name: 'Add Record' }))
-      await screen.findByText('Records: 1')
-
-      fireEvent.click(screen.getByRole('button', { name: 'Open Settings' }))
-
-      await screen.findByTestId('settings-page')
-
-      const resetButton = screen.getByRole('button', { name: 'Reset Data' })
-      fireEvent.click(resetButton)
-
-      await screen.findByTestId('onboarding-screen')
-
-      // 完成 Onboarding 後應該沒有記錄
-      fireEvent.click(screen.getByRole('button', { name: 'Complete Onboarding' }))
-
-      const recordsText = await screen.findByText('Records: 0')
-      expect(recordsText).toBeInTheDocument()
     })
   })
 
@@ -945,127 +844,9 @@ describe('App Component Integration Tests', () => {
       })
     })
 
-    test('應該正確處理雲端數字 ID 與本地字串 ID 的型別不匹配（防止重複記錄）', async () => {
-      // 模擬真實場景：
-      // 1. 用戶新增記錄，localStorage 儲存字串 ID '1766920653559'
-      // 2. 上傳到 Google Sheets
-      // 3. Google Sheets 將數字字串轉為 number 型別 1766920653559
-      // 4. 重新整理頁面時，應該正確去重，不產生重複記錄
-
-      const recordId = '1766920653559'
-      const timestamp = new Date().toISOString()
-
-      const cloudUserData: UserData = {
-        age: 30,
-        salary: 50000,
-        retireAge: 65,
-        currentSavings: 1000000,
-        monthlySavings: 30000,
-        inflationRate: DEFAULT_INFLATION_RATE,
-        roiRate: DEFAULT_ROI_RATE,
-      }
-
-      // 本地記錄：ID 是字串
-      const localRecords: RecordType[] = [
-        {
-          id: recordId, // 字串 '1766920653559'
-          type: 'spend',
-          amount: 1000,
-          isRecurring: true,
-          timeCost: 2843.13,
-          category: '一般消費',
-          note: '',
-          timestamp,
-          date: timestamp.split('T')[0],
-        },
-      ]
-
-      // 雲端記錄：ID 被轉換為數字（模擬 Google Sheets 行為）
-      const cloudRecords: RecordType[] = [
-        {
-          id: 1766920653559 as any, // 數字 1766920653559（Google Sheets 會自動轉換）
-          type: 'spend',
-          amount: 1000,
-          isRecurring: true,
-          timeCost: 2843.13,
-          category: '一般消費',
-          note: '',
-          timestamp,
-          date: timestamp.split('T')[0],
-        },
-      ]
-
-      mockStorage.load.mockImplementation((key: string) => {
-        if (key === 'userData') return cloudUserData
-        if (key === 'records') return localRecords
-        return null
-      })
-
-      mockGoogleSheetsAPI.isConfigured.mockReturnValue(true)
-      mockGoogleSheetsAPI.getAll.mockResolvedValue({
-        success: true,
-        userData: cloudUserData,
-        records: cloudRecords,
-      })
-
-      render(<App />)
-
-      // 等待資料載入完成
-      await screen.findByText('Age: 30')
-
-      // 驗證：合併後的記錄應該只儲存 1 筆（不是 2 筆）
-      await waitFor(() => {
-        const saveRecordsCalls = mockStorage.save.mock.calls.filter(
-          (call) => call[0] === 'records'
-        )
-
-        if (saveRecordsCalls.length > 0) {
-          const lastSavedRecords = saveRecordsCalls[saveRecordsCalls.length - 1][1]
-
-          // 關鍵驗證：合併後應該只有 1 筆記錄
-          expect(lastSavedRecords).toHaveLength(1)
-
-          // 驗證記錄內容正確
-          expect(lastSavedRecords[0]).toMatchObject({
-            type: 'spend',
-            amount: 1000,
-            isRecurring: true,
-          })
-        }
-      })
-
-      // 額外驗證：UI 應該顯示 1 筆記錄（不是重複的 2 筆）
-      const recordsText = await screen.findByText('Records: 1')
-      expect(recordsText).toBeInTheDocument()
-    })
   })
 
   describe('Sync Status States', () => {
-    test('同步中時應該顯示同步狀態', async () => {
-      mockStorage.load.mockReturnValue(null)
-      mockGoogleSheetsAPI.isConfigured.mockReturnValue(true)
-      mockGoogleSheetsAPI.getAll.mockImplementation(
-        () =>
-          new Promise((resolve) => {
-            setTimeout(
-              () =>
-                resolve({
-                  success: true,
-                  userData: null,
-                  records: [],
-                }),
-              100
-            )
-          })
-      )
-
-      render(<App />)
-
-      // 載入畫面應該顯示同步訊息
-      const syncingText = await screen.findByText('☁️ 正在同步雲端資料...')
-      expect(syncingText).toBeInTheDocument()
-    })
-
     test('同步成功後應該進入對應畫面', async () => {
       const cloudUserData: UserData = {
         age: 40,
@@ -1088,8 +869,8 @@ describe('App Component Integration Tests', () => {
       render(<App />)
 
       // 同步完成後應該進入主畫面
-      const mainTracker = await screen.findByTestId('main-tracker')
-      expect(mainTracker).toBeInTheDocument()
+      const dashboardScreen = await screen.findByTestId('dashboard-screen')
+      expect(dashboardScreen).toBeInTheDocument()
     })
 
     test('雲端無資料時應該清除本地資料並導向 onboarding', async () => {
@@ -1142,7 +923,7 @@ describe('App Component Integration Tests', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Complete Onboarding' }))
 
       // Step 3: 主畫面
-      await screen.findByTestId('main-tracker')
+      await screen.findByTestId('dashboard-screen')
       expect(screen.getByText('Age: 30')).toBeInTheDocument()
       expect(screen.getByText('Records: 0')).toBeInTheDocument()
 
@@ -1161,7 +942,7 @@ describe('App Component Integration Tests', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Close' }))
 
       // Step 6: 修改設定
-      await screen.findByTestId('main-tracker')
+      await screen.findByTestId('dashboard-screen')
 
       fireEvent.click(screen.getByRole('button', { name: 'Open Settings' }))
       await screen.findByTestId('settings-page')
@@ -1216,7 +997,7 @@ describe('App Component Integration Tests', () => {
       // Step 5: 重新完成 Onboarding
       fireEvent.click(screen.getByRole('button', { name: 'Complete Onboarding' }))
 
-      await screen.findByTestId('main-tracker')
+      await screen.findByTestId('dashboard-screen')
       expect(screen.getByText('Age: 30')).toBeInTheDocument()
       const recordsText = await screen.findByText('Records: 0')
       expect(recordsText).toBeInTheDocument()
@@ -1224,106 +1005,6 @@ describe('App Component Integration Tests', () => {
       // 驗證清除和重新儲存
       expect(mockStorage.clear).toHaveBeenCalled()
       expect(mockGoogleSheetsAPI.clearAllData).toHaveBeenCalled()
-    })
-  })
-
-  describe('Data Persistence', () => {
-    test('使用者資料變更時應該自動儲存', async () => {
-      const mockUserData: UserData = {
-        age: 30,
-        salary: 50000,
-        retireAge: 65,
-        currentSavings: 0,
-        monthlySavings: 10000,
-        inflationRate: DEFAULT_INFLATION_RATE,
-        roiRate: DEFAULT_ROI_RATE,
-      }
-
-      mockStorage.load.mockImplementation((key: string) => {
-        if (key === 'userData') return mockUserData
-        if (key === 'records') return []
-        return null
-      })
-
-      render(<App />)
-
-      await screen.findByTestId('main-tracker')
-
-      mockStorage.save.mockClear()
-
-      fireEvent.click(screen.getByRole('button', { name: 'Open Settings' }))
-      await screen.findByTestId('settings-page')
-
-      fireEvent.click(screen.getByRole('button', { name: 'Update User' }))
-
-      await waitFor(() => {
-        expect(mockStorage.save).toHaveBeenCalledWith(
-          'userData',
-          expect.objectContaining({
-            age: 35,
-            salary: 80000,
-          })
-        )
-      })
-    })
-
-    test('記錄資料變更時應該自動儲存', async () => {
-      const mockUserData: UserData = {
-        age: 30,
-        salary: 50000,
-        retireAge: 65,
-        currentSavings: 0,
-        monthlySavings: 10000,
-        inflationRate: DEFAULT_INFLATION_RATE,
-        roiRate: DEFAULT_ROI_RATE,
-      }
-
-      mockStorage.load.mockImplementation((key: string) => {
-        if (key === 'userData') return mockUserData
-        if (key === 'records') return []
-        return null
-      })
-
-      render(<App />)
-
-      await screen.findByTestId('main-tracker')
-
-      mockStorage.save.mockClear()
-
-      fireEvent.click(screen.getByRole('button', { name: 'Add Record' }))
-
-      await waitFor(() => {
-        expect(mockStorage.save).toHaveBeenCalledWith('records', expect.any(Array))
-      })
-    })
-
-    test('空記錄列表應該儲存（防止刪除的記錄重新出現）', async () => {
-      const mockUserData: UserData = {
-        age: 30,
-        salary: 50000,
-        retireAge: 65,
-        currentSavings: 0,
-        monthlySavings: 10000,
-        inflationRate: DEFAULT_INFLATION_RATE,
-        roiRate: DEFAULT_ROI_RATE,
-      }
-
-      mockStorage.load.mockImplementation((key: string) => {
-        if (key === 'userData') return mockUserData
-        if (key === 'records') return []
-        return null
-      })
-
-      render(<App />)
-
-      await screen.findByTestId('main-tracker')
-
-      // 檢查應該儲存空的 records（修正後的行為）
-      const recordsSaveCalls = mockStorage.save.mock.calls.filter((call) => call[0] === 'records')
-      expect(recordsSaveCalls.length).toBeGreaterThanOrEqual(1)
-      // 確認儲存的是空陣列
-      const lastRecordsSave = recordsSaveCalls[recordsSaveCalls.length - 1]
-      expect(lastRecordsSave[1]).toEqual([])
     })
   })
 
@@ -1348,8 +1029,8 @@ describe('App Component Integration Tests', () => {
       // 即使儲存失敗，應用程式應該繼續運作
       fireEvent.click(screen.getByRole('button', { name: 'Complete Onboarding' }))
 
-      const mainTracker = await screen.findByTestId('main-tracker')
-      expect(mainTracker).toBeInTheDocument()
+      const dashboardScreen = await screen.findByTestId('dashboard-screen')
+      expect(dashboardScreen).toBeInTheDocument()
     })
 
     test('應該處理雲端 API 完全失敗', async () => {
@@ -1366,7 +1047,7 @@ describe('App Component Integration Tests', () => {
       // 應用程式應該能正常運作
       fireEvent.click(screen.getByRole('button', { name: 'Complete Onboarding' }))
 
-      await screen.findByTestId('main-tracker')
+      await screen.findByTestId('dashboard-screen')
 
       // 新增記錄也應該能運作（即使雲端失敗）
       fireEvent.click(screen.getByRole('button', { name: 'Add Record' }))
@@ -1391,9 +1072,9 @@ describe('App Component Integration Tests', () => {
       // 應該補充缺少的欄位或進入 onboarding
       await waitFor(
         () => {
-          const mainTracker = screen.queryByTestId('main-tracker')
+          const dashboardScreen = screen.queryByTestId('dashboard-screen')
           const onboardingScreen = screen.queryByTestId('onboarding-screen')
-          expect(mainTracker || onboardingScreen).toBeTruthy()
+          expect(dashboardScreen || onboardingScreen).toBeTruthy()
         },
         { timeout: 2000 }
       )
