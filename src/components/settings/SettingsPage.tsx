@@ -87,7 +87,7 @@ export function SettingsPage({ userData, onUpdateUser, onClose, onReset }: Setti
   }, [calculatorMode, currentSavings, monthlySavings, yearsToRetire, realRate, age, targetFund, monthlyRetirement]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800 pb-8">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800 pb-8 animate-slide-in-right">
       <div className="sticky top-0 bg-gray-900/95 backdrop-blur border-b border-gray-800 z-10">
         <div className="max-w-lg mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center">
@@ -99,7 +99,7 @@ export function SettingsPage({ userData, onUpdateUser, onClose, onReset }: Setti
             <h1 className="text-xl font-bold text-white">設定</h1>
           </div>
           <button onClick={handleSave}
-            className="bg-emerald-500 hover:bg-emerald-400 text-gray-900 font-bold py-2 px-4 rounded-xl text-sm">
+            className="bg-emerald-500 hover:bg-emerald-400 hover:scale-105 active:scale-95 text-gray-900 font-bold py-2 px-4 rounded-xl text-sm transition-all">
             儲存
           </button>
         </div>

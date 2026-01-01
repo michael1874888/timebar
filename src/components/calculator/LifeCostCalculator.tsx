@@ -82,7 +82,7 @@ export function LifeCostCalculator({ userData, onDecision }: LifeCostCalculatorP
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800">
       {/* 頭部標題 */}
-      <div className="text-center pt-8 pb-6 px-4">
+      <div className="text-center pt-20 pb-6 px-4">
         <h1 className="text-4xl font-black text-white mb-3">
           這個東西值多少
           <span className="text-orange-400">生命</span>
@@ -94,7 +94,7 @@ export function LifeCostCalculator({ userData, onDecision }: LifeCostCalculatorP
       </div>
 
       {/* 金額輸入區 */}
-      <div className="px-4 mb-6">
+      <div className="px-4 mb-4">
         <div className="bg-gray-800/60 backdrop-blur rounded-3xl p-6 border-2 border-orange-500/30 shadow-xl">
           {/* 物品名稱（選填） */}
           <div className="mb-4">
@@ -128,9 +128,9 @@ export function LifeCostCalculator({ userData, onDecision }: LifeCostCalculatorP
               <button
                 key={v}
                 onClick={() => setAmount(v)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all hover:scale-105 active:scale-95 ${
                   amount === v
-                    ? 'bg-orange-500 text-gray-900'
+                    ? 'bg-orange-500 text-gray-900 shadow-lg shadow-orange-500/30'
                     : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                 }`}
               >
@@ -143,14 +143,14 @@ export function LifeCostCalculator({ userData, onDecision }: LifeCostCalculatorP
 
       {/* 生命成本顯示（只在輸入金額後顯示） */}
       {amount > 0 && (
-        <div className="px-4 pb-24 animate-fade-in">
+        <div className="px-4 pb-24 animate-card-enter">
           {/* 核心震撼：工作時間成本 */}
-          <div className="bg-orange-500/10 border-2 border-orange-500 rounded-3xl p-6 mb-4 shadow-xl">
+          <div className="bg-orange-500/10 border-2 border-orange-500 rounded-3xl p-6 mb-4 shadow-xl animate-number-pop">
             <div className="text-center">
               <div className="text-orange-400 text-sm font-medium mb-3">
                 ⚠️ 生命成本
               </div>
-              <div className="text-white text-5xl font-black mb-3">
+              <div className="text-white text-5xl font-black mb-3 animate-number-change">
                 {workTime.days > 0 && <>{workTime.days} 天</>}
                 {workTime.days > 0 && (workTime.hours > 0 || workTime.minutes > 0) && <> </>}
                 {workTime.hours > 0 && <>{workTime.hours} 小時</>}
@@ -171,7 +171,7 @@ export function LifeCostCalculator({ userData, onDecision }: LifeCostCalculatorP
                 <div className="text-red-400 font-bold text-lg mb-2">
                   這會推遲你的退休
                 </div>
-                <div className="text-white text-3xl font-black mb-1">
+                <div className="text-white text-3xl font-black mb-1 animate-number-change">
                   {retirementImpact.days} 天
                   {retirementImpact.hours > 0 && <> {retirementImpact.hours} 小時</>}
                 </div>
@@ -203,7 +203,7 @@ export function LifeCostCalculator({ userData, onDecision }: LifeCostCalculatorP
                 setAmount(0);
                 setItemName('');
               }}
-              className="bg-gray-700 hover:bg-gray-600 text-white py-4 px-6 rounded-2xl font-bold text-lg transition-all active:scale-95"
+              className="bg-gray-700 hover:bg-gray-600 hover:scale-105 text-white py-4 px-6 rounded-2xl font-bold text-lg transition-all active:scale-95"
             >
               <div>還是要買</div>
               <div className="text-sm text-gray-400 mt-1">😔</div>
@@ -214,7 +214,7 @@ export function LifeCostCalculator({ userData, onDecision }: LifeCostCalculatorP
                 setAmount(0);
                 setItemName('');
               }}
-              className="bg-emerald-500 hover:bg-emerald-400 text-gray-900 py-4 px-6 rounded-2xl font-bold text-lg transition-all active:scale-95 shadow-lg shadow-emerald-500/25"
+              className="bg-emerald-500 hover:bg-emerald-400 hover:scale-105 text-gray-900 py-4 px-6 rounded-2xl font-bold text-lg transition-all active:scale-95 shadow-lg shadow-emerald-500/25"
             >
               <div>我不買了！</div>
               <div className="text-sm text-emerald-700 mt-1">🎉</div>

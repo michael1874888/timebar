@@ -112,3 +112,129 @@
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
+
+/* 頁面滑入動畫 */
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out;
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.3s ease-out;
+}
+
+/* 數字彈出動畫 */
+@keyframes number-pop {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-number-pop {
+  animation: number-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* 數字遞增效果（配合 JS 使用） */
+@keyframes number-change {
+  0% {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-number-change {
+  animation: number-change 0.3s ease-out;
+}
+
+/* 按鈕微互動 */
+@keyframes button-press {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-button-press {
+  animation: button-press 0.2s ease-out;
+}
+
+/* 進度條加載動畫 */
+@keyframes progress-load {
+  from {
+    width: 0%;
+  }
+}
+
+.animate-progress-load {
+  animation: progress-load 1s ease-out;
+}
+
+/* 卡片進入動畫（增強版） */
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-card-enter {
+  animation: card-enter 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* 脈衝強調效果 */
+@keyframes pulse-strong {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+}
+
+.animate-pulse-strong {
+  animation: pulse-strong 0.6s ease-in-out;
+}

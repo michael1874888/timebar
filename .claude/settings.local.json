@@ -21,7 +21,10 @@
       "Bash(npm uninstall:*)",
       "Bash(npx vitest:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(cat:*)",
+      "Bash(ls:*)",
+      "Bash(git -C /d/UmiCode/timebar/transform/timebar log --oneline -20)"
     ]
   }
 }

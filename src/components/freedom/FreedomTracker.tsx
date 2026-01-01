@@ -101,12 +101,12 @@ export function FreedomTracker({ userData, totalSaved }: FreedomTrackerProps) {
   return (
     <div className="space-y-4">
       {/* 當前成就卡片 */}
-      <div className="bg-gradient-to-br from-emerald-900/40 via-emerald-800/30 to-emerald-900/40 rounded-3xl p-6 border border-emerald-500/30">
+      <div className="bg-gradient-to-br from-emerald-900/40 via-emerald-800/30 to-emerald-900/40 rounded-3xl p-5 border border-emerald-500/30">
         <div className="text-center mb-6">
           <div className="text-emerald-400 text-sm font-medium mb-2">
             🏆 你已經買回
           </div>
-          <div className="text-white text-6xl font-black mb-2">
+          <div className="text-white text-5xl font-black mb-2 animate-number-pop">
             {freedomDays}
           </div>
           <div className="text-emerald-300 text-lg">
@@ -177,7 +177,7 @@ export function FreedomTracker({ userData, totalSaved }: FreedomTrackerProps) {
               <div className="relative">
                 <div className="h-3 bg-gray-800 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 transition-all duration-500"
+                    className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 transition-all duration-1000 ease-out animate-progress-load"
                     style={{ width: `${Math.min(progress, 100)}%` }}
                   />
                 </div>

@@ -222,7 +222,7 @@ export default function App() {
         )}
 
         {screen === 'main' && userData && (
-        <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800">
+        <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800 animate-fade-in">
           {/* 頂部導航 */}
           <div className="sticky top-0 z-10 bg-gray-900/95 backdrop-blur border-b border-gray-800">
             <div className="max-w-lg mx-auto px-4 py-3 flex justify-between items-center">
@@ -310,7 +310,7 @@ function DashboardScreen({ userData, records, totalSaved, onClose, onChallengeCo
   const [showDetailedStats, setShowDetailedStats] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800 pb-8">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800 pb-8 animate-slide-in-right">
       <div className="sticky top-0 bg-gray-900/95 backdrop-blur border-b border-gray-800 z-10">
         <div className="max-w-lg mx-auto px-4 py-4 flex items-center">
           <button onClick={onClose} className="text-gray-400 hover:text-white mr-4">
