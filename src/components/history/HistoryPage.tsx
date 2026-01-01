@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { GPSCalc, Formatters } from '@/utils/financeCalc';
 import { UserData, Record as RecordType } from '@/types';
+import { CategoryPieChart } from './CategoryPieChart';
 
 const { formatTime, formatCurrency, formatAgeDiff } = Formatters;
 
@@ -105,6 +106,13 @@ export function HistoryPage({ records, userData, onClose }: HistoryPageProps) {
           </div>
         </div>
 
+        {/* 支出分類分析 */}
+        {records.length > 0 && (
+          <div className="mb-6">
+            <CategoryPieChart records={records} type="spend" />
+          </div>
+        )}
+
         {/* Records List */}
         {Object.keys(groupedRecords).length === 0 ? (
           <div className="text-center py-16">
@@ -120,7 +128,7 @@ export function HistoryPage({ records, userData, onClose }: HistoryPageProps) {
 
             return (
               <div key={monthKey} className="mb-6">
-                <div className="flex justify-between items-center mb-3 px-1">
+                <div data-testid="month-summary" className="flex justify-between items-center mb-3 px-1">
                   <div className="text-gray-400 font-medium">{year}年{month}月</div>
                   <div className="flex gap-3 text-sm">
                     <span className="text-emerald-400">+{formatCurrency(monthSaved)}</span>

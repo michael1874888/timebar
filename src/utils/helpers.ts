@@ -1,7 +1,7 @@
 // UI 工具函數
 import { CONSTANTS } from './financeCalc';
 
-const { WORKING_HOURS_PER_DAY, WORKING_DAYS_PER_MONTH, WORKING_HOURS_PER_YEAR } = CONSTANTS;
+const { WORKING_HOURS_PER_DAY, WORKING_DAYS_PER_MONTH } = CONSTANTS;
 
 export const getRandomItem = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 
@@ -10,24 +10,27 @@ export const getEquivalent = (workingHours: number, isSpend: boolean): string =>
   const hoursPerDay = WORKING_HOURS_PER_DAY; // 8
   const hoursPerWeek = hoursPerDay * 5; // 40
   const hoursPerMonth = hoursPerDay * WORKING_DAYS_PER_MONTH; // 176
-  const hoursPerYear = WORKING_HOURS_PER_YEAR; // 2112
 
-  const items = isSpend ? [
-    { max: hoursPerDay, texts: ['一杯咖啡的時間', '一頓午餐'] },
-    { max: hoursPerDay * 3, texts: ['一天的工作', '一次電影約會'] },
-    { max: hoursPerWeek, texts: ['一週的上班時間', '一頓高級餐廳'] },
-    { max: hoursPerMonth, texts: ['一個月的假期', '一趟國內旅行'] },
-    { max: hoursPerMonth * 3, texts: ['一季的自由', '一趟日本旅行'] },
-    { max: hoursPerYear, texts: ['一整年的時光', '環遊世界的機會'] },
-    { max: Infinity, texts: ['好幾年的退休生活', '財務自由的關鍵'] },
-  ] : [
-    { max: hoursPerDay * 3, texts: ['多睡幾天懶覺', '退休後的悠閒早晨'] },
-    { max: hoursPerWeek, texts: ['多一週去爬山', '陪家人的時光'] },
-    { max: hoursPerMonth, texts: ['多一個月的旅行', '學一項新技能'] },
-    { max: hoursPerMonth * 3, texts: ['多一季的自由', '完成一個小夢想'] },
-    { max: Infinity, texts: ['人生多了好多可能', '離財務自由更近一步'] },
-  ];
-  return getRandomItem((items.find(i => absHours <= i.max) || items[items.length - 1]).texts);
+  if (isSpend) {
+    // 花費描述 - 根據工作小時
+    if (absHours < 1) return '不到 1 小時的工作';
+    if (absHours < hoursPerDay * 0.5) return '幾小時的工作';
+    if (absHours < hoursPerDay) return '半天的工作';
+    if (absHours < hoursPerDay * 1.5) return '一整天的工作';
+    if (absHours < hoursPerWeek * 0.8) return `${Math.round(absHours / hoursPerDay)} 天的工作`;
+    if (absHours < hoursPerMonth * 0.8) return `${Math.round(absHours / hoursPerWeek * 10) / 10} 週的工作`;
+    if (absHours < hoursPerMonth * 3) return `${Math.round(absHours / hoursPerMonth * 10) / 10} 個月的工作`;
+    return `${Math.round(absHours / hoursPerMonth)} 個月的辛苦`;
+  } else {
+    // 儲蓄描述
+    if (absHours < hoursPerDay * 0.5) return '多睡一個懶覺';
+    if (absHours < hoursPerDay) return '多一天睡到自然醒';
+    if (absHours < hoursPerDay * 3) return '多一個悠閒週末';
+    if (absHours < hoursPerWeek) return '多一週的自由';
+    if (absHours < hoursPerMonth * 0.5) return '多半個月的假期';
+    if (absHours < hoursPerMonth) return '多一個月去旅行';
+    return '人生多了無限可能';
+  }
 };
 
 export const getMotivationalQuote = (): string => getRandomItem([
