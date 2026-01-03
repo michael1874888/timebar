@@ -5,6 +5,7 @@ import { MainTracker } from './tracker/MainTracker';
 import { HistoryPage } from './history/HistoryPage';
 import { SettingsPage } from './settings/SettingsPage';
 import { ShopPage } from './shop/ShopPage';
+import { ChallengeSettingsPage } from './settings/ChallengeSettingsPage';
 import { GoogleSheetsAPI } from '@/services/googleSheets';
 import { Storage } from '@/utils/storage';
 import { CONSTANTS } from '@/utils/financeCalc';
@@ -183,10 +184,14 @@ export default function App() {
       {screen === 'settings' && userData && (
         <SettingsPage userData={userData} onUpdateUser={handleUpdateUser}
           onClose={() => setScreen('dashboard')} onReset={handleReset}
-          onOpenShop={() => setScreen('shop')} />
+          onOpenShop={() => setScreen('shop')}
+          onOpenChallengeSettings={() => setScreen('challenge-settings')} />
       )}
       {screen === 'shop' && userData && (
         <ShopPage onClose={() => setScreen('settings')} />
+      )}
+      {screen === 'challenge-settings' && (
+        <ChallengeSettingsPage onClose={() => setScreen('settings')} />
       )}
     </div>
   );

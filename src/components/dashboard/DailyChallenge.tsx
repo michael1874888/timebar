@@ -1,6 +1,8 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Storage } from '@/utils/storage';
 import { ChallengeDefinition } from '@/types';
+
+const CUSTOM_CHALLENGES_KEY = 'timebar_custom_challenges';
 
 // 預設每日挑戰定義（含積分獎勵）
 const DAILY_CHALLENGES: ChallengeDefinition[] = [
@@ -96,24 +98,53 @@ interface DailyChallengeProps {
 
 export function DailyChallenge({ onCompleteChallenge, totalPoints = 0 }: DailyChallengeProps) {
   const [challengeState, setChallengeState] = useState<InternalChallengeState>(loadChallengeState);
+  const [customChallenges, setCustomChallenges] = useState<ChallengeDefinition[]>([]);
+  const [deletedDefaults, setDeletedDefaults] = useState<string[]>([]);
+  const [modifiedDefaults, setModifiedDefaults] = useState<Record<string, ChallengeDefinition>>({});
+
+  // 載入自定義挑戰和預設挑戰的修改
+  useEffect(() => {
+    const savedCustom = Storage.load(CUSTOM_CHALLENGES_KEY);
+    if (Array.isArray(savedCustom)) {
+      setCustomChallenges(savedCustom);
+    }
+
+    const savedDeleted = Storage.load('timebar_deleted_default_challenges');
+    if (Array.isArray(savedDeleted)) {
+      setDeletedDefaults(savedDeleted);
+    }
+
+    const savedModified = Storage.load('timebar_modified_default_challenges');
+    if (savedModified && typeof savedModified === 'object') {
+      setModifiedDefaults(savedModified as Record<string, ChallengeDefinition>);
+    }
+  }, []);
+
+  // 合併預設（套用修改、排除刪除）+ 自定義挑戰
+  const allChallenges = useMemo(() => {
+    const effectiveDefaults = DAILY_CHALLENGES
+      .filter(c => !deletedDefaults.includes(c.id))
+      .map(c => modifiedDefaults[c.id] || c);
+    return [...effectiveDefaults, ...customChallenges];
+  }, [customChallenges, deletedDefaults, modifiedDefaults]);
 
   // 計算今天完成了幾個
   const completedCount = challengeState.completed.length;
-  const totalChallenges = DAILY_CHALLENGES.length;
+  const totalChallenges = allChallenges.length;
 
   // 計算今天獲得的總積分
   const { todayEarned, todaySaved } = useMemo(() => {
     let earned = 0;
     let saved = 0;
     challengeState.completed.forEach(id => {
-      const challenge = DAILY_CHALLENGES.find(c => c.id === id);
+      const challenge = allChallenges.find(c => c.id === id);
       if (challenge) {
         earned += challenge.energyReward;
         saved += challenge.defaultAmount;
       }
     });
     return { todayEarned: earned, todaySaved: saved };
-  }, [challengeState.completed]);
+  }, [challengeState.completed, allChallenges]);
 
   // 完成挑戰
   const handleComplete = useCallback((challenge: ChallengeDefinition) => {
@@ -171,7 +202,7 @@ export function DailyChallenge({ onCompleteChallenge, totalPoints = 0 }: DailyCh
         </div>
       ) : (
         <div className="space-y-2">
-          {DAILY_CHALLENGES.map((challenge) => {
+          {allChallenges.map((challenge) => {
             const isCompleted = challengeState.completed.includes(challenge.id);
             
             return (

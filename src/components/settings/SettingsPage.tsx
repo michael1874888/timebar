@@ -14,9 +14,10 @@ interface SettingsPageProps {
   onClose: () => void;
   onReset: () => void;
   onOpenShop?: () => void;
+  onOpenChallengeSettings?: () => void;
 }
 
-export function SettingsPage({ userData, onUpdateUser, onClose, onReset, onOpenShop }: SettingsPageProps) {
+export function SettingsPage({ userData, onUpdateUser, onClose, onReset, onOpenShop, onOpenChallengeSettings }: SettingsPageProps) {
   const [age, setAge] = useState<number>(userData.age);
   const [salary, setSalary] = useState<number>(userData.salary);
   const [retireAge, setRetireAge] = useState<number>(userData.retireAge);
@@ -310,6 +311,27 @@ export function SettingsPage({ userData, onUpdateUser, onClose, onReset, onOpenS
                   進入
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Challenge Management Entry */}
+        {onOpenChallengeSettings && (
+          <div className="bg-gradient-to-r from-emerald-900/40 to-teal-900/40 rounded-3xl p-6 mb-6 border border-emerald-500/30">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="text-3xl">🎯</div>
+                <div>
+                  <h2 className="text-white font-bold">管理每日挑戰</h2>
+                  <div className="text-gray-400 text-sm">新增或編輯自定義挑戰</div>
+                </div>
+              </div>
+              <button
+                onClick={onOpenChallengeSettings}
+                className="bg-emerald-500 hover:bg-emerald-400 text-gray-900 font-bold py-2 px-4 rounded-xl text-sm"
+              >
+                管理
+              </button>
             </div>
           </div>
         )}

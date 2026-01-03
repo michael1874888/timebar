@@ -82,7 +82,7 @@ export interface Record {
   guiltFree?: boolean;       // v2.0: 是否使用免死金牌豁免
 }
 
-export type Screen = 'loading' | 'onboarding' | 'dashboard' | 'tracker' | 'history' | 'settings' | 'shop';
+export type Screen = 'loading' | 'onboarding' | 'dashboard' | 'tracker' | 'history' | 'settings' | 'shop' | 'challenge-settings';
 
 export interface GPSResult {
   estimatedAge: number;
