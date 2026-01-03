@@ -71,7 +71,7 @@ export const formatBehindMessage = (days: number): string => {
  */
 export const formatSpendFeedback = (workingDays: number): string => {
   if (workingDays < 1) {
-    return '小額消費，影響不大，繼續保持覺察！';
+    return '小額也會累積！持續覺察就是在掌控未來';
   }
   if (workingDays < 3) {
     return '已記錄！知道代價就是進步的開始';
