@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import { FinanceCalc, GPSCalc, Formatters } from '@/utils/financeCalc';
 import { getVividComparison, formatRetirementImpact } from '@/utils/lifeCostCalc';
 import { Confetti } from '../Confetti';
+import { AwarenessParticles } from '../AwarenessParticles';
 import { CelebrationModal } from '../common/CelebrationModal';
 import { Toast } from '../common/Toast';
 import { PointsParticles } from '../common/PointsParticles';
@@ -42,6 +43,7 @@ export function DashboardScreen({
   const [isRecurring, setIsRecurring] = useState<boolean>(false);
   const [showCelebration, setShowCelebration] = useState<boolean>(false);
   const [showConfetti, setShowConfetti] = useState<boolean>(false);
+  const [showAwareness, setShowAwareness] = useState<boolean>(false);
   const [lastSavedAmount, setLastSavedAmount] = useState<number>(0);
   const [lastSavedHours, setLastSavedHours] = useState<number>(0);
   const [showToast, setShowToast] = useState<boolean>(false);
@@ -108,6 +110,11 @@ export function DashboardScreen({
     };
 
     await onAddRecord(record);
+
+    // 觸發覺察提醒動畫
+    setShowAwareness(true);
+    setTimeout(() => setShowAwareness(false), 2500);
+
     setToastMessage('已記錄消費 📝');
     setToastType('success');
     setShowToast(true);
@@ -247,6 +254,7 @@ export function DashboardScreen({
       )}
       
       <Confetti active={showConfetti} />
+      <AwarenessParticles active={showAwareness} />
       <CelebrationModal
         isOpen={showCelebration}
         onClose={() => {

@@ -33,6 +33,20 @@
   }
 }
 
+@keyframes awareness {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(-100vh) rotate(-360deg);
+    opacity: 0;
+  }
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -50,6 +64,10 @@
 
 .animate-confetti {
   animation: confetti 2s ease-out forwards;
+}
+
+.animate-awareness {
+  animation: awareness 2s ease-out forwards;
 }
 
 /* Spinner */
