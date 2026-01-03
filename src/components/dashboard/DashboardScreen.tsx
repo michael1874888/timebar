@@ -4,7 +4,7 @@ import { getVividComparison, formatRetirementImpact } from '@/utils/lifeCostCalc
 import { Confetti } from '../Confetti';
 import { AwarenessParticles } from '../AwarenessParticles';
 import { CelebrationModal } from '../common/CelebrationModal';
-import { Toast } from '../common/Toast';
+import { useToast } from '../common/Toast';
 import { PointsParticles } from '../common/PointsParticles';
 import { LifeBattery } from './LifeBattery';
 import { MilestoneDisplay } from './MilestoneDisplay';
@@ -24,13 +24,6 @@ interface DashboardScreenProps {
   onOpenSettings: () => void;
 }
 
-// 記帳提示的 Toast 資料
-interface RecordPromptData {
-  challenge: ChallengeDefinition;
-  amount: number;
-  timeCost: number;
-}
-
 export function DashboardScreen({
   userData,
   records,
@@ -46,13 +39,12 @@ export function DashboardScreen({
   const [showAwareness, setShowAwareness] = useState<boolean>(false);
   const [lastSavedAmount, setLastSavedAmount] = useState<number>(0);
   const [lastSavedHours, setLastSavedHours] = useState<number>(0);
-  const [showToast, setShowToast] = useState<boolean>(false);
-  const [toastMessage, setToastMessage] = useState<string>('');
-  const [toastType, setToastType] = useState<'success' | 'error' | 'info' | 'points'>('success');
-  
-  // v2.0: 積分與記帳提示
+
+  // v2.0: Toast 佇列系統
+  const { showToast, ToastContainer } = useToast();
+
+  // v2.0: 積分系統
   const [pointsBalance, setPointsBalance] = useState<number>(0);
-  const [recordPrompt, setRecordPrompt] = useState<RecordPromptData | null>(null);
   const [pendingSave, setPendingSave] = useState<{ amount: number; timeCost: number } | null>(null);
   
   // v2.0: 積分粒子效果
@@ -115,9 +107,7 @@ export function DashboardScreen({
     setShowAwareness(true);
     setTimeout(() => setShowAwareness(false), 2500);
 
-    setToastMessage('已記錄消費 📝');
-    setToastType('success');
-    setShowToast(true);
+    showToast('已記錄消費 📝', 'success');
     setAmount(0);
   }, [amount, isRecurring, timeCost, onAddRecord]);
 
@@ -160,21 +150,19 @@ export function DashboardScreen({
     await onAddRecord(record);
     setPendingSave(null);
     setShowCelebration(false);
-    
-    setToastMessage('已記入儲蓄 💰');
-    setToastType('success');
-    setShowToast(true);
+
+    showToast('已記入儲蓄 💰', 'success');
   }, [pendingSave, onAddRecord]);
 
   // v2.0: 處理每日挑戰完成
   const handleChallengeComplete = useCallback((
-    challenge: ChallengeDefinition, 
+    challenge: ChallengeDefinition,
     result: ChallengeCompleteResult
   ) => {
     // 增加積分
     const newBalance = PointsSystem.addPoints(result.points, 'daily_challenge');
     setPointsBalance(newBalance);
-    
+
     // v2.0: 觸發粒子效果
     setEarnedPoints(result.points);
     setShowPointsParticles(true);
@@ -191,67 +179,52 @@ export function DashboardScreen({
 
     // 顯示積分 Toast 並詢問是否記帳
     if (result.showRecordPrompt) {
-      setRecordPrompt({
+      const promptData = {
         challenge,
         amount: result.amount,
         timeCost: challengeTimeCost
-      });
+      };
+
+      showToast(
+        `獲得 ${challenge.energyReward} ⏳ 時間沙！`,
+        'points',
+        {
+          subMessage: `要把省下的 $${result.amount} 記下來嗎？`,
+          action: {
+            label: '💰 記一筆',
+            onClick: async () => {
+              const record: RecordType = {
+                id: Date.now().toString(),
+                type: 'save',
+                amount: promptData.amount,
+                isRecurring: false,
+                timeCost: promptData.timeCost,
+                category: '每日挑戰',
+                note: promptData.challenge.name,
+                timestamp: new Date().toISOString(),
+                date: new Date().toISOString().split('T')[0],
+              };
+              await onAddRecord(record);
+              showToast(`已記錄省下 $${promptData.amount} 💰`, 'success');
+            }
+          }
+        }
+      );
+    } else {
+      // 沒有記帳提示，只顯示積分獲得
+      showToast(`獲得 ${challenge.energyReward} ⏳ 時間沙！`, 'points');
     }
-  }, [hourlyRate, realRate, yearsToRetire]);
-
-  // v2.0: 記錄挑戰儲蓄
-  const handleRecordChallenge = useCallback(async () => {
-    if (!recordPrompt) return;
-
-    const record: RecordType = {
-      id: Date.now().toString(),
-      type: 'save',
-      amount: recordPrompt.amount,
-      isRecurring: false,
-      timeCost: recordPrompt.timeCost,
-      category: '每日挑戰',
-      note: recordPrompt.challenge.name,
-      timestamp: new Date().toISOString(),
-      date: new Date().toISOString().split('T')[0],
-    };
-
-    await onAddRecord(record);
-    setRecordPrompt(null);
-    
-    setToastMessage(`已記錄省下 $${recordPrompt.amount} 💰`);
-    setToastType('success');
-    setShowToast(true);
-  }, [recordPrompt, onAddRecord]);
+  }, [hourlyRate, realRate, yearsToRetire, showToast, onAddRecord]);
 
   const quickAmounts = [100, 300, 500, 1000, 3000, 5000];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800">
-      {/* Toast 通知 */}
-      {showToast && (
-        <Toast
-          message={toastMessage}
-          type={toastType}
-          onClose={() => setShowToast(false)}
-        />
-      )}
-      
+      {/* v2.0: Toast 佇列容器 */}
+      <ToastContainer />
+
       {/* v2.0: 積分粒子效果 */}
       <PointsParticles active={showPointsParticles} amount={earnedPoints} x={50} y={30} />
-
-      {/* 挑戰完成積分 Toast（帶記帳選項） */}
-      {recordPrompt && (
-        <Toast
-          message={`獲得 ${recordPrompt.challenge.energyReward} ⏳ 時間沙！`}
-          subMessage={`要把省下的 $${recordPrompt.amount} 記下來嗎？`}
-          type="points"
-          action={{
-            label: '💰 記一筆',
-            onClick: handleRecordChallenge
-          }}
-          onClose={() => setRecordPrompt(null)}
-        />
-      )}
       
       <Confetti active={showConfetti} />
       <AwarenessParticles active={showAwareness} />

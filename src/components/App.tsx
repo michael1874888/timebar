@@ -9,6 +9,8 @@ import { ChallengeSettingsPage } from './settings/ChallengeSettingsPage';
 import { GoogleSheetsAPI } from '@/services/googleSheets';
 import { Storage } from '@/utils/storage';
 import { CONSTANTS } from '@/utils/financeCalc';
+import { PointsSystem } from '@/utils/pointsSystem';
+import { InventorySystem } from '@/utils/inventorySystem';
 import { UserData, Record as RecordType, Screen } from '@/types';
 
 const { DEFAULT_INFLATION_RATE, DEFAULT_ROI_RATE } = CONSTANTS;
@@ -42,6 +44,14 @@ export default function App() {
               roiRate: cloudData.userData.roiRate ?? DEFAULT_ROI_RATE,
               monthlySavings: cloudData.userData.monthlySavings ?? Math.round(cloudData.userData.salary * 0.2),
             };
+
+            // v2.0: 同步積分和庫存到對應系統
+            if (cloudUserData.pointsBalance !== undefined) {
+              PointsSystem.setBalance(cloudUserData.pointsBalance);
+            }
+            if (cloudUserData.inventory) {
+              InventorySystem.save(cloudUserData.inventory);
+            }
 
             // 完全以雲端為準（source of truth），不合併本地記錄
             // 這樣可以確保跨裝置資料同步的一致性，避免資料重置後出現舊資料
@@ -120,16 +130,36 @@ export default function App() {
   }, [records, userData]);
 
   const handleOnboardingComplete = (data: UserData): void => { setUserData(data); setScreen('dashboard'); };
+
   const handleAddRecord = async (record: RecordType): Promise<void> => {
     setRecords(prev => [...prev, record]);
     try {
       await GoogleSheetsAPI.saveRecord(record);
+
+      // v2.0: 記帳後同步積分和庫存到雲端
+      if (userData) {
+        const updatedUserData: UserData = {
+          ...userData,
+          pointsBalance: PointsSystem.getBalance(),
+          inventory: InventorySystem.load()
+        };
+        setUserData(updatedUserData);
+      }
     } catch (error) {
       console.error('Failed to save record to cloud:', error);
       // 記錄已加入本地，即使雲端同步失敗也不影響使用
     }
   };
-  const handleUpdateUser = (data: UserData): void => { setUserData(data); };
+
+  const handleUpdateUser = (data: UserData): void => {
+    // v2.0: 同步積分和庫存
+    const updatedData: UserData = {
+      ...data,
+      pointsBalance: PointsSystem.getBalance(),
+      inventory: InventorySystem.load()
+    };
+    setUserData(updatedData);
+  };
   const handleReset = async (): Promise<void> => {
     try {
       await GoogleSheetsAPI.clearAllData();
@@ -138,6 +168,9 @@ export default function App() {
       // 繼續清除本地資料
     }
     Storage.clear();
+    // v2.0: 重置積分和庫存系統
+    PointsSystem.reset();
+    InventorySystem.reset();
     setUserData(null);
     setRecords([]);
     setScreen('onboarding');

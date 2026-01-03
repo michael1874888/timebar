@@ -120,6 +120,42 @@ export function DailyChallenge({ onCompleteChallenge, totalPoints = 0 }: DailyCh
     }
   }, []);
 
+  // v2.0: 跨日自動重置機制
+  useEffect(() => {
+    const checkAndResetAtMidnight = () => {
+      const now = new Date();
+      const currentDate = getTodayDate();
+
+      // 如果當前日期與儲存的日期不同，重置挑戰
+      if (challengeState.date !== currentDate) {
+        const newState: InternalChallengeState = {
+          date: currentDate,
+          completed: [],
+          totalEarnedToday: 0
+        };
+        setChallengeState(newState);
+        saveChallengeState(newState);
+        console.log('[DailyChallenge] 新的一天，挑戰已重置');
+      }
+
+      // 計算到下一個午夜的毫秒數
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+      const msUntilMidnight = tomorrow.getTime() - now.getTime();
+
+      // 在午夜時重新檢查
+      const timer = setTimeout(() => {
+        checkAndResetAtMidnight();
+      }, msUntilMidnight);
+
+      return () => clearTimeout(timer);
+    };
+
+    const cleanup = checkAndResetAtMidnight();
+    return cleanup;
+  }, [challengeState.date]);
+
   // 合併預設（套用修改、排除刪除）+ 自定義挑戰
   const allChallenges = useMemo(() => {
     const effectiveDefaults = DAILY_CHALLENGES
