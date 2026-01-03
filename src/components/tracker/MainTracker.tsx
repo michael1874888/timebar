@@ -3,6 +3,7 @@ import { FinanceCalc, GPSCalc, Formatters } from '@/utils/financeCalc';
 import { getEquivalent, getMotivationalQuote } from '@/utils/helpers';
 import { Confetti } from '../Confetti';
 import { UserData, Record as RecordType } from '@/types';
+import { InventorySystem } from '@/utils/inventorySystem';
 
 const { formatTime, formatCurrency, formatCurrencyFull, formatAgeDiff } = Formatters;
 
@@ -10,11 +11,12 @@ interface MainTrackerProps {
   userData: UserData;
   records: RecordType[];
   onAddRecord: (record: RecordType) => void;
+  onOpenHome: () => void;
   onOpenHistory: () => void;
   onOpenSettings: () => void;
 }
 
-export function MainTracker({ userData, records, onAddRecord, onOpenHistory, onOpenSettings }: MainTrackerProps) {
+export function MainTracker({ userData, records, onAddRecord, onOpenHome, onOpenHistory, onOpenSettings }: MainTrackerProps) {
   const [mode, setMode] = useState<'spend' | 'save'>('spend');
   const [amount, setAmount] = useState<number>(500);
   const [isRecurring, setIsRecurring] = useState<boolean>(false);
@@ -24,6 +26,10 @@ export function MainTracker({ userData, records, onAddRecord, onOpenHistory, onO
   const [resultType, setResultType] = useState<'spend' | 'save' | null>(null);
   const [showConfetti, setShowConfetti] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
+  
+  // v2.0: 免死金牌使用狀態
+  const [useGuiltFree, setUseGuiltFree] = useState<boolean>(false);
+  const [guiltFreeCount, setGuiltFreeCount] = useState<number>(() => InventorySystem.getItemCount('guilt_free_pass'));
 
   const { salary, retireAge, inflationRate, roiRate } = userData;
 
@@ -53,6 +59,14 @@ export function MainTracker({ userData, records, onAddRecord, onOpenHistory, onO
     if (amount <= 0) return;
     setIsSaving(true);
 
+    // v2.0: 如果使用免死金牌
+    let usedGuiltFree = false;
+    if (mode === 'spend' && useGuiltFree && guiltFreeCount > 0) {
+      InventorySystem.useItem('guilt_free_pass');
+      setGuiltFreeCount(InventorySystem.getItemCount('guilt_free_pass'));
+      usedGuiltFree = true;
+    }
+
     const record: RecordType = {
       id: Date.now().toString(),
       type: mode,
@@ -63,6 +77,7 @@ export function MainTracker({ userData, records, onAddRecord, onOpenHistory, onO
       note,
       timestamp: new Date().toISOString(),
       date: new Date().toISOString().split('T')[0],
+      guiltFree: usedGuiltFree,  // v2.0: 標記是否使用免死金牌
     };
 
     await onAddRecord(record);
@@ -76,6 +91,7 @@ export function MainTracker({ userData, records, onAddRecord, onOpenHistory, onO
     }
 
     setIsSaving(false);
+    setUseGuiltFree(false);  // 重置免死金牌狀態
     setTimeout(() => {
       setShowResult(false);
       setResultType(null);
@@ -177,11 +193,23 @@ export function MainTracker({ userData, records, onAddRecord, onOpenHistory, onO
           {!showResult ? (
             <>
               {/* Recurring Toggle */}
-              <div className="flex justify-center mb-6">
+              <div className="flex justify-center gap-2 mb-6">
                 <button onClick={() => setIsRecurring(!isRecurring)}
                   className={`px-4 py-2 rounded-xl text-sm transition-all duration-300 ${
                     isRecurring ? 'bg-purple-500/20 text-purple-400 border border-purple-500/50' : 'bg-gray-800 text-gray-400'
                   }`}>{isRecurring ? '🔄 每月固定' : '☝️ 僅此一次'}</button>
+                
+                {/* v2.0: 免死金牌開關 - 只在花費模式且擁有金牌時顯示 */}
+                {mode === 'spend' && guiltFreeCount > 0 && (
+                  <button onClick={() => setUseGuiltFree(!useGuiltFree)}
+                    className={`px-4 py-2 rounded-xl text-sm transition-all duration-300 ${
+                      useGuiltFree 
+                        ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50' 
+                        : 'bg-gray-800 text-gray-400'
+                    }`}>
+                    🎫 免死金牌 (×{guiltFreeCount})
+                  </button>
+                )}
               </div>
 
               {/* Amount Input */}
@@ -300,6 +328,12 @@ export function MainTracker({ userData, records, onAddRecord, onOpenHistory, onO
       {/* Bottom Nav */}
       <div className="fixed bottom-0 left-0 right-0 bg-gray-900/95 backdrop-blur border-t border-gray-800">
         <div className="max-w-lg mx-auto flex justify-around py-3">
+          <button onClick={onOpenHome} className="flex flex-col items-center text-gray-500 hover:text-gray-300">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <span className="text-xs mt-1">首頁</span>
+          </button>
           <button className="flex flex-col items-center text-emerald-400">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />

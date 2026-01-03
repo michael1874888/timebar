@@ -30,9 +30,10 @@ interface CategoryData {
 }
 
 export function CategoryPieChart({ records, type = 'spend' }: CategoryPieChartProps) {
-  // 按分類聚合資料
+  // 按分類聚合資料 - v2.0: 排除已豁免的記錄
   const chartData = useMemo((): CategoryData[] => {
-    const filtered = records.filter(r => r.type === type);
+    // 排除已使用免死金牌的記錄
+    const filtered = records.filter(r => r.type === type && r.guiltFree !== true);
     
     if (filtered.length === 0) return [];
 

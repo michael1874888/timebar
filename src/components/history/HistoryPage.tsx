@@ -139,27 +139,38 @@ export function HistoryPage({ records, userData, onClose }: HistoryPageProps) {
                   {monthRecords.map((record, i) => {
                     const time = formatTime(record.timeCost);
                     const date = new Date(record.timestamp);
+                    const isExempted = record.guiltFree === true;
                     return (
-                      <div key={record.id} className={`flex items-center gap-3 p-4 ${i > 0 ? 'border-t border-gray-700/50' : ''}`}>
+                      <div key={record.id} className={`flex items-center gap-3 p-4 ${i > 0 ? 'border-t border-gray-700/50' : ''} ${isExempted ? 'opacity-60' : ''}`}>
                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${
+                          isExempted ? 'bg-gray-600/20' :
                           record.type === 'save' ? 'bg-emerald-500/20' : 'bg-orange-500/20'
-                        }`}>{record.type === 'save' ? '💰' : '💸'}</div>
+                        }`}>
+                          {isExempted ? '🎫' : record.type === 'save' ? '💰' : '💸'}
+                        </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex justify-between items-start">
                             <div className="min-w-0">
-                              <div className="text-white font-medium truncate">
+                              <div className={`font-medium truncate ${isExempted ? 'text-gray-400 line-through' : 'text-white'}`}>
                                 {record.note || record.category || (record.type === 'save' ? '儲蓄' : '消費')}
+                                {isExempted && <span className="text-amber-400 text-xs ml-1 no-underline">(已豁免)</span>}
                               </div>
                               <div className="text-gray-500 text-xs">
                                 {record.isRecurring ? '🔄 ' : ''}{date.getMonth() + 1}/{date.getDate()}
                               </div>
                             </div>
                             <div className="text-right ml-2">
-                              <div className={`font-bold ${record.type === 'save' ? 'text-emerald-400' : 'text-orange-400'}`}>
+                              <div className={`font-bold ${
+                                isExempted ? 'text-gray-500' :
+                                record.type === 'save' ? 'text-emerald-400' : 'text-orange-400'
+                              }`}>
                                 {record.type === 'save' ? '+' : '-'}{formatCurrency(record.amount)}
                               </div>
-                              <div className={`text-xs ${record.type === 'save' ? 'text-emerald-500/70' : 'text-orange-500/70'}`}>
-                                {record.type === 'save' ? '+' : '-'}{time.value}{time.unit}
+                              <div className={`text-xs ${
+                                isExempted ? 'text-gray-600' :
+                                record.type === 'save' ? 'text-emerald-500/70' : 'text-orange-500/70'
+                              }`}>
+                                {isExempted ? '不計入統計' : `${record.type === 'save' ? '+' : '-'}${time.value}${time.unit}`}
                               </div>
                             </div>
                           </div>

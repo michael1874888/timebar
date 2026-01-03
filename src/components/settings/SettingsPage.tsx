@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { FinanceCalc, Formatters, CONSTANTS } from '@/utils/financeCalc';
 import { GAS_WEB_APP_URL } from '@/constants';
 import { UserData } from '@/types';
+import { PointsSystem } from '@/utils/pointsSystem';
+import { InventorySystem } from '@/utils/inventorySystem';
 
 const { formatCurrency, formatCurrencyFull } = Formatters;
 const { DEFAULT_INFLATION_RATE, DEFAULT_ROI_RATE } = CONSTANTS;
@@ -11,9 +13,10 @@ interface SettingsPageProps {
   onUpdateUser: (data: UserData) => void;
   onClose: () => void;
   onReset: () => void;
+  onOpenShop?: () => void;
 }
 
-export function SettingsPage({ userData, onUpdateUser, onClose, onReset }: SettingsPageProps) {
+export function SettingsPage({ userData, onUpdateUser, onClose, onReset, onOpenShop }: SettingsPageProps) {
   const [age, setAge] = useState<number>(userData.age);
   const [salary, setSalary] = useState<number>(userData.salary);
   const [retireAge, setRetireAge] = useState<number>(userData.retireAge);
@@ -281,6 +284,35 @@ export function SettingsPage({ userData, onUpdateUser, onClose, onReset }: Setti
             </div>
           </div>
         </div>
+
+        {/* Shop Entry */}
+        {onOpenShop && (
+          <div className="bg-gradient-to-r from-amber-900/40 to-orange-900/40 rounded-3xl p-6 mb-6 border border-amber-500/30">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="text-3xl">🛒</div>
+                <div>
+                  <h2 className="text-white font-bold">時間沙商店</h2>
+                  <div className="text-gray-400 text-sm">用積分兌換道具</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  <div className="text-amber-400 text-sm">⏳ {PointsSystem.getBalance()}</div>
+                  {InventorySystem.getItemCount('guilt_free_pass') > 0 && (
+                    <div className="text-emerald-400 text-xs">🎫 ×{InventorySystem.getItemCount('guilt_free_pass')}</div>
+                  )}
+                </div>
+                <button
+                  onClick={onOpenShop}
+                  className="bg-amber-500 hover:bg-amber-400 text-gray-900 font-bold py-2 px-4 rounded-xl text-sm"
+                >
+                  進入
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Cloud Status */}
         <div className="bg-gray-800/50 rounded-3xl p-6 mb-6">

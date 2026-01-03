@@ -11,6 +11,9 @@ interface CelebrationModalProps {
   savedAmount: number;
   savedHours: number;
   newMilestone?: Milestone;
+  // v2.0: 可選的儲蓄確認
+  showSaveOption?: boolean;
+  onConfirmSave?: () => void;
 }
 
 export function CelebrationModal({
@@ -18,15 +21,17 @@ export function CelebrationModal({
   onClose,
   savedAmount,
   savedHours,
-  newMilestone
+  newMilestone,
+  showSaveOption = false,
+  onConfirmSave
 }: CelebrationModalProps) {
-  // 自動關閉
+  // 自動關閉（如果有 showSaveOption 則不自動關閉）
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !showSaveOption) {
       const timer = setTimeout(onClose, 4000);
       return () => clearTimeout(timer);
     }
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, showSaveOption]);
 
   if (!isOpen) return null;
 
@@ -46,6 +51,10 @@ export function CelebrationModal({
       return `${Math.round(days / 7 * 10) / 10} 週`;
     }
     return `${Math.round(days / 30 * 10) / 10} 個月`;
+  };
+
+  const handleConfirmSave = () => {
+    onConfirmSave?.();
   };
 
   return (
@@ -69,7 +78,7 @@ export function CelebrationModal({
 
           {/* 省下金額 */}
           <div className="mb-4">
-            <div className="text-emerald-300 text-sm mb-1">你決定不買，省下了</div>
+            <div className="text-emerald-300 text-sm mb-1">你決定不買，守住了</div>
             <div className="text-4xl font-black text-emerald-400">
               {formatCurrencyFull(savedAmount)}
             </div>
@@ -94,19 +103,41 @@ export function CelebrationModal({
           )}
 
           {/* 激勵語句 */}
-          <div className="text-gray-300 text-sm italic">
+          <div className="text-gray-300 text-sm italic mb-4">
             {getMotivationalQuote()}
           </div>
 
-          {/* 關閉按鈕 */}
-          <button
-            onClick={onClose}
-            className="mt-6 px-6 py-2 bg-emerald-500 hover:bg-emerald-400 text-gray-900 font-bold rounded-xl transition-all"
-          >
-            繼續加油 💪
-          </button>
+          {/* v2.0: 儲蓄確認按鈕區 */}
+          {showSaveOption ? (
+            <div className="space-y-2">
+              <button
+                onClick={handleConfirmSave}
+                className="w-full px-6 py-3 bg-amber-500 hover:bg-amber-400 text-gray-900 font-bold rounded-xl transition-all flex items-center justify-center gap-2"
+              >
+                <span>💰</span>
+                <span>把這筆錢存下來</span>
+              </button>
+              <button
+                onClick={onClose}
+                className="w-full px-6 py-2 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 font-medium rounded-xl transition-all"
+              >
+                繼續加油 💪
+              </button>
+              <div className="text-gray-500 text-xs mt-2">
+                選擇「存下來」會將這筆金額記入儲蓄紀錄
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={onClose}
+              className="mt-2 px-6 py-2 bg-emerald-500 hover:bg-emerald-400 text-gray-900 font-bold rounded-xl transition-all"
+            >
+              繼續加油 💪
+            </button>
+          )}
         </div>
       </div>
     </div>
   );
 }
+

@@ -1,7 +1,8 @@
 /**
- * TimeBar - Google Apps Script Backend v2.2
+ * TimeBar - Google Apps Script Backend v2.3
  * 
  * ⚠️ 重要：請先設定下方的 SPREADSHEET_ID！
+ * v2.3 更新：新增積分系統欄位
  */
 
 // ⚠️ 請在這裡填入你的試算表 ID
@@ -27,19 +28,22 @@ function getOrCreateSheet(name) {
     sheet = ss.insertSheet(name);
     
     if (name === SHEET_NAMES.RECORDS) {
-      sheet.getRange(1, 1, 1, 9).setValues([[
-        'ID', '類型', '金額', '是否每月', '時間成本(小時)', '分類', '備註', '時間戳記', '日期'
+      // 消費紀錄：新增 guiltFree 欄位
+      sheet.getRange(1, 1, 1, 10).setValues([[
+        'ID', '類型', '金額', '是否每月', '時間成本(小時)', '分類', '備註', '時間戳記', '日期', '已豁免'
       ]]);
-      sheet.getRange(1, 1, 1, 9).setFontWeight('bold').setBackground('#10b981').setFontColor('white');
+      sheet.getRange(1, 1, 1, 10).setFontWeight('bold').setBackground('#10b981').setFontColor('white');
       sheet.setFrozenRows(1);
       sheet.setColumnWidth(1, 150);
       sheet.setColumnWidth(7, 200);
       sheet.setColumnWidth(8, 180);
     } else if (name === SHEET_NAMES.USER_DATA) {
-      sheet.getRange(1, 1, 1, 9).setValues([[
-        '年齡', '月薪', '目標退休年齡', '目前存款', '每月儲蓄', '目標退休金', '通膨率(%)', '投資報酬率(%)', '更新時間'
+      // 使用者資料：新增積分、庫存、自定義挑戰欄位
+      sheet.getRange(1, 1, 1, 12).setValues([[
+        '年齡', '月薪', '目標退休年齡', '目前存款', '每月儲蓄', '目標退休金', '通膨率(%)', '投資報酬率(%)', '更新時間',
+        '積分餘額', '道具庫存(JSON)', '自定義挑戰(JSON)'
       ]]);
-      sheet.getRange(1, 1, 1, 9).setFontWeight('bold').setBackground('#10b981').setFontColor('white');
+      sheet.getRange(1, 1, 1, 12).setFontWeight('bold').setBackground('#10b981').setFontColor('white');
       sheet.setFrozenRows(1);
     }
   }
@@ -121,7 +125,8 @@ function addRecord(record) {
     record.category || '',
     record.note || '',
     dateStr,
-    dateOnly
+    dateOnly,
+    record.guiltFree ? '是' : '否'  // v2.3: 免死金牌豁免
   ];
   
   sheet.appendRow(rowData);
@@ -131,6 +136,9 @@ function addRecord(record) {
   
   if (record.type === 'save') {
     sheet.getRange(lastRow, 2).setBackground('#d1fae5').setFontColor('#065f46');
+  } else if (record.guiltFree) {
+    // 免死金牌豁免的消費用灰色顯示
+    sheet.getRange(lastRow, 2).setBackground('#e5e7eb').setFontColor('#6b7280');
   } else {
     sheet.getRange(lastRow, 2).setBackground('#fee2e2').setFontColor('#991b1b');
   }
@@ -158,7 +166,8 @@ function getRecords() {
       category: data[i][5],
       note: data[i][6],
       timestamp: data[i][7],
-      date: data[i][8]
+      date: data[i][8],
+      guiltFree: data[i][9] === '是'  // v2.3: 免死金牌豁免
     });
   }
   
@@ -170,12 +179,14 @@ function saveUserData(userData) {
   const sheet = getOrCreateSheet(SHEET_NAMES.USER_DATA);
   const timestamp = Utilities.formatDate(new Date(), 'Asia/Taipei', 'yyyy-MM-dd HH:mm:ss');
   
-  // 確保標題列是新格式
-  const headers = sheet.getRange(1, 1, 1, 9).getValues()[0];
-  if (headers[4] !== '每月儲蓄') {
-    sheet.getRange(1, 1, 1, 9).setValues([[
-      '年齡', '月薪', '目標退休年齡', '目前存款', '每月儲蓄', '目標退休金', '通膨率(%)', '投資報酬率(%)', '更新時間'
+  // 確保標題列是 v2.3 格式（12 欄）
+  const headers = sheet.getRange(1, 1, 1, 12).getValues()[0];
+  if (headers[9] !== '積分餘額') {
+    sheet.getRange(1, 1, 1, 12).setValues([[
+      '年齡', '月薪', '目標退休年齡', '目前存款', '每月儲蓄', '目標退休金', '通膨率(%)', '投資報酬率(%)', '更新時間',
+      '積分餘額', '道具庫存(JSON)', '自定義挑戰(JSON)'
     ]]);
+    sheet.getRange(1, 1, 1, 12).setFontWeight('bold').setBackground('#10b981').setFontColor('white');
   }
   
   // 清除舊資料
@@ -189,6 +200,11 @@ function saveUserData(userData) {
   const monthlySavings = userData.monthlySavings !== undefined ? userData.monthlySavings : Math.round(userData.salary * 0.2);
   const targetRetirementFund = userData.targetRetirementFund !== undefined ? userData.targetRetirementFund : 0;
   
+  // v2.3 新增欄位
+  const pointsBalance = userData.pointsBalance !== undefined ? userData.pointsBalance : 0;
+  const inventory = userData.inventory ? JSON.stringify(userData.inventory) : '{"guiltFreePass":0}';
+  const customChallenges = userData.customChallenges ? JSON.stringify(userData.customChallenges) : '[]';
+  
   sheet.appendRow([
     userData.age,
     userData.salary,
@@ -198,7 +214,10 @@ function saveUserData(userData) {
     targetRetirementFund,
     inflationRate,
     roiRate,
-    timestamp
+    timestamp,
+    pointsBalance,
+    inventory,
+    customChallenges
   ]);
   
   // 格式化
@@ -206,8 +225,19 @@ function saveUserData(userData) {
   sheet.getRange(2, 4).setNumberFormat('#,##0');
   sheet.getRange(2, 5).setNumberFormat('#,##0');
   sheet.getRange(2, 6).setNumberFormat('#,##0');
+  sheet.getRange(2, 10).setNumberFormat('#,##0');  // 積分餘額
   
   return { message: 'User data saved successfully' };
+}
+
+// 安全解析 JSON
+function parseJSON(str, defaultValue) {
+  if (!str || str === '') return defaultValue;
+  try {
+    return JSON.parse(str);
+  } catch (e) {
+    return defaultValue;
+  }
 }
 
 // 取得使用者資料
@@ -230,7 +260,11 @@ function getUserData() {
       targetRetirementFund: row[5] !== undefined && row[5] !== '' ? Number(row[5]) : 0,
       inflationRate: row[6] !== undefined && row[6] !== '' ? Number(row[6]) : 2.5,
       roiRate: row[7] !== undefined && row[7] !== '' ? Number(row[7]) : 6,
-      updatedAt: row[8]
+      updatedAt: row[8],
+      // v2.3 新增欄位
+      pointsBalance: row[9] !== undefined && row[9] !== '' ? Number(row[9]) : 0,
+      inventory: parseJSON(row[10], { guiltFreePass: 0 }),
+      customChallenges: parseJSON(row[11], [])
     }
   };
 }
