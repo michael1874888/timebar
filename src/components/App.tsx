@@ -4,9 +4,19 @@ import { DashboardScreen } from './dashboard/DashboardScreen';
 import { MainTracker } from './tracker/MainTracker';
 import { HistoryPage } from './history/HistoryPage';
 import { SettingsPage } from './settings/SettingsPage';
+import { ShopPage } from './shop/ShopPage';
+import { ChallengeSettingsPage } from './settings/ChallengeSettingsPage';
+import { CategorySettingsPage } from './settings/CategorySettingsPage';
+import { QuickActionsSettingsPage } from './settings/QuickActionsSettingsPage';
+import { SubscriptionManagerPage } from './subscription/SubscriptionManagerPage';
 import { GoogleSheetsAPI } from '@/services/googleSheets';
 import { Storage } from '@/utils/storage';
 import { CONSTANTS } from '@/utils/financeCalc';
+import { PointsSystem } from '@/utils/pointsSystem';
+import { InventorySystem } from '@/utils/inventorySystem';
+import { RecordSystem } from '@/utils/recordSystem';
+import { QuickActionsUtils } from './dashboard/QuickActionsBar';
+import { SettingsSystem } from '@/utils/settingsSystem';
 import { UserData, Record as RecordType, Screen } from '@/types';
 
 const { DEFAULT_INFLATION_RATE, DEFAULT_ROI_RATE } = CONSTANTS;
@@ -40,6 +50,22 @@ export default function App() {
               roiRate: cloudData.userData.roiRate ?? DEFAULT_ROI_RATE,
               monthlySavings: cloudData.userData.monthlySavings ?? Math.round(cloudData.userData.salary * 0.2),
             };
+
+            // v2.0: 同步積分和庫存到對應系統
+            if (cloudUserData.pointsBalance !== undefined) {
+              PointsSystem.setBalance(cloudUserData.pointsBalance);
+            }
+            if (cloudUserData.inventory) {
+              InventorySystem.save(cloudUserData.inventory);
+            }
+
+            // v2.1: 同步快速記帳按鈕
+            if (cloudData.quickActions && cloudData.quickActions.length > 0) {
+              Storage.save('timebar_quick_actions', cloudData.quickActions);
+            }
+
+            // v2.2: 同步所有設置（分類、挑戰、預算）
+            await SettingsSystem.syncFromCloud();
 
             // 完全以雲端為準（source of truth），不合併本地記錄
             // 這樣可以確保跨裝置資料同步的一致性，避免資料重置後出現舊資料
@@ -118,16 +144,63 @@ export default function App() {
   }, [records, userData]);
 
   const handleOnboardingComplete = (data: UserData): void => { setUserData(data); setScreen('dashboard'); };
+
   const handleAddRecord = async (record: RecordType): Promise<void> => {
-    setRecords(prev => [...prev, record]);
+    // v2.1: 新增 createdAt 時間戳記
+    const recordWithMeta: RecordType = {
+      ...record,
+      createdAt: Date.now()
+    };
+    setRecords(prev => [...prev, recordWithMeta]);
     try {
-      await GoogleSheetsAPI.saveRecord(record);
+      await GoogleSheetsAPI.saveRecord(recordWithMeta);
+
+      // v2.0: 記帳後同步積分和庫存到雲端
+      if (userData) {
+        const updatedUserData: UserData = {
+          ...userData,
+          pointsBalance: PointsSystem.getBalance(),
+          inventory: InventorySystem.load()
+        };
+        setUserData(updatedUserData);
+      }
     } catch (error) {
       console.error('Failed to save record to cloud:', error);
       // 記錄已加入本地，即使雲端同步失敗也不影響使用
     }
   };
-  const handleUpdateUser = (data: UserData): void => { setUserData(data); };
+
+  // v2.1: 更新記錄
+  const handleUpdateRecord = async (id: string, updates: { amount: number; category: string; note: string }): Promise<void> => {
+    const result = await RecordSystem.updateRecord(records, id, updates);
+    if (result.success) {
+      setRecords(result.records);
+    } else {
+      console.error('Failed to update record:', result.error);
+      throw new Error(result.error);
+    }
+  };
+
+  // v2.1: 刪除記錄
+  const handleDeleteRecord = async (id: string): Promise<void> => {
+    const result = await RecordSystem.deleteRecord(records, id);
+    if (result.success) {
+      setRecords(result.records);
+    } else {
+      console.error('Failed to delete record:', result.error);
+      throw new Error(result.error);
+    }
+  };
+
+  const handleUpdateUser = (data: UserData): void => {
+    // v2.0: 同步積分和庫存
+    const updatedData: UserData = {
+      ...data,
+      pointsBalance: PointsSystem.getBalance(),
+      inventory: InventorySystem.load()
+    };
+    setUserData(updatedData);
+  };
   const handleReset = async (): Promise<void> => {
     try {
       await GoogleSheetsAPI.clearAllData();
@@ -136,6 +209,9 @@ export default function App() {
       // 繼續清除本地資料
     }
     Storage.clear();
+    // v2.0: 重置積分和庫存系統
+    PointsSystem.reset();
+    InventorySystem.reset();
     setUserData(null);
     setRecords([]);
     setScreen('onboarding');
@@ -164,6 +240,7 @@ export default function App() {
           onOpenTracker={() => setScreen('tracker')}
           onOpenHistory={() => setScreen('history')}
           onOpenSettings={() => setScreen('settings')}
+          onOpenQuickActionsSettings={() => setScreen('quick-actions-settings')}
         />
       )}
       {screen === 'tracker' && userData && (
@@ -171,16 +248,46 @@ export default function App() {
           userData={userData}
           records={records}
           onAddRecord={handleAddRecord}
+          onOpenHome={() => setScreen('dashboard')}
           onOpenHistory={() => setScreen('history')}
           onOpenSettings={() => setScreen('settings')}
         />
       )}
       {screen === 'history' && userData && (
-        <HistoryPage records={records} userData={userData} onClose={() => setScreen('dashboard')} />
+        <HistoryPage
+          records={records}
+          userData={userData}
+          onClose={() => setScreen('dashboard')}
+          onUpdateRecord={handleUpdateRecord}
+          onDeleteRecord={handleDeleteRecord}
+        />
       )}
       {screen === 'settings' && userData && (
         <SettingsPage userData={userData} onUpdateUser={handleUpdateUser}
-          onClose={() => setScreen('dashboard')} onReset={handleReset} />
+          onClose={() => setScreen('dashboard')} onReset={handleReset}
+          onOpenShop={() => setScreen('shop')}
+          onOpenChallengeSettings={() => setScreen('challenge-settings')}
+          onOpenSubscriptionManager={() => setScreen('subscription-manager')}
+          onOpenCategorySettings={() => setScreen('category-settings')} />
+      )}
+      {screen === 'shop' && userData && (
+        <ShopPage onClose={() => setScreen('settings')} />
+      )}
+      {screen === 'challenge-settings' && (
+        <ChallengeSettingsPage onClose={() => setScreen('settings')} />
+      )}
+      {screen === 'subscription-manager' && userData && (
+        <SubscriptionManagerPage
+          records={records}
+          onUpdateRecords={setRecords}
+          onClose={() => setScreen('settings')}
+        />
+      )}
+      {screen === 'category-settings' && (
+        <CategorySettingsPage onClose={() => setScreen('settings')} />
+      )}
+      {screen === 'quick-actions-settings' && (
+        <QuickActionsSettingsPage onBack={() => setScreen('dashboard')} />
       )}
     </div>
   );

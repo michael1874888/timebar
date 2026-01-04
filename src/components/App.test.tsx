@@ -201,6 +201,7 @@ describe('App Component Integration Tests', () => {
   let mockGoogleSheetsAPI: {
     isConfigured: ReturnType<typeof vi.fn>
     getAll: ReturnType<typeof vi.fn>
+    getUserData: ReturnType<typeof vi.fn>
     saveUserData: ReturnType<typeof vi.fn>
     saveRecord: ReturnType<typeof vi.fn>
     clearAllData: ReturnType<typeof vi.fn>
@@ -223,12 +224,14 @@ describe('App Component Integration Tests', () => {
     mockGoogleSheetsAPI = {
       isConfigured: vi.fn().mockReturnValue(false),
       getAll: vi.fn().mockResolvedValue({ success: false, userData: null, records: [] }),
+      getUserData: vi.fn().mockResolvedValue({ success: false, data: null }),
       saveUserData: vi.fn().mockResolvedValue({ success: true }),
       saveRecord: vi.fn().mockResolvedValue({ success: true }),
       clearAllData: vi.fn().mockResolvedValue({ success: true }),
     }
     ;(GoogleSheetsAPI.isConfigured as any) = mockGoogleSheetsAPI.isConfigured
     ;(GoogleSheetsAPI.getAll as any) = mockGoogleSheetsAPI.getAll
+    ;(GoogleSheetsAPI.getUserData as any) = mockGoogleSheetsAPI.getUserData
     ;(GoogleSheetsAPI.saveUserData as any) = mockGoogleSheetsAPI.saveUserData
     ;(GoogleSheetsAPI.saveRecord as any) = mockGoogleSheetsAPI.saveRecord
     ;(GoogleSheetsAPI.clearAllData as any) = mockGoogleSheetsAPI.clearAllData

@@ -288,6 +288,9 @@ let _timeBarFinanceExports: TimeBarFinanceModule;
     type: 'save' | 'spend';
     timeCost?: number;
     amount: number;
+    guiltFree?: boolean;  // v2.0: 使用免死金牌豁免的記錄
+    isRecurring?: boolean;  // v2.1: 是否為循環支出
+    recurringStatus?: 'active' | 'ended';  // v2.1: 訂閱狀態
   }
 
   interface EstimatedAgeResult {
@@ -309,6 +312,8 @@ let _timeBarFinanceExports: TimeBarFinanceModule;
   const GPSCalc = {
     /**
      * 根據記錄計算預估退休年齡
+     * v2.0: 排除已豁免(guiltFree)的消費記錄
+     * v2.1: 排除已終止(recurringStatus='ended')的訂閱
      * @param {number} targetRetireAge - 目標退休年齡
      * @param {Array} records - 消費/儲蓄記錄陣列
      * @returns {object} { estimatedAge, ageDiff, isAhead, isBehind, isOnTrack }
@@ -318,8 +323,11 @@ let _timeBarFinanceExports: TimeBarFinanceModule;
         .filter(r => r.type === 'save')
         .reduce((sum, r) => sum + (r.timeCost || 0), 0);
 
+      // v2.0: 排除已使用免死金牌的消費記錄
+      // v2.1: 排除已終止的訂閱（不再計入未來成本）
       const totalSpentHours = records
-        .filter(r => r.type === 'spend')
+        .filter(r => r.type === 'spend' && r.guiltFree !== true)
+        .filter(r => r.recurringStatus !== 'ended')  // v2.1: 排除已終止訂閱
         .reduce((sum, r) => sum + (r.timeCost || 0), 0);
 
       const netHoursImpact = totalSpentHours - totalSavedHours;
@@ -344,6 +352,7 @@ let _timeBarFinanceExports: TimeBarFinanceModule;
 
     /**
      * 計算記錄的累積金額
+     * v2.0: 排除已豁免(guiltFree)的消費記錄
      * @param {Array} records - 消費/儲蓄記錄陣列
      * @returns {object} { totalSaved, totalSpent }
      */
@@ -352,8 +361,9 @@ let _timeBarFinanceExports: TimeBarFinanceModule;
         .filter(r => r.type === 'save')
         .reduce((sum, r) => sum + r.amount, 0);
 
+      // v2.0: 排除已使用免死金牌的消費記錄
       const totalSpent = records
-        .filter(r => r.type === 'spend')
+        .filter(r => r.type === 'spend' && r.guiltFree !== true)
         .reduce((sum, r) => sum + r.amount, 0);
 
       return { totalSaved, totalSpent };

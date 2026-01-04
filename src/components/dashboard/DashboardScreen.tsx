@@ -1,14 +1,19 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { FinanceCalc, GPSCalc, Formatters } from '@/utils/financeCalc';
 import { getVividComparison, formatRetirementImpact } from '@/utils/lifeCostCalc';
 import { Confetti } from '../Confetti';
+import { AwarenessParticles } from '../AwarenessParticles';
 import { CelebrationModal } from '../common/CelebrationModal';
-import { Toast } from '../common/Toast';
+import { useToast } from '../common/Toast';
+import { PointsParticles } from '../common/PointsParticles';
 import { LifeBattery } from './LifeBattery';
 import { MilestoneDisplay } from './MilestoneDisplay';
-import { DailyChallenge, Challenge } from './DailyChallenge';
+import { DailyChallenge, ChallengeCompleteResult } from './DailyChallenge';
+import { DailyBudgetWidget } from './DailyBudgetWidget';
+import { QuickActionsBar, QuickAction } from './QuickActionsBar';
 import { CatchUpPlan } from './CatchUpPlan';
-import { UserData, Record as RecordType } from '@/types';
+import { UserData, Record as RecordType, ChallengeDefinition } from '@/types';
+import { PointsSystem } from '@/utils/pointsSystem';
 
 const { formatCurrencyFull, formatCurrency } = Formatters;
 
@@ -19,6 +24,7 @@ interface DashboardScreenProps {
   onOpenTracker: () => void;
   onOpenHistory: () => void;
   onOpenSettings: () => void;
+  onOpenQuickActionsSettings?: () => void;  // v2.1: 快速記帳設定
 }
 
 export function DashboardScreen({
@@ -27,22 +33,42 @@ export function DashboardScreen({
   onAddRecord,
   onOpenTracker,
   onOpenHistory,
-  onOpenSettings
+  onOpenSettings,
+  onOpenQuickActionsSettings
 }: DashboardScreenProps) {
   const [amount, setAmount] = useState<number>(0);
   const [isRecurring, setIsRecurring] = useState<boolean>(false);
   const [showCelebration, setShowCelebration] = useState<boolean>(false);
   const [showConfetti, setShowConfetti] = useState<boolean>(false);
+  const [showAwareness, setShowAwareness] = useState<boolean>(false);
   const [lastSavedAmount, setLastSavedAmount] = useState<number>(0);
   const [lastSavedHours, setLastSavedHours] = useState<number>(0);
-  const [showToast, setShowToast] = useState<boolean>(false);
-  const [toastMessage, setToastMessage] = useState<string>('');
+
+  // v2.0: Toast 佇列系統
+  const { showToast, ToastContainer } = useToast();
+
+  // v2.0: 積分系統
+  const [pointsBalance, setPointsBalance] = useState<number>(0);
+  const [pendingSave, setPendingSave] = useState<{ amount: number; timeCost: number } | null>(null);
+  
+  // v2.0: 積分粒子效果
+  const [showPointsParticles, setShowPointsParticles] = useState<boolean>(false);
+  const [earnedPoints, setEarnedPoints] = useState<number>(0);
+
+  // v2.1: 防止重複點擊
+  const [isSaving, setIsSaving] = useState<boolean>(false);
 
   const { salary, retireAge, inflationRate, roiRate, age } = userData;
 
   const yearsToRetire = useMemo(() => retireAge - age, [retireAge, age]);
   const hourlyRate = useMemo(() => FinanceCalc.hourlyRate(salary), [salary]);
   const realRate = useMemo(() => FinanceCalc.realRate(inflationRate, roiRate), [inflationRate, roiRate]);
+
+  // 載入積分
+  useEffect(() => {
+    const balance = PointsSystem.load();
+    setPointsBalance(balance);
+  }, []);
 
   // GPS 計算
   const gpsResult = useMemo(() => GPSCalc.calculateEstimatedAge(retireAge, records), [retireAge, records]);
@@ -68,37 +94,65 @@ export function DashboardScreen({
 
   // 處理「我買了」
   const handleBought = useCallback(async () => {
+    if (amount <= 0 || isSaving) return;
+
+    setIsSaving(true);
+    try {
+      const record: RecordType = {
+        id: Date.now().toString(),
+        type: 'spend',
+        amount,
+        isRecurring,
+        timeCost,
+        category: '一般消費',
+        note: '',
+        timestamp: new Date().toISOString(),
+        date: new Date().toISOString().split('T')[0],
+      };
+
+      await onAddRecord(record);
+
+      // 觸發覺察提醒動畫
+      setShowAwareness(true);
+      setTimeout(() => setShowAwareness(false), 2500);
+
+      showToast('已記錄消費 📝', 'success');
+      setAmount(0);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [amount, isRecurring, timeCost, onAddRecord, isSaving, showToast]);
+
+  // 處理「我不買了」- v2.0: 不自動記帳，改為詢問
+  const handleSkipped = useCallback(() => {
     if (amount <= 0) return;
 
-    const record: RecordType = {
-      id: Date.now().toString(),
-      type: 'spend',
-      amount,
-      isRecurring,
-      timeCost,
-      category: '一般消費',
-      note: '',
-      timestamp: new Date().toISOString(),
-      date: new Date().toISOString().split('T')[0],
-    };
+    // 記住待確認的金額
+    setPendingSave({ amount, timeCost });
+    
+    // 觸發慶祝
+    setLastSavedAmount(amount);
+    setLastSavedHours(timeCost);
+    setShowConfetti(true);
+    setShowCelebration(true);
 
-    await onAddRecord(record);
-    setToastMessage('已記錄消費 \u{1F4DD}');
-    setShowToast(true);
+    // 重置金額
     setAmount(0);
-  }, [amount, isRecurring, timeCost, onAddRecord]);
 
-  // 處理「我不買了」
-  const handleSkipped = useCallback(async () => {
-    if (amount <= 0) return;
+    // 3秒後關閉彩帶
+    setTimeout(() => setShowConfetti(false), 3000);
+  }, [amount, timeCost]);
 
-    // 記錄為儲蓄
+  // v2.0: 確認儲蓄
+  const handleConfirmSave = useCallback(async () => {
+    if (!pendingSave) return;
+
     const record: RecordType = {
       id: Date.now().toString(),
       type: 'save',
-      amount,
+      amount: pendingSave.amount,
       isRecurring: false,
-      timeCost,
+      timeCost: pendingSave.timeCost,
       category: '忍住不買',
       note: '決定不買，省下這筆錢',
       timestamp: new Date().toISOString(),
@@ -106,47 +160,113 @@ export function DashboardScreen({
     };
 
     await onAddRecord(record);
+    setPendingSave(null);
+    setShowCelebration(false);
 
-    // 觸發慶祝
-    setLastSavedAmount(amount);
-    setLastSavedHours(timeCost);
-    setShowConfetti(true);
-    setShowCelebration(true);
+    showToast('已記入儲蓄 💰', 'success');
+  }, [pendingSave, onAddRecord]);
 
-    // 重置
-    setAmount(0);
+  // v2.0: 處理每日挑戰完成
+  const handleChallengeComplete = useCallback((
+    challenge: ChallengeDefinition,
+    result: ChallengeCompleteResult
+  ) => {
+    // 增加積分
+    const newBalance = PointsSystem.addPoints(result.points, 'daily_challenge');
+    setPointsBalance(newBalance);
 
-    // 3秒後關閉彩帶
-    setTimeout(() => setShowConfetti(false), 3000);
-  }, [amount, timeCost, onAddRecord]);
+    // v2.0: 觸發粒子效果
+    setEarnedPoints(result.points);
+    setShowPointsParticles(true);
+    setTimeout(() => setShowPointsParticles(false), 1600);
+
+    // 計算時間成本
+    const challengeTimeCost = FinanceCalc.calculateTimeCost(
+      result.amount,
+      false,
+      hourlyRate,
+      realRate,
+      yearsToRetire
+    );
+
+    // 顯示積分 Toast 並詢問是否記帳
+    if (result.showRecordPrompt) {
+      const promptData = {
+        challenge,
+        amount: result.amount,
+        timeCost: challengeTimeCost
+      };
+
+      showToast(
+        `獲得 ${challenge.energyReward} ⏳ 時間沙！`,
+        'points',
+        {
+          subMessage: `要把省下的 $${result.amount} 記下來嗎？`,
+          action: {
+            label: '💰 記一筆',
+            onClick: async () => {
+              const record: RecordType = {
+                id: Date.now().toString(),
+                type: 'save',
+                amount: promptData.amount,
+                isRecurring: false,
+                timeCost: promptData.timeCost,
+                category: '每日挑戰',
+                note: promptData.challenge.name,
+                timestamp: new Date().toISOString(),
+                date: new Date().toISOString().split('T')[0],
+              };
+              await onAddRecord(record);
+              showToast(`已記錄省下 $${promptData.amount} 💰`, 'success');
+            }
+          }
+        }
+      );
+    } else {
+      // 沒有記帳提示，只顯示積分獲得
+      showToast(`獲得 ${challenge.energyReward} ⏳ 時間沙！`, 'points');
+    }
+  }, [hourlyRate, realRate, yearsToRetire, showToast, onAddRecord]);
 
   const quickAmounts = [100, 300, 500, 1000, 3000, 5000];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800">
-      {/* Toast 通知 */}
-      {showToast && (
-        <Toast
-          message={toastMessage}
-          type="success"
-          onClose={() => setShowToast(false)}
-        />
-      )}
+      {/* v2.0: Toast 佇列容器 */}
+      <ToastContainer />
+
+      {/* v2.0: 積分粒子效果 */}
+      <PointsParticles active={showPointsParticles} amount={earnedPoints} x={50} y={30} />
       
       <Confetti active={showConfetti} />
+      <AwarenessParticles active={showAwareness} />
       <CelebrationModal
         isOpen={showCelebration}
-        onClose={() => setShowCelebration(false)}
+        onClose={() => {
+          setShowCelebration(false);
+          setPendingSave(null);
+        }}
         savedAmount={lastSavedAmount}
         savedHours={lastSavedHours}
+        showSaveOption={!!pendingSave}
+        onConfirmSave={handleConfirmSave}
       />
 
       {/* Header */}
       <div className="pt-4 pb-2 px-4">
         <div className="max-w-lg mx-auto">
           <div className="flex justify-between items-center mb-4">
-            <div className="text-xl font-black text-white">
-              Time<span className="text-emerald-400">Bar</span>
+            <div className="flex items-center gap-2">
+              <div className="text-xl font-black text-white">
+                Time<span className="text-emerald-400">Bar</span>
+              </div>
+              {/* 顯示積分餘額 */}
+              {pointsBalance > 0 && (
+                <div className="bg-amber-500/20 text-amber-400 text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                  <span>⏳</span>
+                  <span className="font-medium">{pointsBalance}</span>
+                </div>
+              )}
             </div>
             <button
               onClick={onOpenSettings}
@@ -175,31 +295,23 @@ export function DashboardScreen({
         </div>
       </div>
 
-      {/* 每日挑戰 */}
+      {/* v2.1: 今日額度進度條 */}
+      <div className="px-4 py-2">
+        <div className="max-w-lg mx-auto">
+          <DailyBudgetWidget
+            records={records}
+            userData={userData}
+            onOpenSettings={onOpenSettings}
+          />
+        </div>
+      </div>
+
+      {/* 每日挑戰 - v2.0: 傳遞積分和新的回調 */}
       <div className="px-4 py-2">
         <div className="max-w-lg mx-auto">
           <DailyChallenge
-            onCompleteChallenge={(challenge: Challenge) => {
-              // 完成挑戰時建立儲蓄記錄
-              const record: RecordType = {
-                id: Date.now().toString(),
-                type: 'save',
-                amount: challenge.targetAmount,
-                isRecurring: false,
-                timeCost: FinanceCalc.calculateTimeCost(
-                  challenge.targetAmount,
-                  false,
-                  hourlyRate,
-                  realRate,
-                  yearsToRetire
-                ),
-                category: '每日挑戰',
-                note: challenge.name,
-                timestamp: new Date().toISOString(),
-                date: new Date().toISOString().split('T')[0],
-              };
-              onAddRecord(record);
-            }}
+            totalPoints={pointsBalance}
+            onCompleteChallenge={handleChallengeComplete}
           />
         </div>
       </div>
@@ -212,6 +324,39 @@ export function DashboardScreen({
           </div>
         </div>
       )}
+
+      {/* v2.1: 快速記帳按鈕列 */}
+      <div className="px-4 py-2">
+        <div className="max-w-lg mx-auto">
+          <QuickActionsBar
+            onQuickAdd={(action: QuickAction) => {
+              // 快速記帳
+              const timeCost = FinanceCalc.calculateTimeCost(
+                action.amount,
+                action.isRecurring,
+                FinanceCalc.hourlyRate(userData.salary),
+                FinanceCalc.realRate(userData.inflationRate, userData.roiRate),
+                userData.retireAge - userData.age
+              );
+              const record: RecordType = {
+                id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                type: 'spend',
+                amount: action.amount,
+                isRecurring: action.isRecurring,
+                timeCost,
+                category: action.categoryId,
+                note: action.name,
+                timestamp: new Date().toISOString(),
+                date: new Date().toISOString().split('T')[0],
+                createdAt: Date.now()
+              };
+              onAddRecord(record);
+              showToast(`✅ 已記錄 ${action.name} $${action.amount}`);
+            }}
+            onOpenSettings={onOpenQuickActionsSettings}
+          />
+        </div>
+      </div>
 
       {/* 金額輸入區 */}
       <div className="px-4 py-4">
@@ -333,10 +478,10 @@ export function DashboardScreen({
             {/* 我買了 */}
             <button
               onClick={handleBought}
-              disabled={amount <= 0}
+              disabled={amount <= 0 || isSaving}
               className="py-4 rounded-2xl font-bold text-lg transition-all duration-300 active:scale-95 disabled:opacity-30 bg-gray-700 hover:bg-gray-600 text-gray-300"
             >
-              我買了 💸
+              {isSaving ? '記錄中...' : '我買了 💸'}
             </button>
 
             {/* 我不買了 */}

@@ -21,7 +21,8 @@
       "Bash(npm uninstall:*)",
       "Bash(npx vitest:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(if exist node_modules.vitest rmdir /s /q node_modules.vitest)"
     ]
   }
 }
