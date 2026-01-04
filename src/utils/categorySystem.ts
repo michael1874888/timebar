@@ -1,13 +1,10 @@
 /**
  * CategorySystem - 分類標準化系統
- * v2.1: 提供預設分類定義、分類管理功能
+ * v2.2: 使用 SettingsSystem 統一管理，支持雲端同步
  */
 
 import { Category } from '@/types';
-import { Storage } from '@/utils/storage';
-
-const CUSTOM_CATEGORIES_KEY = 'timebar_custom_categories';
-const HIDDEN_CATEGORIES_KEY = 'timebar_hidden_categories';
+import { SettingsSystem } from '@/utils/settingsSystem';
 
 // 預設分類
 export const DEFAULT_CATEGORIES: Category[] = [
@@ -118,16 +115,14 @@ export const CategorySystem = {
    * 取得自訂分類
    */
   getCustomCategories(): Category[] {
-    const saved = Storage.load(CUSTOM_CATEGORIES_KEY);
-    return Array.isArray(saved) ? saved : [];
+    return SettingsSystem.getSetting('customCategories', []);
   },
 
   /**
    * 取得隱藏的分類 ID
    */
   getHiddenCategoryIds(): string[] {
-    const saved = Storage.load(HIDDEN_CATEGORIES_KEY);
-    return Array.isArray(saved) ? saved : [];
+    return SettingsSystem.getSetting('hiddenCategories', []);
   },
 
   /**
@@ -139,11 +134,11 @@ export const CategorySystem = {
       type: 'custom',
       sortOrder: category.sortOrder || 100 + this.getCustomCategories().length
     };
-    
+
     const customs = this.getCustomCategories();
     customs.push(newCategory);
-    Storage.save(CUSTOM_CATEGORIES_KEY, customs);
-    
+    SettingsSystem.saveSetting('customCategories', customs);
+
     return newCategory;
   },
 
@@ -154,9 +149,9 @@ export const CategorySystem = {
     const customs = this.getCustomCategories();
     const index = customs.findIndex(c => c.id === id);
     if (index === -1) return false;
-    
+
     customs.splice(index, 1);
-    Storage.save(CUSTOM_CATEGORIES_KEY, customs);
+    SettingsSystem.saveSetting('customCategories', customs);
     return true;
   },
 
@@ -166,14 +161,14 @@ export const CategorySystem = {
   toggleCategoryVisibility(id: string): boolean {
     const hiddenIds = this.getHiddenCategoryIds();
     const index = hiddenIds.indexOf(id);
-    
+
     if (index === -1) {
       hiddenIds.push(id);
     } else {
       hiddenIds.splice(index, 1);
     }
-    
-    Storage.save(HIDDEN_CATEGORIES_KEY, hiddenIds);
+
+    SettingsSystem.saveSetting('hiddenCategories', hiddenIds);
     return index === -1; // 返回是否現在是隱藏狀態
   },
 

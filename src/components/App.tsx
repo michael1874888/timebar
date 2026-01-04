@@ -16,6 +16,7 @@ import { PointsSystem } from '@/utils/pointsSystem';
 import { InventorySystem } from '@/utils/inventorySystem';
 import { RecordSystem } from '@/utils/recordSystem';
 import { QuickActionsUtils } from './dashboard/QuickActionsBar';
+import { SettingsSystem } from '@/utils/settingsSystem';
 import { UserData, Record as RecordType, Screen } from '@/types';
 
 const { DEFAULT_INFLATION_RATE, DEFAULT_ROI_RATE } = CONSTANTS;
@@ -62,6 +63,9 @@ export default function App() {
             if (cloudData.quickActions && cloudData.quickActions.length > 0) {
               Storage.save('timebar_quick_actions', cloudData.quickActions);
             }
+
+            // v2.2: 同步所有設置（分類、挑戰、預算）
+            await SettingsSystem.syncFromCloud();
 
             // 完全以雲端為準（source of truth），不合併本地記錄
             // 這樣可以確保跨裝置資料同步的一致性，避免資料重置後出現舊資料

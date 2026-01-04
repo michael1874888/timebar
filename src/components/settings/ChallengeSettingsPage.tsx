@@ -1,10 +1,6 @@
 import { useState, useMemo } from 'react';
 import { ChallengeDefinition } from '@/types';
-import { Storage } from '@/utils/storage';
-
-const CUSTOM_CHALLENGES_KEY = 'timebar_custom_challenges';
-const DELETED_DEFAULTS_KEY = 'timebar_deleted_default_challenges';
-const MODIFIED_DEFAULTS_KEY = 'timebar_modified_default_challenges';
+import { SettingsSystem } from '@/utils/settingsSystem';
 
 // 預設挑戰定義（與 DailyChallenge.tsx 同步）
 const DEFAULT_CHALLENGES: ChallengeDefinition[] = [
@@ -195,22 +191,19 @@ interface ChallengeSettingsPageProps {
 
 export function ChallengeSettingsPage({ onClose }: ChallengeSettingsPageProps) {
   // 自定義挑戰
-  const [customChallenges, setCustomChallenges] = useState<ChallengeDefinition[]>(() => {
-    const saved = Storage.load(CUSTOM_CHALLENGES_KEY);
-    return Array.isArray(saved) ? saved : [];
-  });
+  const [customChallenges, setCustomChallenges] = useState<ChallengeDefinition[]>(() =>
+    SettingsSystem.getSetting('customChallenges', [])
+  );
 
   // 已刪除的預設挑戰 ID
-  const [deletedDefaults, setDeletedDefaults] = useState<string[]>(() => {
-    const saved = Storage.load(DELETED_DEFAULTS_KEY);
-    return Array.isArray(saved) ? saved : [];
-  });
+  const [deletedDefaults, setDeletedDefaults] = useState<string[]>(() =>
+    SettingsSystem.getSetting('deletedDefaultChallenges', [])
+  );
 
   // 已修改的預設挑戰（覆蓋層）
-  const [modifiedDefaults, setModifiedDefaults] = useState<Record<string, ChallengeDefinition>>(() => {
-    const saved = Storage.load(MODIFIED_DEFAULTS_KEY);
-    return (saved && typeof saved === 'object') ? saved as Record<string, ChallengeDefinition> : {};
-  });
+  const [modifiedDefaults, setModifiedDefaults] = useState<Record<string, ChallengeDefinition>>(() =>
+    SettingsSystem.getSetting('modifiedDefaultChallenges', {})
+  );
 
   const [editingChallenge, setEditingChallenge] = useState<ChallengeDefinition | null>(null);
   const [editingIsDefault, setEditingIsDefault] = useState(false);
@@ -228,19 +221,19 @@ export function ChallengeSettingsPage({ onClose }: ChallengeSettingsPageProps) {
   // 儲存自定義挑戰
   const saveCustomChallenges = (challenges: ChallengeDefinition[]) => {
     setCustomChallenges(challenges);
-    Storage.save(CUSTOM_CHALLENGES_KEY, challenges);
+    SettingsSystem.saveSetting('customChallenges', challenges);
   };
 
   // 儲存已刪除預設
   const saveDeletedDefaults = (ids: string[]) => {
     setDeletedDefaults(ids);
-    Storage.save(DELETED_DEFAULTS_KEY, ids);
+    SettingsSystem.saveSetting('deletedDefaultChallenges', ids);
   };
 
   // 儲存已修改預設
   const saveModifiedDefaults = (modified: Record<string, ChallengeDefinition>) => {
     setModifiedDefaults(modified);
-    Storage.save(MODIFIED_DEFAULTS_KEY, modified);
+    SettingsSystem.saveSetting('modifiedDefaultChallenges', modified);
   };
 
   const handleSave = (challenge: ChallengeDefinition) => {

@@ -40,12 +40,13 @@ function getOrCreateSheet(name) {
       sheet.setColumnWidth(7, 200);
       sheet.setColumnWidth(8, 180);
     } else if (name === SHEET_NAMES.USER_DATA) {
-      // 使用者資料：新增積分、庫存、自定義挑戰欄位
-      sheet.getRange(1, 1, 1, 12).setValues([[
+      // 使用者資料：v2.2 擴充設置欄位
+      sheet.getRange(1, 1, 1, 16).setValues([[
         '年齡', '月薪', '目標退休年齡', '目前存款', '每月儲蓄', '目標退休金', '通膨率(%)', '投資報酬率(%)', '更新時間',
-        '積分餘額', '道具庫存(JSON)', '自定義挑戰(JSON)'
+        '積分餘額', '道具庫存(JSON)', '自定義挑戰(JSON)',
+        '自訂分類(JSON)', '隱藏分類(JSON)', '刪除挑戰(JSON)', '預算設定(JSON)'
       ]]);
-      sheet.getRange(1, 1, 1, 12).setFontWeight('bold').setBackground('#10b981').setFontColor('white');
+      sheet.getRange(1, 1, 1, 16).setFontWeight('bold').setBackground('#10b981').setFontColor('white');
       sheet.setFrozenRows(1);
     } else if (name === SHEET_NAMES.QUICK_ACTIONS) {
       // 快速記帳按鈕
@@ -207,33 +208,40 @@ function getRecords() {
 function saveUserData(userData) {
   const sheet = getOrCreateSheet(SHEET_NAMES.USER_DATA);
   const timestamp = Utilities.formatDate(new Date(), 'Asia/Taipei', 'yyyy-MM-dd HH:mm:ss');
-  
-  // 確保標題列是 v2.3 格式（12 欄）
-  const headers = sheet.getRange(1, 1, 1, 12).getValues()[0];
-  if (headers[9] !== '積分餘額') {
-    sheet.getRange(1, 1, 1, 12).setValues([[
+
+  // 確保標題列是 v2.2 格式（16 欄）
+  const headers = sheet.getRange(1, 1, 1, 16).getValues()[0];
+  if (headers[12] !== '自訂分類(JSON)') {
+    sheet.getRange(1, 1, 1, 16).setValues([[
       '年齡', '月薪', '目標退休年齡', '目前存款', '每月儲蓄', '目標退休金', '通膨率(%)', '投資報酬率(%)', '更新時間',
-      '積分餘額', '道具庫存(JSON)', '自定義挑戰(JSON)'
+      '積分餘額', '道具庫存(JSON)', '自定義挑戰(JSON)',
+      '自訂分類(JSON)', '隱藏分類(JSON)', '刪除挑戰(JSON)', '預算設定(JSON)'
     ]]);
-    sheet.getRange(1, 1, 1, 12).setFontWeight('bold').setBackground('#10b981').setFontColor('white');
+    sheet.getRange(1, 1, 1, 16).setFontWeight('bold').setBackground('#10b981').setFontColor('white');
   }
-  
+
   // 清除舊資料
   const lastRow = sheet.getLastRow();
   if (lastRow > 1) {
     sheet.deleteRows(2, lastRow - 1);
   }
-  
+
   const inflationRate = userData.inflationRate !== undefined ? userData.inflationRate : 2.5;
   const roiRate = userData.roiRate !== undefined ? userData.roiRate : 6;
   const monthlySavings = userData.monthlySavings !== undefined ? userData.monthlySavings : Math.round(userData.salary * 0.2);
   const targetRetirementFund = userData.targetRetirementFund !== undefined ? userData.targetRetirementFund : 0;
-  
-  // v2.3 新增欄位
+
+  // v2.0 欄位
   const pointsBalance = userData.pointsBalance !== undefined ? userData.pointsBalance : 0;
   const inventory = userData.inventory ? JSON.stringify(userData.inventory) : '{"guiltFreePass":0}';
   const customChallenges = userData.customChallenges ? JSON.stringify(userData.customChallenges) : '[]';
-  
+
+  // v2.2 新增設置欄位
+  const customCategories = userData.customCategories ? JSON.stringify(userData.customCategories) : '[]';
+  const hiddenCategories = userData.hiddenCategories ? JSON.stringify(userData.hiddenCategories) : '[]';
+  const deletedDefaultChallenges = userData.deletedDefaultChallenges ? JSON.stringify(userData.deletedDefaultChallenges) : '[]';
+  const budgetSettings = userData.budgetSettings ? JSON.stringify(userData.budgetSettings) : '{"method":"auto"}';
+
   sheet.appendRow([
     userData.age,
     userData.salary,
@@ -246,16 +254,20 @@ function saveUserData(userData) {
     timestamp,
     pointsBalance,
     inventory,
-    customChallenges
+    customChallenges,
+    customCategories,
+    hiddenCategories,
+    deletedDefaultChallenges,
+    budgetSettings
   ]);
-  
+
   // 格式化
   sheet.getRange(2, 2).setNumberFormat('#,##0');
   sheet.getRange(2, 4).setNumberFormat('#,##0');
   sheet.getRange(2, 5).setNumberFormat('#,##0');
   sheet.getRange(2, 6).setNumberFormat('#,##0');
   sheet.getRange(2, 10).setNumberFormat('#,##0');  // 積分餘額
-  
+
   return { message: 'User data saved successfully' };
 }
 
@@ -273,11 +285,11 @@ function parseJSON(str, defaultValue) {
 function getUserData() {
   const sheet = getOrCreateSheet(SHEET_NAMES.USER_DATA);
   const data = sheet.getDataRange().getValues();
-  
+
   if (data.length <= 1) {
     return { userData: null };
   }
-  
+
   const row = data[data.length - 1];
   return {
     userData: {
@@ -290,10 +302,15 @@ function getUserData() {
       inflationRate: row[6] !== undefined && row[6] !== '' ? Number(row[6]) : 2.5,
       roiRate: row[7] !== undefined && row[7] !== '' ? Number(row[7]) : 6,
       updatedAt: row[8],
-      // v2.3 新增欄位
+      // v2.0 欄位
       pointsBalance: row[9] !== undefined && row[9] !== '' ? Number(row[9]) : 0,
       inventory: parseJSON(row[10], { guiltFreePass: 0 }),
-      customChallenges: parseJSON(row[11], [])
+      customChallenges: parseJSON(row[11], []),
+      // v2.2 新增設置欄位
+      customCategories: parseJSON(row[12], []),
+      hiddenCategories: parseJSON(row[13], []),
+      deletedDefaultChallenges: parseJSON(row[14], []),
+      budgetSettings: parseJSON(row[15], { method: 'auto' })
     }
   };
 }

@@ -1,8 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Storage } from '@/utils/storage';
+import { SettingsSystem } from '@/utils/settingsSystem';
 import { ChallengeDefinition } from '@/types';
-
-const CUSTOM_CHALLENGES_KEY = 'timebar_custom_challenges';
 
 // 預設每日挑戰定義（含積分獎勵）
 const DAILY_CHALLENGES: ChallengeDefinition[] = [
@@ -104,20 +103,9 @@ export function DailyChallenge({ onCompleteChallenge, totalPoints = 0 }: DailyCh
 
   // 載入自定義挑戰和預設挑戰的修改
   useEffect(() => {
-    const savedCustom = Storage.load(CUSTOM_CHALLENGES_KEY);
-    if (Array.isArray(savedCustom)) {
-      setCustomChallenges(savedCustom);
-    }
-
-    const savedDeleted = Storage.load('timebar_deleted_default_challenges');
-    if (Array.isArray(savedDeleted)) {
-      setDeletedDefaults(savedDeleted);
-    }
-
-    const savedModified = Storage.load('timebar_modified_default_challenges');
-    if (savedModified && typeof savedModified === 'object') {
-      setModifiedDefaults(savedModified as Record<string, ChallengeDefinition>);
-    }
+    setCustomChallenges(SettingsSystem.getSetting('customChallenges', []));
+    setDeletedDefaults(SettingsSystem.getSetting('deletedDefaultChallenges', []));
+    setModifiedDefaults(SettingsSystem.getSetting('modifiedDefaultChallenges', {}));
   }, []);
 
   // v2.0: 跨日自動重置機制

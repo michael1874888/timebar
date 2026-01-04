@@ -6,7 +6,7 @@
 import { useMemo } from 'react';
 import { Record as RecordType, UserData } from '@/types';
 import { Formatters } from '@/utils/financeCalc';
-import { Storage } from '@/utils/storage';
+import { SettingsSystem } from '@/utils/settingsSystem';
 
 const { formatCurrency } = Formatters;
 
@@ -22,14 +22,13 @@ const getTodayString = () => {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 };
 
-// 儲存每日預算設定的 key
-const DAILY_BUDGET_KEY = 'timebar_daily_budget';
-
 export function DailyBudgetWidget({ records, userData, onOpenSettings }: DailyBudgetWidgetProps) {
   // 取得每日預算設定（預設：月薪的 30%）
   const dailyBudget = useMemo(() => {
-    const saved = Storage.load(DAILY_BUDGET_KEY) as number | null;
-    if (saved && saved > 0) return saved;
+    const settings = SettingsSystem.getSetting('budgetSettings', { method: 'auto' });
+    if (settings.method === 'custom' && settings.customDailyBudget && settings.customDailyBudget > 0) {
+      return settings.customDailyBudget;
+    }
     // 預設：(月薪 * 0.3) / 30 = 每日可花費
     return Math.round((userData.salary * 0.3) / 30);
   }, [userData.salary]);

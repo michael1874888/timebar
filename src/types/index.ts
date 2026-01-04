@@ -60,16 +60,21 @@ export interface UserData {
   inflationRate: number;
   roiRate: number;
   targetRetirementFund?: number;
-  
+
   // v2.0 新增欄位
   pointsBalance?: number;              // 積分餘額
   inventory?: Inventory;               // 道具庫存
   customChallenges?: ChallengeDefinition[];  // 自定義挑戰
-  
+
   // v2.1 新增欄位
   customCategories?: Category[];       // 自訂分類
   budgetSettings?: BudgetSettings;     // 額度設定
   quickActions?: QuickAction[];        // 快速記帳按鈕
+
+  // v2.2 新增設置同步欄位
+  hiddenCategories?: string[];         // 隱藏的分類ID
+  deletedDefaultChallenges?: string[]; // 刪除的預設挑戰ID
+  modifiedDefaultChallenges?: Record<string, ChallengeDefinition>; // 修改的預設挑戰
 }
 
 // ==================== 記帳系統 ====================
