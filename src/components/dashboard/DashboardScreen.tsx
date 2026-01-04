@@ -53,6 +53,9 @@ export function DashboardScreen({
   const [showPointsParticles, setShowPointsParticles] = useState<boolean>(false);
   const [earnedPoints, setEarnedPoints] = useState<number>(0);
 
+  // v2.1: 防止重複點擊
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+
   const { salary, retireAge, inflationRate, roiRate, age } = userData;
 
   const yearsToRetire = useMemo(() => retireAge - age, [retireAge, age]);
@@ -89,29 +92,34 @@ export function DashboardScreen({
 
   // 處理「我買了」
   const handleBought = useCallback(async () => {
-    if (amount <= 0) return;
+    if (amount <= 0 || isSaving) return;
 
-    const record: RecordType = {
-      id: Date.now().toString(),
-      type: 'spend',
-      amount,
-      isRecurring,
-      timeCost,
-      category: '一般消費',
-      note: '',
-      timestamp: new Date().toISOString(),
-      date: new Date().toISOString().split('T')[0],
-    };
+    setIsSaving(true);
+    try {
+      const record: RecordType = {
+        id: Date.now().toString(),
+        type: 'spend',
+        amount,
+        isRecurring,
+        timeCost,
+        category: '一般消費',
+        note: '',
+        timestamp: new Date().toISOString(),
+        date: new Date().toISOString().split('T')[0],
+      };
 
-    await onAddRecord(record);
+      await onAddRecord(record);
 
-    // 觸發覺察提醒動畫
-    setShowAwareness(true);
-    setTimeout(() => setShowAwareness(false), 2500);
+      // 觸發覺察提醒動畫
+      setShowAwareness(true);
+      setTimeout(() => setShowAwareness(false), 2500);
 
-    showToast('已記錄消費 📝', 'success');
-    setAmount(0);
-  }, [amount, isRecurring, timeCost, onAddRecord]);
+      showToast('已記錄消費 📝', 'success');
+      setAmount(0);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [amount, isRecurring, timeCost, onAddRecord, isSaving, showToast]);
 
   // 處理「我不買了」- v2.0: 不自動記帳，改為詢問
   const handleSkipped = useCallback(() => {
@@ -468,10 +476,10 @@ export function DashboardScreen({
             {/* 我買了 */}
             <button
               onClick={handleBought}
-              disabled={amount <= 0}
+              disabled={amount <= 0 || isSaving}
               className="py-4 rounded-2xl font-bold text-lg transition-all duration-300 active:scale-95 disabled:opacity-30 bg-gray-700 hover:bg-gray-600 text-gray-300"
             >
-              我買了 💸
+              {isSaving ? '記錄中...' : '我買了 💸'}
             </button>
 
             {/* 我不買了 */}
