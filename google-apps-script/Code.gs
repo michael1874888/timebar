@@ -118,6 +118,7 @@ function addRecord(record) {
   const timestamp = new Date(record.timestamp || new Date());
   const dateStr = Utilities.formatDate(timestamp, 'Asia/Taipei', 'yyyy-MM-dd HH:mm:ss');
   const dateOnly = Utilities.formatDate(timestamp, 'Asia/Taipei', 'yyyy-MM-dd');
+  const nowStr = Utilities.formatDate(new Date(), 'Asia/Taipei', 'yyyy-MM-dd HH:mm:ss');
   
   const rowData = [
     record.id || Utilities.getUuid(),
@@ -129,7 +130,12 @@ function addRecord(record) {
     record.note || '',
     dateStr,
     dateOnly,
-    record.guiltFree ? '是' : '否'  // v2.3: 免死金牌豁免
+    record.guiltFree ? '是' : '否',
+    // v2.1: 訂閱管理欄位
+    '',           // Col 11: 訂閱狀態
+    '',           // Col 12: 終止日期
+    nowStr,       // Col 13: 創建時間
+    ''            // Col 14: 更新時間
   ];
   
   sheet.appendRow(rowData);
@@ -281,9 +287,10 @@ function getUserData() {
 function updateRecord(record) {
   const sheet = getOrCreateSheet(SHEET_NAMES.RECORDS);
   const data = sheet.getDataRange().getValues();
+  const targetId = String(record.id);  // 確保是字串
   
   for (let i = 1; i < data.length; i++) {
-    if (data[i][0] === record.id) {
+    if (String(data[i][0]) === targetId) {  // 都轉成字串比較
       const row = i + 1;
       
       // 只更新允許的欄位：金額、分類、備註
@@ -300,17 +307,15 @@ function updateRecord(record) {
       
       // v2.1: 更新訂閱狀態（如果有）
       if (record.recurringStatus !== undefined) {
-        // 確保欄位存在（第 11 欄）
         sheet.getRange(row, 11).setValue(record.recurringStatus);
       }
       if (record.recurringEndDate !== undefined) {
         sheet.getRange(row, 12).setValue(record.recurringEndDate);
       }
       
-      // 更新修改時間戳記（第 14 欄）
-      if (record.updatedAt !== undefined) {
-        sheet.getRange(row, 14).setValue(record.updatedAt);
-      }
+      // 更新修改時間（第 14 欄）- 使用日期格式
+      const nowStr = Utilities.formatDate(new Date(), 'Asia/Taipei', 'yyyy-MM-dd HH:mm:ss');
+      sheet.getRange(row, 14).setValue(nowStr);
       
       return { message: 'Record updated successfully', id: record.id };
     }
@@ -323,9 +328,10 @@ function updateRecord(record) {
 function deleteRecord(recordId) {
   const sheet = getOrCreateSheet(SHEET_NAMES.RECORDS);
   const data = sheet.getDataRange().getValues();
+  const targetId = String(recordId);  // 確保是字串
   
   for (let i = 1; i < data.length; i++) {
-    if (data[i][0] === recordId) {
+    if (String(data[i][0]) === targetId) {  // 都轉成字串比較
       sheet.deleteRow(i + 1);
       return { message: 'Record deleted successfully' };
     }
