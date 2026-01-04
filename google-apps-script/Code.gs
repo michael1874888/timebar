@@ -11,7 +11,8 @@ const SPREADSHEET_ID = '1bJ-plKk3locg4fRWtEcdL5rIgT2KQvEz5Xer1h7--MU';
 // 試算表設定
 const SHEET_NAMES = {
   RECORDS: '消費紀錄',
-  USER_DATA: '使用者資料'
+  USER_DATA: '使用者資料',
+  QUICK_ACTIONS: '快速記帳按鈕'
 };
 
 // 取得試算表
@@ -46,6 +47,15 @@ function getOrCreateSheet(name) {
       ]]);
       sheet.getRange(1, 1, 1, 12).setFontWeight('bold').setBackground('#10b981').setFontColor('white');
       sheet.setFrozenRows(1);
+    } else if (name === SHEET_NAMES.QUICK_ACTIONS) {
+      // 快速記帳按鈕
+      sheet.getRange(1, 1, 1, 6).setValues([[
+        'ID', '名稱', '圖示', '金額', '分類ID', '是否循環'
+      ]]);
+      sheet.getRange(1, 1, 1, 6).setFontWeight('bold').setBackground('#10b981').setFontColor('white');
+      sheet.setFrozenRows(1);
+      sheet.setColumnWidth(1, 150);
+      sheet.setColumnWidth(2, 120);
     }
   }
   
@@ -62,10 +72,13 @@ function doGet(e) {
       result = getRecords();
     } else if (action === 'getUserData') {
       result = getUserData();
+    } else if (action === 'getQuickActions') {
+      result = getQuickActions();
     } else if (action === 'getAll') {
       result = {
         records: getRecords().records,
-        userData: getUserData().userData
+        userData: getUserData().userData,
+        quickActions: getQuickActions().quickActions
       };
     } else if (action === 'ping') {
       result = { message: 'pong', timestamp: new Date().toISOString() };
@@ -94,6 +107,8 @@ function doPost(e) {
       result = updateRecord(data.data);  // v2.1: 更新記錄
     } else if (action === 'saveUserData') {
       result = saveUserData(data.data);
+    } else if (action === 'saveQuickActions') {
+      result = saveQuickActions(data.data);
     } else if (action === 'deleteRecord') {
       result = deleteRecord(data.id);
     } else if (action === 'clearAllData') {
@@ -367,6 +382,62 @@ function clearAllData() {
   }
   
   return { message: 'All data cleared successfully' };
+}
+
+// ========== 快速記帳按鈕函數 ==========
+
+// 取得快速記帳按鈕
+function getQuickActions() {
+  const sheet = getOrCreateSheet(SHEET_NAMES.QUICK_ACTIONS);
+  const data = sheet.getDataRange().getValues();
+
+  if (data.length <= 1) {
+    return { quickActions: [] };
+  }
+
+  const quickActions = [];
+  for (let i = 1; i < data.length; i++) {
+    quickActions.push({
+      id: data[i][0],
+      name: data[i][1],
+      icon: data[i][2],
+      amount: Number(data[i][3]),
+      categoryId: data[i][4],
+      isRecurring: data[i][5] === '是'
+    });
+  }
+
+  return { quickActions };
+}
+
+// 儲存快速記帳按鈕（完全覆蓋）
+function saveQuickActions(quickActions) {
+  const sheet = getOrCreateSheet(SHEET_NAMES.QUICK_ACTIONS);
+
+  // 清除舊資料（保留標題列）
+  const lastRow = sheet.getLastRow();
+  if (lastRow > 1) {
+    sheet.deleteRows(2, lastRow - 1);
+  }
+
+  // 新增所有按鈕
+  if (quickActions && quickActions.length > 0) {
+    const rows = quickActions.map(action => [
+      action.id,
+      action.name,
+      action.icon,
+      action.amount,
+      action.categoryId,
+      action.isRecurring ? '是' : '否'
+    ]);
+
+    sheet.getRange(2, 1, rows.length, 6).setValues(rows);
+
+    // 格式化金額欄
+    sheet.getRange(2, 4, rows.length, 1).setNumberFormat('#,##0');
+  }
+
+  return { message: 'Quick actions saved successfully' };
 }
 
 // ========== 測試函數 ==========

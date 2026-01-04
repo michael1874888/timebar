@@ -15,6 +15,7 @@ import { CONSTANTS } from '@/utils/financeCalc';
 import { PointsSystem } from '@/utils/pointsSystem';
 import { InventorySystem } from '@/utils/inventorySystem';
 import { RecordSystem } from '@/utils/recordSystem';
+import { QuickActionsUtils } from './dashboard/QuickActionsBar';
 import { UserData, Record as RecordType, Screen } from '@/types';
 
 const { DEFAULT_INFLATION_RATE, DEFAULT_ROI_RATE } = CONSTANTS;
@@ -55,6 +56,11 @@ export default function App() {
             }
             if (cloudUserData.inventory) {
               InventorySystem.save(cloudUserData.inventory);
+            }
+
+            // v2.1: 同步快速記帳按鈕
+            if (cloudData.quickActions && cloudData.quickActions.length > 0) {
+              Storage.save('timebar_quick_actions', cloudData.quickActions);
             }
 
             // 完全以雲端為準（source of truth），不合併本地記錄

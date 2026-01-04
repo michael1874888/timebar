@@ -1,6 +1,7 @@
 // Google Sheets API 服務
 import { GAS_WEB_APP_URL } from '@/constants';
 import type { UserData, Record } from '@/types';
+import type { QuickAction } from '@/components/dashboard/QuickActionsBar';
 
 export const GoogleSheetsAPI = {
   isConfigured: (): boolean => !!GAS_WEB_APP_URL,
@@ -32,7 +33,7 @@ export const GoogleSheetsAPI = {
   },
 
   // 讀取全部資料（一次請求）
-  async getAll(): Promise<{ success: boolean; userData: UserData | null; records: Record[] }> {
+  async getAll(): Promise<{ success: boolean; userData: UserData | null; records: Record[]; quickActions?: QuickAction[] }> {
     if (!this.isConfigured()) return { success: false, userData: null, records: [] };
     try {
       const response = await fetch(`${GAS_WEB_APP_URL}?action=getAll`);
@@ -40,11 +41,25 @@ export const GoogleSheetsAPI = {
       return {
         success: true,
         userData: result.userData,
-        records: result.records || []
+        records: result.records || [],
+        quickActions: result.quickActions || []
       };
     } catch (e) {
       console.error('getAll error:', e);
       return { success: false, userData: null, records: [] };
+    }
+  },
+
+  // 讀取快速記帳按鈕
+  async getQuickActions(): Promise<{ success: boolean; data: QuickAction[] }> {
+    if (!this.isConfigured()) return { success: false, data: [] };
+    try {
+      const response = await fetch(`${GAS_WEB_APP_URL}?action=getQuickActions`);
+      const result = await response.json();
+      return { success: true, data: result.quickActions || [] };
+    } catch (e) {
+      console.error('getQuickActions error:', e);
+      return { success: false, data: [] };
     }
   },
 
@@ -72,6 +87,22 @@ export const GoogleSheetsAPI = {
       });
       return { success: true };
     } catch (e) {
+      return { success: false };
+    }
+  },
+
+  // 儲存快速記帳按鈕
+  async saveQuickActions(quickActions: QuickAction[]): Promise<{ success: boolean }> {
+    if (!this.isConfigured()) return { success: false };
+    try {
+      await fetch(GAS_WEB_APP_URL, {
+        method: 'POST', mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'saveQuickActions', data: quickActions }),
+      });
+      return { success: true };
+    } catch (e) {
+      console.error('saveQuickActions error:', e);
       return { success: false };
     }
   },

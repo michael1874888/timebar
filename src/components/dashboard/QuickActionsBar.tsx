@@ -7,6 +7,7 @@ import { useState, useMemo } from 'react';
 import { Storage } from '@/utils/storage';
 import { CategorySystem } from '@/utils/categorySystem';
 import { Formatters } from '@/utils/financeCalc';
+import { GoogleSheetsAPI } from '@/services/googleSheets';
 
 const { formatCurrency } = Formatters;
 
@@ -214,6 +215,10 @@ export const QuickActionsUtils = {
 
   saveQuickActions(actions: QuickAction[]): void {
     Storage.save(QUICK_ACTIONS_KEY, actions);
+    // 同步到雲端
+    GoogleSheetsAPI.saveQuickActions(actions).catch(err => {
+      console.error('Failed to sync quick actions to cloud:', err);
+    });
   },
 
   addQuickAction(action: QuickAction): void {
@@ -228,7 +233,7 @@ export const QuickActionsUtils = {
   },
 
   updateQuickAction(updated: QuickAction): void {
-    const actions = this.getQuickActions().map(a => 
+    const actions = this.getQuickActions().map(a =>
       a.id === updated.id ? updated : a
     );
     this.saveQuickActions(actions);
@@ -236,6 +241,25 @@ export const QuickActionsUtils = {
 
   resetToDefault(): void {
     Storage.save(QUICK_ACTIONS_KEY, DEFAULT_QUICK_ACTIONS);
+    // 同步到雲端
+    GoogleSheetsAPI.saveQuickActions(DEFAULT_QUICK_ACTIONS).catch(err => {
+      console.error('Failed to sync quick actions to cloud:', err);
+    });
+  },
+
+  // 從雲端同步快速按鈕
+  async syncFromCloud(): Promise<boolean> {
+    try {
+      const result = await GoogleSheetsAPI.getQuickActions();
+      if (result.success && result.data && result.data.length > 0) {
+        Storage.save(QUICK_ACTIONS_KEY, result.data);
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error('Failed to sync quick actions from cloud:', err);
+      return false;
+    }
   }
 };
 
