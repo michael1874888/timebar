@@ -37,6 +37,7 @@ const QUICK_ACTIONS_KEY = 'timebar_quick_actions';
 export function QuickActionsBar({ onQuickAdd, onOpenSettings }: QuickActionsBarProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [confirmingAction, setConfirmingAction] = useState<QuickAction | null>(null);
+  const [adjustedAmount, setAdjustedAmount] = useState<number>(0);
 
   // 取得快速操作列表
   const quickActions = useMemo(() => {
@@ -47,12 +48,14 @@ export function QuickActionsBar({ onQuickAdd, onOpenSettings }: QuickActionsBarP
   // 處理快速記帳
   const handleQuickAction = (action: QuickAction) => {
     setConfirmingAction(action);
+    setAdjustedAmount(action.amount);  // 初始化為預設金額
   };
 
   // 確認記帳
   const confirmAction = () => {
     if (confirmingAction) {
-      onQuickAdd(confirmingAction);
+      // 使用微調後的金額
+      onQuickAdd({ ...confirmingAction, amount: adjustedAmount });
       setConfirmingAction(null);
     }
   };
@@ -126,21 +129,58 @@ export function QuickActionsBar({ onQuickAdd, onOpenSettings }: QuickActionsBarP
         )}
       </div>
 
-      {/* 確認 Modal */}
+      {/* 確認 Modal - 含金額微調 */}
       {confirmingAction && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-gray-800 rounded-2xl p-6 w-full max-w-sm animate-scale-up">
-            <div className="text-center mb-6">
-              <div className="text-5xl mb-4">{confirmingAction.icon}</div>
+            <div className="text-center mb-4">
+              <div className="text-5xl mb-3">{confirmingAction.icon}</div>
               <h2 className="text-xl font-bold text-white mb-2">
                 記錄 {confirmingAction.name}？
               </h2>
               <div className="text-3xl font-black text-orange-400">
-                {formatCurrency(confirmingAction.amount)}
+                {formatCurrency(adjustedAmount)}
               </div>
               <div className="flex items-center justify-center gap-2 text-gray-500 text-sm mt-2">
                 <span>{getCategoryDisplay(confirmingAction.categoryId).icon}</span>
                 <span>{getCategoryDisplay(confirmingAction.categoryId).name}</span>
+              </div>
+            </div>
+
+            {/* 金額微調滑桿 */}
+            <div className="mb-6">
+              <div className="flex justify-between text-xs text-gray-500 mb-2">
+                <span>${Math.max(10, Math.floor(confirmingAction.amount * 0.5))}</span>
+                <span className="text-gray-400">微調金額</span>
+                <span>${Math.floor(confirmingAction.amount * 2)}</span>
+              </div>
+              <input
+                type="range"
+                min={Math.max(10, Math.floor(confirmingAction.amount * 0.5))}
+                max={Math.floor(confirmingAction.amount * 2)}
+                step={confirmingAction.amount >= 100 ? 10 : 5}
+                value={adjustedAmount}
+                onChange={(e) => setAdjustedAmount(Number(e.target.value))}
+                className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-orange-500"
+              />
+              {/* 快速調整按鈕 */}
+              <div className="flex justify-center gap-2 mt-3">
+                {[0.5, 0.75, 1, 1.25, 1.5].map(multiplier => {
+                  const value = Math.round(confirmingAction.amount * multiplier);
+                  return (
+                    <button
+                      key={multiplier}
+                      onClick={() => setAdjustedAmount(value)}
+                      className={`px-2 py-1 rounded text-xs ${
+                        adjustedAmount === value
+                          ? 'bg-orange-500 text-gray-900'
+                          : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+                      }`}
+                    >
+                      {multiplier === 1 ? '預設' : `${multiplier}x`}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 

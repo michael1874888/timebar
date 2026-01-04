@@ -24,6 +24,7 @@ interface DashboardScreenProps {
   onOpenTracker: () => void;
   onOpenHistory: () => void;
   onOpenSettings: () => void;
+  onOpenQuickActionsSettings?: () => void;  // v2.1: 快速記帳設定
 }
 
 export function DashboardScreen({
@@ -32,7 +33,8 @@ export function DashboardScreen({
   onAddRecord,
   onOpenTracker,
   onOpenHistory,
-  onOpenSettings
+  onOpenSettings,
+  onOpenQuickActionsSettings
 }: DashboardScreenProps) {
   const [amount, setAmount] = useState<number>(0);
   const [isRecurring, setIsRecurring] = useState<boolean>(false);
@@ -351,7 +353,7 @@ export function DashboardScreen({
               onAddRecord(record);
               showToast(`✅ 已記錄 ${action.name} $${action.amount}`);
             }}
-            onOpenSettings={onOpenSettings}
+            onOpenSettings={onOpenQuickActionsSettings}
           />
         </div>
       </div>

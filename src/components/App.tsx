@@ -7,6 +7,7 @@ import { SettingsPage } from './settings/SettingsPage';
 import { ShopPage } from './shop/ShopPage';
 import { ChallengeSettingsPage } from './settings/ChallengeSettingsPage';
 import { CategorySettingsPage } from './settings/CategorySettingsPage';
+import { QuickActionsSettingsPage } from './settings/QuickActionsSettingsPage';
 import { SubscriptionManagerPage } from './subscription/SubscriptionManagerPage';
 import { GoogleSheetsAPI } from '@/services/googleSheets';
 import { Storage } from '@/utils/storage';
@@ -229,6 +230,7 @@ export default function App() {
           onOpenTracker={() => setScreen('tracker')}
           onOpenHistory={() => setScreen('history')}
           onOpenSettings={() => setScreen('settings')}
+          onOpenQuickActionsSettings={() => setScreen('quick-actions-settings')}
         />
       )}
       {screen === 'tracker' && userData && (
@@ -273,6 +275,9 @@ export default function App() {
       )}
       {screen === 'category-settings' && (
         <CategorySettingsPage onClose={() => setScreen('settings')} />
+      )}
+      {screen === 'quick-actions-settings' && (
+        <QuickActionsSettingsPage onBack={() => setScreen('dashboard')} />
       )}
     </div>
   );
