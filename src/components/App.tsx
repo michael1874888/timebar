@@ -6,11 +6,14 @@ import { HistoryPage } from './history/HistoryPage';
 import { SettingsPage } from './settings/SettingsPage';
 import { ShopPage } from './shop/ShopPage';
 import { ChallengeSettingsPage } from './settings/ChallengeSettingsPage';
+import { CategorySettingsPage } from './settings/CategorySettingsPage';
+import { SubscriptionManagerPage } from './subscription/SubscriptionManagerPage';
 import { GoogleSheetsAPI } from '@/services/googleSheets';
 import { Storage } from '@/utils/storage';
 import { CONSTANTS } from '@/utils/financeCalc';
 import { PointsSystem } from '@/utils/pointsSystem';
 import { InventorySystem } from '@/utils/inventorySystem';
+import { RecordSystem } from '@/utils/recordSystem';
 import { UserData, Record as RecordType, Screen } from '@/types';
 
 const { DEFAULT_INFLATION_RATE, DEFAULT_ROI_RATE } = CONSTANTS;
@@ -132,9 +135,14 @@ export default function App() {
   const handleOnboardingComplete = (data: UserData): void => { setUserData(data); setScreen('dashboard'); };
 
   const handleAddRecord = async (record: RecordType): Promise<void> => {
-    setRecords(prev => [...prev, record]);
+    // v2.1: 新增 createdAt 時間戳記
+    const recordWithMeta: RecordType = {
+      ...record,
+      createdAt: Date.now()
+    };
+    setRecords(prev => [...prev, recordWithMeta]);
     try {
-      await GoogleSheetsAPI.saveRecord(record);
+      await GoogleSheetsAPI.saveRecord(recordWithMeta);
 
       // v2.0: 記帳後同步積分和庫存到雲端
       if (userData) {
@@ -148,6 +156,28 @@ export default function App() {
     } catch (error) {
       console.error('Failed to save record to cloud:', error);
       // 記錄已加入本地，即使雲端同步失敗也不影響使用
+    }
+  };
+
+  // v2.1: 更新記錄
+  const handleUpdateRecord = async (id: string, updates: { amount: number; category: string; note: string }): Promise<void> => {
+    const result = await RecordSystem.updateRecord(records, id, updates);
+    if (result.success) {
+      setRecords(result.records);
+    } else {
+      console.error('Failed to update record:', result.error);
+      throw new Error(result.error);
+    }
+  };
+
+  // v2.1: 刪除記錄
+  const handleDeleteRecord = async (id: string): Promise<void> => {
+    const result = await RecordSystem.deleteRecord(records, id);
+    if (result.success) {
+      setRecords(result.records);
+    } else {
+      console.error('Failed to delete record:', result.error);
+      throw new Error(result.error);
     }
   };
 
@@ -212,19 +242,37 @@ export default function App() {
         />
       )}
       {screen === 'history' && userData && (
-        <HistoryPage records={records} userData={userData} onClose={() => setScreen('dashboard')} />
+        <HistoryPage
+          records={records}
+          userData={userData}
+          onClose={() => setScreen('dashboard')}
+          onUpdateRecord={handleUpdateRecord}
+          onDeleteRecord={handleDeleteRecord}
+        />
       )}
       {screen === 'settings' && userData && (
         <SettingsPage userData={userData} onUpdateUser={handleUpdateUser}
           onClose={() => setScreen('dashboard')} onReset={handleReset}
           onOpenShop={() => setScreen('shop')}
-          onOpenChallengeSettings={() => setScreen('challenge-settings')} />
+          onOpenChallengeSettings={() => setScreen('challenge-settings')}
+          onOpenSubscriptionManager={() => setScreen('subscription-manager')}
+          onOpenCategorySettings={() => setScreen('category-settings')} />
       )}
       {screen === 'shop' && userData && (
         <ShopPage onClose={() => setScreen('settings')} />
       )}
       {screen === 'challenge-settings' && (
         <ChallengeSettingsPage onClose={() => setScreen('settings')} />
+      )}
+      {screen === 'subscription-manager' && userData && (
+        <SubscriptionManagerPage
+          records={records}
+          onUpdateRecords={setRecords}
+          onClose={() => setScreen('settings')}
+        />
+      )}
+      {screen === 'category-settings' && (
+        <CategorySettingsPage onClose={() => setScreen('settings')} />
       )}
     </div>
   );

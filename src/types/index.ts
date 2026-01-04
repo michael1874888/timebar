@@ -65,6 +65,11 @@ export interface UserData {
   pointsBalance?: number;              // 積分餘額
   inventory?: Inventory;               // 道具庫存
   customChallenges?: ChallengeDefinition[];  // 自定義挑戰
+  
+  // v2.1 新增欄位
+  customCategories?: Category[];       // 自訂分類
+  budgetSettings?: BudgetSettings;     // 額度設定
+  quickActions?: QuickAction[];        // 快速記帳按鈕
 }
 
 // ==================== 記帳系統 ====================
@@ -80,9 +85,62 @@ export interface Record {
   timestamp: string;
   date: string;
   guiltFree?: boolean;       // v2.0: 是否使用免死金牌豁免
+  
+  // v2.1 新增：訂閱管理
+  recurringStatus?: 'active' | 'ended';  // 訂閱狀態
+  recurringEndDate?: string;             // 終止日期（YYYY-MM-DD）
+  
+  // v2.1 新增：元數據
+  createdAt?: number;         // 創建時間戳記
+  updatedAt?: number;         // 最後修改時間戳記
 }
 
-export type Screen = 'loading' | 'onboarding' | 'dashboard' | 'tracker' | 'history' | 'settings' | 'shop' | 'challenge-settings';
+// ==================== 分類系統 ====================
+
+export interface Category {
+  id: string;                 // 'food', 'transport', 'housing'...
+  name: string;               // '飲食', '交通', '居住'...
+  icon: string;               // '🍽️', '🚗', '🏠'...
+  color: string;              // Tailwind 色碼
+  type: 'default' | 'custom'; // 預設或自訂
+  isHidden?: boolean;         // 是否在選單中隱藏
+  sortOrder?: number;         // 排序權重
+}
+
+// ==================== 額度系統 ====================
+
+export interface DailyBudget {
+  date: string;               // YYYY-MM-DD
+  totalAllowedHours: number;  // 今日可用生命時間（小時）
+  spentHours: number;         // 已花費時間
+  remainingHours: number;     // 剩餘時間
+  isOverBudget: boolean;      // 是否超額
+  overBudgetHours?: number;   // 超額時間
+}
+
+export interface BudgetSettings {
+  method: 'auto' | 'custom';  // 計算方式
+  customDailyHours?: number;  // 自訂每日額度（小時）
+  workHoursPerDay?: number;   // 工作時數/天（預設 8）
+  allowancePercentage?: number; // 可浪費比例（預設 25% = 2hr）
+}
+
+// ==================== 快速記帳 ====================
+
+export interface QuickAction {
+  id: string;
+  name: string;               // '早餐', '咖啡', '午餐'
+  amount: number;             // 預設金額
+  category: string;           // 分類 ID
+  icon: string;               // 圖示
+  type: 'default' | 'custom'; // 預設或自訂
+  sortOrder: number;          // 排序
+  usageCount?: number;        // 使用次數（用於智能排序）
+}
+
+// ==================== 畫面路由 ====================
+
+export type Screen = 'loading' | 'onboarding' | 'dashboard' | 'tracker' | 'history' | 'settings' | 'shop' | 'challenge-settings' | 'subscription-manager' | 'category-settings' | 'budget-settings' | 'quick-actions-settings';
 
 export interface GPSResult {
   estimatedAge: number;
@@ -117,4 +175,5 @@ export interface SkippedPurchase {
   workingHours: number;
   timestamp: string;
 }
+
 

@@ -15,9 +15,11 @@ interface SettingsPageProps {
   onReset: () => void;
   onOpenShop?: () => void;
   onOpenChallengeSettings?: () => void;
+  onOpenSubscriptionManager?: () => void;
+  onOpenCategorySettings?: () => void;
 }
 
-export function SettingsPage({ userData, onUpdateUser, onClose, onReset, onOpenShop, onOpenChallengeSettings }: SettingsPageProps) {
+export function SettingsPage({ userData, onUpdateUser, onClose, onReset, onOpenShop, onOpenChallengeSettings, onOpenSubscriptionManager, onOpenCategorySettings }: SettingsPageProps) {
   const [age, setAge] = useState<number>(userData.age);
   const [salary, setSalary] = useState<number>(userData.salary);
   const [retireAge, setRetireAge] = useState<number>(userData.retireAge);
@@ -329,6 +331,47 @@ export function SettingsPage({ userData, onUpdateUser, onClose, onReset, onOpenS
               <button
                 onClick={onOpenChallengeSettings}
                 className="bg-emerald-500 hover:bg-emerald-400 text-gray-900 font-bold py-2 px-4 rounded-xl text-sm"
+              >
+                管理
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* v2.1: Subscription Manager Entry */}
+        {onOpenSubscriptionManager && (
+          <div className="bg-gradient-to-r from-pink-900/40 to-purple-900/40 rounded-3xl p-6 mb-6 border border-pink-500/30">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="text-3xl">📱</div>
+                <div>
+                  <h2 className="text-white font-bold">訂閱管理</h2>
+                  <div className="text-gray-400 text-sm">管理每月固定支出</div>
+                </div>
+              </div>
+              <button
+                onClick={onOpenSubscriptionManager}
+                className="bg-pink-500 hover:bg-pink-400 text-gray-900 font-bold py-2 px-4 rounded-xl text-sm"
+              >
+                管理
+              </button>
+            </div>
+          </div>
+        )}
+        {/* v2.1: Category Settings Entry */}
+        {onOpenCategorySettings && (
+          <div className="bg-gradient-to-r from-cyan-900/40 to-blue-900/40 rounded-3xl p-6 mb-6 border border-cyan-500/30">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="text-3xl">🏷️</div>
+                <div>
+                  <h2 className="text-white font-bold">分類管理</h2>
+                  <div className="text-gray-400 text-sm">自訂消費分類</div>
+                </div>
+              </div>
+              <button
+                onClick={onOpenCategorySettings}
+                className="bg-cyan-500 hover:bg-cyan-400 text-gray-900 font-bold py-2 px-4 rounded-xl text-sm"
               >
                 管理
               </button>

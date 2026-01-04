@@ -1,7 +1,9 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { GPSCalc, Formatters } from '@/utils/financeCalc';
 import { UserData, Record as RecordType } from '@/types';
 import { CategoryPieChart } from './CategoryPieChart';
+import { EditRecordModal, DeleteConfirmModal } from './EditRecordModal';
+import { CategorySystem } from '@/utils/categorySystem';
 
 const { formatTime, formatCurrency, formatAgeDiff } = Formatters;
 
@@ -9,10 +11,17 @@ interface HistoryPageProps {
   records: RecordType[];
   userData: UserData;
   onClose: () => void;
+  onUpdateRecord?: (id: string, updates: { amount: number; category: string; note: string }) => Promise<void>;
+  onDeleteRecord?: (id: string) => Promise<void>;
 }
 
-export function HistoryPage({ records, userData, onClose }: HistoryPageProps) {
+export function HistoryPage({ records, userData, onClose, onUpdateRecord, onDeleteRecord }: HistoryPageProps) {
   const { retireAge } = userData;
+
+  // v2.1: 編輯/刪除 Modal 狀態
+  const [editingRecord, setEditingRecord] = useState<RecordType | null>(null);
+  const [deletingRecord, setDeletingRecord] = useState<RecordType | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   // 使用 GPSCalc 計算
   const { totalSaved, totalSpent } = useMemo(() => GPSCalc.calculateTotals(records), [records]);
@@ -35,6 +44,39 @@ export function HistoryPage({ records, userData, onClose }: HistoryPageProps) {
     }, {} as { [key: string]: RecordType[] }),
     [sortedRecords]
   );
+
+  // v2.1: 處理編輯儲存
+  const handleEditSave = async (updates: { amount: number; category: string; note: string }) => {
+    if (!editingRecord || !onUpdateRecord) return;
+    setIsLoading(true);
+    try {
+      await onUpdateRecord(editingRecord.id, updates);
+      setEditingRecord(null);
+    } catch (error) {
+      console.error('Failed to update record:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // v2.1: 處理刪除確認
+  const handleDeleteConfirm = async () => {
+    if (!deletingRecord || !onDeleteRecord) return;
+    setIsLoading(true);
+    try {
+      await onDeleteRecord(deletingRecord.id);
+      setDeletingRecord(null);
+    } catch (error) {
+      console.error('Failed to delete record:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 取得分類顯示資訊
+  const getCategoryDisplay = (categoryId: string) => {
+    return CategorySystem.getCategoryDisplay(categoryId);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800 pb-8">
@@ -140,23 +182,29 @@ export function HistoryPage({ records, userData, onClose }: HistoryPageProps) {
                     const time = formatTime(record.timeCost);
                     const date = new Date(record.timestamp);
                     const isExempted = record.guiltFree === true;
+                    const categoryDisplay = getCategoryDisplay(record.category);
+                    
                     return (
                       <div key={record.id} className={`flex items-center gap-3 p-4 ${i > 0 ? 'border-t border-gray-700/50' : ''} ${isExempted ? 'opacity-60' : ''}`}>
+                        {/* 分類圖示 */}
                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${
                           isExempted ? 'bg-gray-600/20' :
                           record.type === 'save' ? 'bg-emerald-500/20' : 'bg-orange-500/20'
                         }`}>
-                          {isExempted ? '🎫' : record.type === 'save' ? '💰' : '💸'}
+                          {isExempted ? '🎫' : categoryDisplay.icon}
                         </div>
+                        
+                        {/* 記錄內容 */}
                         <div className="flex-1 min-w-0">
                           <div className="flex justify-between items-start">
                             <div className="min-w-0">
                               <div className={`font-medium truncate ${isExempted ? 'text-gray-400 line-through' : 'text-white'}`}>
-                                {record.note || record.category || (record.type === 'save' ? '儲蓄' : '消費')}
+                                {record.note || categoryDisplay.name || (record.type === 'save' ? '儲蓄' : '消費')}
                                 {isExempted && <span className="text-amber-400 text-xs ml-1 no-underline">(已豁免)</span>}
                               </div>
                               <div className="text-gray-500 text-xs">
                                 {record.isRecurring ? '🔄 ' : ''}{date.getMonth() + 1}/{date.getDate()}
+                                {record.recurringStatus === 'ended' && <span className="text-gray-600 ml-1">(已終止)</span>}
                               </div>
                             </div>
                             <div className="text-right ml-2">
@@ -175,6 +223,30 @@ export function HistoryPage({ records, userData, onClose }: HistoryPageProps) {
                             </div>
                           </div>
                         </div>
+
+                        {/* v2.1: 編輯/刪除按鈕 */}
+                        {(onUpdateRecord || onDeleteRecord) && (
+                          <div className="flex gap-1 ml-2">
+                            {onUpdateRecord && (
+                              <button
+                                onClick={() => setEditingRecord(record)}
+                                className="w-8 h-8 rounded-lg bg-gray-700/50 hover:bg-gray-600 flex items-center justify-center transition-colors"
+                                title="編輯"
+                              >
+                                <span className="text-sm">✏️</span>
+                              </button>
+                            )}
+                            {onDeleteRecord && (
+                              <button
+                                onClick={() => setDeletingRecord(record)}
+                                className="w-8 h-8 rounded-lg bg-gray-700/50 hover:bg-red-500/30 flex items-center justify-center transition-colors"
+                                title="刪除"
+                              >
+                                <span className="text-sm">🗑️</span>
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -184,6 +256,34 @@ export function HistoryPage({ records, userData, onClose }: HistoryPageProps) {
           })
         )}
       </div>
+
+      {/* v2.1: 編輯 Modal */}
+      {editingRecord && (
+        <EditRecordModal
+          record={editingRecord}
+          onSave={handleEditSave}
+          onCancel={() => setEditingRecord(null)}
+        />
+      )}
+
+      {/* v2.1: 刪除確認 Modal */}
+      {deletingRecord && (
+        <DeleteConfirmModal
+          record={deletingRecord}
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => setDeletingRecord(null)}
+        />
+      )}
+
+      {/* Loading overlay */}
+      {isLoading && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]">
+          <div className="bg-gray-800 rounded-xl px-6 py-4 flex items-center gap-3">
+            <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+            <span className="text-white">處理中...</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

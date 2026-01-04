@@ -76,6 +76,38 @@ export const GoogleSheetsAPI = {
     }
   },
 
+  // v2.1: 更新記錄
+  async updateRecord(record: Record): Promise<{ success: boolean }> {
+    if (!this.isConfigured()) return { success: false };
+    try {
+      await fetch(GAS_WEB_APP_URL, {
+        method: 'POST', mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'updateRecord', data: record }),
+      });
+      return { success: true };
+    } catch (e) {
+      console.error('updateRecord error:', e);
+      return { success: false };
+    }
+  },
+
+  // v2.1: 刪除記錄
+  async deleteRecord(id: string): Promise<{ success: boolean }> {
+    if (!this.isConfigured()) return { success: false };
+    try {
+      await fetch(GAS_WEB_APP_URL, {
+        method: 'POST', mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'deleteRecord', id }),
+      });
+      return { success: true };
+    } catch (e) {
+      console.error('deleteRecord error:', e);
+      return { success: false };
+    }
+  },
+
   async clearAllData(): Promise<{ success: boolean }> {
     if (!this.isConfigured()) return { success: false };
     try {

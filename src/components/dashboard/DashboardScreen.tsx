@@ -9,6 +9,8 @@ import { PointsParticles } from '../common/PointsParticles';
 import { LifeBattery } from './LifeBattery';
 import { MilestoneDisplay } from './MilestoneDisplay';
 import { DailyChallenge, ChallengeCompleteResult } from './DailyChallenge';
+import { DailyBudgetWidget } from './DailyBudgetWidget';
+import { QuickActionsBar, QuickAction } from './QuickActionsBar';
 import { CatchUpPlan } from './CatchUpPlan';
 import { UserData, Record as RecordType, ChallengeDefinition } from '@/types';
 import { PointsSystem } from '@/utils/pointsSystem';
@@ -283,6 +285,17 @@ export function DashboardScreen({
         </div>
       </div>
 
+      {/* v2.1: 今日額度進度條 */}
+      <div className="px-4 py-2">
+        <div className="max-w-lg mx-auto">
+          <DailyBudgetWidget
+            records={records}
+            userData={userData}
+            onOpenSettings={onOpenSettings}
+          />
+        </div>
+      </div>
+
       {/* 每日挑戰 - v2.0: 傳遞積分和新的回調 */}
       <div className="px-4 py-2">
         <div className="max-w-lg mx-auto">
@@ -301,6 +314,39 @@ export function DashboardScreen({
           </div>
         </div>
       )}
+
+      {/* v2.1: 快速記帳按鈕列 */}
+      <div className="px-4 py-2">
+        <div className="max-w-lg mx-auto">
+          <QuickActionsBar
+            onQuickAdd={(action: QuickAction) => {
+              // 快速記帳
+              const timeCost = FinanceCalc.calculateTimeCost(
+                action.amount,
+                action.isRecurring,
+                FinanceCalc.hourlyRate(userData.salary),
+                FinanceCalc.realRate(userData.inflationRate, userData.roiRate),
+                userData.retireAge - userData.age
+              );
+              const record: RecordType = {
+                id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                type: 'spend',
+                amount: action.amount,
+                isRecurring: action.isRecurring,
+                timeCost,
+                category: action.categoryId,
+                note: action.name,
+                timestamp: new Date().toISOString(),
+                date: new Date().toISOString().split('T')[0],
+                createdAt: Date.now()
+              };
+              onAddRecord(record);
+              showToast(`✅ 已記錄 ${action.name} $${action.amount}`);
+            }}
+            onOpenSettings={onOpenSettings}
+          />
+        </div>
+      </div>
 
       {/* 金額輸入區 */}
       <div className="px-4 py-4">

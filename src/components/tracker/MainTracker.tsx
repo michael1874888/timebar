@@ -4,8 +4,18 @@ import { getEquivalent, getMotivationalQuote } from '@/utils/helpers';
 import { Confetti } from '../Confetti';
 import { UserData, Record as RecordType } from '@/types';
 import { InventorySystem } from '@/utils/inventorySystem';
+import { CategorySystem } from '@/utils/categorySystem';
 
 const { formatTime, formatCurrency, formatCurrencyFull, formatAgeDiff } = Formatters;
+
+// v2.1: 儲蓄專用分類
+const SAVE_CATEGORIES = [
+  { id: 'salary', name: '薪資儲蓄', icon: '💰' },
+  { id: 'bonus', name: '獎金', icon: '🎁' },
+  { id: 'investment', name: '投資收益', icon: '📈' },
+  { id: 'sidework', name: '副業收入', icon: '💼' },
+  { id: 'other_save', name: '其他', icon: '✨' },
+];
 
 interface MainTrackerProps {
   userData: UserData;
@@ -101,8 +111,9 @@ export function MainTracker({ userData, records, onAddRecord, onOpenHome, onOpen
     }, 2500);
   };
 
-  const spendCategories = ['飲食', '購物', '娛樂', '交通', '訂閱', '其他'];
-  const saveCategories = ['薪資儲蓄', '獎金', '投資收益', '副業收入', '其他'];
+  // v2.1: 使用標準化分類系統
+  const spendCategories = useMemo(() => CategorySystem.getCategories(), []);
+  const saveCategories = SAVE_CATEGORIES;
 
   return (
     <div className={`min-h-screen transition-colors duration-700 ${
@@ -242,15 +253,27 @@ export function MainTracker({ userData, records, onAddRecord, onOpenHome, onOpen
                 ))}
               </div>
 
-              {/* Category Selection */}
+              {/* v2.1: Category Selection Grid */}
               <div className="mb-4">
-                <div className="text-gray-400 text-sm mb-2 text-center">分類（選填）</div>
-                <div className="flex gap-2 justify-center flex-wrap">
+                <div className="text-gray-400 text-sm mb-3 text-center">分類（選填）</div>
+                <div className="grid grid-cols-4 gap-2">
                   {(mode === 'spend' ? spendCategories : saveCategories).map((cat) => (
-                    <button key={cat} onClick={() => setCategory(category === cat ? '' : cat)}
-                      className={`px-3 py-1.5 rounded-lg text-sm transition-all ${
-                        category === cat ? 'bg-gray-600 text-white' : 'bg-gray-800/50 text-gray-500 hover:text-gray-300'
-                      }`}>{cat}</button>
+                    <button 
+                      key={cat.id} 
+                      onClick={() => setCategory(category === cat.id ? '' : cat.id)}
+                      className={`flex flex-col items-center p-2 rounded-xl text-sm transition-all ${
+                        category === cat.id 
+                          ? mode === 'spend' 
+                            ? 'bg-orange-500/30 ring-2 ring-orange-500/50' 
+                            : 'bg-emerald-500/30 ring-2 ring-emerald-500/50'
+                          : 'bg-gray-800/50 hover:bg-gray-700/50'
+                      }`}
+                    >
+                      <span className="text-xl mb-1">{cat.icon}</span>
+                      <span className={`text-xs ${category === cat.id ? 'text-white' : 'text-gray-400'}`}>
+                        {cat.name}
+                      </span>
+                    </button>
                   ))}
                 </div>
               </div>

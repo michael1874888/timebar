@@ -89,6 +89,8 @@ function doPost(e) {
     
     if (action === 'addRecord') {
       result = addRecord(data.data);
+    } else if (action === 'updateRecord') {
+      result = updateRecord(data.data);  // v2.1: 更新記錄
     } else if (action === 'saveUserData') {
       result = saveUserData(data.data);
     } else if (action === 'deleteRecord') {
@@ -267,6 +269,48 @@ function getUserData() {
       customChallenges: parseJSON(row[11], [])
     }
   };
+}
+
+// v2.1: 更新記錄
+function updateRecord(record) {
+  const sheet = getOrCreateSheet(SHEET_NAMES.RECORDS);
+  const data = sheet.getDataRange().getValues();
+  
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] === record.id) {
+      const row = i + 1;
+      
+      // 只更新允許的欄位：金額、分類、備註
+      if (record.amount !== undefined) {
+        sheet.getRange(row, 3).setValue(record.amount);
+        sheet.getRange(row, 3).setNumberFormat('#,##0');
+      }
+      if (record.category !== undefined) {
+        sheet.getRange(row, 6).setValue(record.category);
+      }
+      if (record.note !== undefined) {
+        sheet.getRange(row, 7).setValue(record.note);
+      }
+      
+      // v2.1: 更新訂閱狀態（如果有）
+      if (record.recurringStatus !== undefined) {
+        // 確保欄位存在（第 11 欄）
+        sheet.getRange(row, 11).setValue(record.recurringStatus);
+      }
+      if (record.recurringEndDate !== undefined) {
+        sheet.getRange(row, 12).setValue(record.recurringEndDate);
+      }
+      
+      // 更新修改時間戳記（第 14 欄）
+      if (record.updatedAt !== undefined) {
+        sheet.getRange(row, 14).setValue(record.updatedAt);
+      }
+      
+      return { message: 'Record updated successfully', id: record.id };
+    }
+  }
+  
+  return { message: 'Record not found', id: record.id };
 }
 
 // 刪除單筆紀錄
