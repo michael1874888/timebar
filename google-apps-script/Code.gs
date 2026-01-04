@@ -391,13 +391,20 @@ function clearAllData() {
   if (recordsLastRow > 1) {
     recordsSheet.deleteRows(2, recordsLastRow - 1);
   }
-  
+
   const userSheet = getOrCreateSheet(SHEET_NAMES.USER_DATA);
   const userLastRow = userSheet.getLastRow();
   if (userLastRow > 1) {
     userSheet.deleteRows(2, userLastRow - 1);
   }
-  
+
+  // 清除快速記帳按鈕
+  const quickActionsSheet = getOrCreateSheet(SHEET_NAMES.QUICK_ACTIONS);
+  const quickActionsLastRow = quickActionsSheet.getLastRow();
+  if (quickActionsLastRow > 1) {
+    quickActionsSheet.deleteRows(2, quickActionsLastRow - 1);
+  }
+
   return { message: 'All data cleared successfully' };
 }
 
