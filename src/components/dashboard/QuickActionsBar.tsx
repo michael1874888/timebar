@@ -93,9 +93,9 @@ export function QuickActionsBar({ onQuickAdd, onOpenSettings }: QuickActionsBarP
           </div>
         </div>
 
-        {/* 按鈕網格 */}
+        {/* 按鈕網格 - 第一行完整顯示，展開時顯示更多 */}
         <div className={`grid grid-cols-4 gap-2 overflow-hidden transition-all duration-300 ${
-          isExpanded ? 'max-h-48 opacity-100' : 'max-h-14 opacity-100'
+          isExpanded ? 'max-h-96' : 'max-h-24'
         }`}>
           {quickActions.slice(0, isExpanded ? quickActions.length : 4).map((action) => {
             return (
