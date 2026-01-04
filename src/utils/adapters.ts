@@ -20,8 +20,8 @@ export class StorageAdapter implements IStorage {
     return Storage.load(key)
   }
 
-  clear(key: string): boolean {
-    return Storage.clear(key)
+  clear(): void {
+    Storage.clear()
   }
 }
 

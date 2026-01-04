@@ -8,7 +8,7 @@
 export interface IStorage {
   save<T>(key: string, value: T): boolean
   load<T>(key: string): T | null
-  clear(key: string): boolean
+  clear(): void
 }
 
 // ==================== Cloud Sync 接口 ====================
