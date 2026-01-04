@@ -28,11 +28,12 @@ function getOrCreateSheet(name) {
     sheet = ss.insertSheet(name);
     
     if (name === SHEET_NAMES.RECORDS) {
-      // 消費紀錄：新增 guiltFree 欄位
-      sheet.getRange(1, 1, 1, 10).setValues([[
-        'ID', '類型', '金額', '是否每月', '時間成本(小時)', '分類', '備註', '時間戳記', '日期', '已豁免'
+      // 消費紀錄：v2.1 擴充至 14 欄
+      sheet.getRange(1, 1, 1, 14).setValues([[
+        'ID', '類型', '金額', '是否每月', '時間成本(小時)', '分類', '備註', '時間戳記', '日期', '已豁免',
+        '訂閱狀態', '終止日期', '創建時間', '更新時間'
       ]]);
-      sheet.getRange(1, 1, 1, 10).setFontWeight('bold').setBackground('#10b981').setFontColor('white');
+      sheet.getRange(1, 1, 1, 14).setFontWeight('bold').setBackground('#10b981').setFontColor('white');
       sheet.setFrozenRows(1);
       sheet.setColumnWidth(1, 150);
       sheet.setColumnWidth(7, 200);
@@ -169,7 +170,12 @@ function getRecords() {
       note: data[i][6],
       timestamp: data[i][7],
       date: data[i][8],
-      guiltFree: data[i][9] === '是'  // v2.3: 免死金牌豁免
+      guiltFree: data[i][9] === '是',
+      // v2.1: 訂閱管理欄位
+      recurringStatus: data[i][10] || undefined,  // 'active' | 'ended' | undefined
+      recurringEndDate: data[i][11] || undefined, // YYYY-MM-DD
+      createdAt: data[i][12] ? Number(data[i][12]) : undefined,
+      updatedAt: data[i][13] ? Number(data[i][13]) : undefined
     });
   }
   
@@ -383,4 +389,75 @@ function testAddRecord() {
   });
   
   Logger.log('新增結果：' + JSON.stringify(result));
+}
+
+// ========== v2.1 升級函數 ==========
+
+/**
+ * 升級消費紀錄工作表至 v2.1（14 欄）
+ * ⚠️ 請手動執行此函數一次以更新現有試算表
+ */
+function upgradeToV21() {
+  try {
+    const ss = getSpreadsheet();
+    const sheet = ss.getSheetByName(SHEET_NAMES.RECORDS);
+    
+    if (!sheet) {
+      Logger.log('❌ 找不到消費紀錄工作表');
+      return { success: false, message: '找不到消費紀錄工作表' };
+    }
+    
+    // 檢查當前標題列
+    const currentHeaders = sheet.getRange(1, 1, 1, 14).getValues()[0];
+    
+    // 如果第 11 欄不是「訂閱狀態」，則添加新標題
+    if (currentHeaders[10] !== '訂閱狀態') {
+      // 設定新的標題列（擴充到 14 欄）
+      sheet.getRange(1, 11, 1, 4).setValues([[
+        '訂閱狀態', '終止日期', '創建時間', '更新時間'
+      ]]);
+      sheet.getRange(1, 11, 1, 4).setFontWeight('bold').setBackground('#10b981').setFontColor('white');
+      
+      Logger.log('✅ 已升級消費紀錄工作表至 v2.1（新增 4 個欄位）');
+      return { success: true, message: '已升級至 v2.1' };
+    } else {
+      Logger.log('ℹ️ 工作表已是 v2.1 格式，無需升級');
+      return { success: true, message: '已是最新版本' };
+    }
+  } catch (error) {
+    Logger.log('❌ 升級失敗：' + error.toString());
+    return { success: false, message: error.toString() };
+  }
+}
+
+/**
+ * 檢查版本狀態
+ */
+function checkVersion() {
+  try {
+    const ss = getSpreadsheet();
+    const sheet = ss.getSheetByName(SHEET_NAMES.RECORDS);
+    
+    if (!sheet) {
+      Logger.log('消費紀錄工作表不存在');
+      return;
+    }
+    
+    const headers = sheet.getRange(1, 1, 1, 14).getValues()[0];
+    const columnCount = headers.filter(h => h !== '').length;
+    
+    Logger.log('=== 版本檢查 ===');
+    Logger.log('標題列欄位數：' + columnCount);
+    Logger.log('標題列內容：' + headers.join(', '));
+    
+    if (columnCount >= 14 && headers[10] === '訂閱狀態') {
+      Logger.log('✅ 版本：v2.1（完整支援訂閱管理）');
+    } else if (columnCount >= 10) {
+      Logger.log('⚠️ 版本：v2.0（需要執行 upgradeToV21() 來支援訂閱管理）');
+    } else {
+      Logger.log('❌ 版本：未知（結構不完整）');
+    }
+  } catch (error) {
+    Logger.log('❌ 檢查失敗：' + error.toString());
+  }
 }
