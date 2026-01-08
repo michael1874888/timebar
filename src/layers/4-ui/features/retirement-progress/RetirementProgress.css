@@ -25,7 +25,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 .retirement-progress__title {
@@ -42,13 +42,66 @@
 
 /* Progress Bar Container */
 .retirement-progress__bar-container {
-  padding: 1.5rem 0.5rem;
   position: relative;
+  padding: 0;
 }
 
+/* 上方標籤區 */
+.retirement-progress__labels-top {
+  position: relative;
+  height: 2rem;
+  margin-bottom: 0.25rem;
+}
+
+/* 下方標籤區 */
+.retirement-progress__labels-bottom {
+  position: relative;
+  height: 2rem;
+  margin-top: 0.25rem;
+}
+
+/* 標籤項目 */
+.retirement-progress__label-item {
+  position: absolute;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 標籤文字 */
+.retirement-progress__label-text {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  white-space: nowrap;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.retirement-progress__label-text--target {
+  color: #3b82f6;
+}
+
+.retirement-progress__label-text--estimated {
+  font-weight: 600;
+}
+
+/* 連接線 */
+.retirement-progress__label-line {
+  width: 2px;
+  height: 8px;
+  background: #d4d4d8;
+}
+
+.retirement-progress__label-line--bottom {
+  order: -1;
+}
+
+/* 進度條本體 */
 .retirement-progress__bar {
   position: relative;
-  height: 8px;
+  height: 12px;
   width: 100%;
 }
 
@@ -57,9 +110,9 @@
   top: 50%;
   left: 0;
   right: 0;
-  height: 8px;
+  height: 12px;
   background: #e4e4e7;
-  border-radius: 4px;
+  border-radius: 6px;
   transform: translateY(-50%);
 }
 
@@ -67,52 +120,40 @@
   position: absolute;
   top: 50%;
   left: 0;
-  height: 8px;
-  border-radius: 4px;
+  height: 12px;
+  border-radius: 6px;
   transform: translateY(-50%);
   transition: width 0.5s ease;
 }
 
-/* Dots */
-.retirement-progress__dot {
+/* 標記點 */
+.retirement-progress__marker {
   position: absolute;
   top: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 2;
-}
-
-.retirement-progress__dot-inner {
   width: 16px;
   height: 16px;
   border-radius: 50%;
+  transform: translate(-50%, -50%);
   border: 3px solid #fff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  z-index: 2;
 }
 
-.retirement-progress__dot--target .retirement-progress__dot-inner {
+.retirement-progress__marker--target {
   background: #3b82f6;
 }
 
-.retirement-progress__label {
-  position: absolute;
-  top: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 0.75rem;
-  color: #52525b;
-  white-space: nowrap;
-}
-
-.retirement-progress__label--estimated {
-  color: #18181b;
-  font-weight: 600;
+.retirement-progress__marker--estimated {
+  width: 20px;
+  height: 20px;
+  z-index: 3;
 }
 
 /* Badge */
 .retirement-progress__badge-container {
   display: flex;
   justify-content: center;
-  margin-top: 1rem;
+  margin-top: 0.75rem;
 }
 
 .retirement-progress__badge {

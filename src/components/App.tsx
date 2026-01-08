@@ -9,6 +9,7 @@ import { ChallengeSettingsPage } from './settings/ChallengeSettingsPage';
 import { CategorySettingsPage } from './settings/CategorySettingsPage';
 import { QuickActionsSettingsPage } from './settings/QuickActionsSettingsPage';
 import { SubscriptionManagerPage } from './subscription/SubscriptionManagerPage';
+import { NewUIPreview } from '@/NewUIPreview';
 import { GoogleSheetsAPI } from '@/services/googleSheets';
 import { Storage } from '@/utils/storage';
 import { CONSTANTS } from '@/utils/financeCalc';
@@ -241,6 +242,7 @@ export default function App() {
           onOpenHistory={() => setScreen('history')}
           onOpenSettings={() => setScreen('settings')}
           onOpenQuickActionsSettings={() => setScreen('quick-actions-settings')}
+          onOpenNewUI={() => setScreen('new-ui')}
         />
       )}
       {screen === 'tracker' && userData && (
@@ -288,6 +290,17 @@ export default function App() {
       )}
       {screen === 'quick-actions-settings' && (
         <QuickActionsSettingsPage onBack={() => setScreen('dashboard')} />
+      )}
+      {screen === 'new-ui' && userData && (
+        <div className="relative">
+          <button
+            onClick={() => setScreen('dashboard')}
+            className="fixed top-4 left-4 z-50 bg-white/90 backdrop-blur px-4 py-2 rounded-lg shadow-lg text-gray-700 hover:bg-white transition"
+          >
+            ← 返回舊版
+          </button>
+          <NewUIPreview />
+        </div>
       )}
     </div>
   );

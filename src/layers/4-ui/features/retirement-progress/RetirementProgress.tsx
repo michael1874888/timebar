@@ -137,6 +137,20 @@ export function RetirementProgress({
 
       {/* 進度條 */}
       <div className="retirement-progress__bar-container">
+        {/* 目標標籤 - 上方 */}
+        <div className="retirement-progress__labels-top">
+          <div
+            className="retirement-progress__label-item"
+            style={{ left: `${targetPosition}%` }}
+          >
+            <span className="retirement-progress__label-text retirement-progress__label-text--target">
+              🎯 目標 {targetAge} 歲
+            </span>
+            <div className="retirement-progress__label-line" />
+          </div>
+        </div>
+
+        {/* 進度條本體 */}
         <div className="retirement-progress__bar">
           {/* 背景軌道 */}
           <div className="retirement-progress__track" />
@@ -145,36 +159,39 @@ export function RetirementProgress({
           <div
             className="retirement-progress__fill"
             style={{
-              width: `${Math.max(estimatedPosition, targetPosition)}%`,
+              width: `${Math.min(estimatedPosition, targetPosition)}%`,
               backgroundColor: config.bar,
             }}
           />
 
-          {/* 目標點 */}
+          {/* 目標位置標記 */}
           <div
-            className="retirement-progress__dot retirement-progress__dot--target"
+            className="retirement-progress__marker retirement-progress__marker--target"
             style={{ left: `${targetPosition}%` }}
-          >
-            <div className="retirement-progress__dot-inner" />
-            <span className="retirement-progress__label">
-              目標 {targetAge}
-            </span>
-          </div>
+          />
 
-          {/* 預估點 */}
+          {/* 預估位置標記 */}
           <div
-            className="retirement-progress__dot retirement-progress__dot--estimated"
+            className="retirement-progress__marker retirement-progress__marker--estimated"
             style={{
               left: `${estimatedPosition}%`,
               backgroundColor: config.dot,
             }}
+          />
+        </div>
+
+        {/* 預估標籤 - 下方 */}
+        <div className="retirement-progress__labels-bottom">
+          <div
+            className="retirement-progress__label-item"
+            style={{ left: `${estimatedPosition}%` }}
           >
-            <div
-              className="retirement-progress__dot-inner"
-              style={{ backgroundColor: config.dot }}
-            />
-            <span className="retirement-progress__label retirement-progress__label--estimated">
-              預估 {estimatedAge.toFixed(1)}
+            <div className="retirement-progress__label-line retirement-progress__label-line--bottom" />
+            <span
+              className="retirement-progress__label-text retirement-progress__label-text--estimated"
+              style={{ color: config.bar }}
+            >
+              預估 {estimatedAge.toFixed(1)} 歲
             </span>
           </div>
         </div>
