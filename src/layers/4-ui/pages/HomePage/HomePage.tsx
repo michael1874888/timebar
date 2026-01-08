@@ -5,13 +5,14 @@
  * 根據 UI-UX-ANALYSIS-AND-REDESIGN.md 重新設計的主畫面
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useFinance, useGPS } from '@business/hooks';
 import {
   RetirementProgress,
   AmountInput,
   TimeCostDisplay,
   DecisionButtons,
+  Celebration,
 } from '@ui/features';
 import type { RecordItem } from '@domain/types';
 import './HomePage.css';
@@ -53,16 +54,32 @@ export function HomePage({
   const [isRecurring, setIsRecurring] = useState(false);
   const [showGPSDetail, setShowGPSDetail] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [celebrationData, setCelebrationData] = useState({ amount: 0, timeCost: 0 });
 
   // Hooks
   const finance = useFinance(userData);
+  
+  // 計算時間成本 (必須在 previewRecords 之前)
+  const timeCost = finance.calculateTimeCost(amount, isRecurring);
+
+  // 預覽記錄 (用於即時更新進度條)
+  // 假設用戶會「花費」，展示負面影響，讓用戶更有感
+  const previewRecords = useMemo(() => {
+    if (amount <= 0) return records;
+    return [...records, {
+      type: 'spend' as const,
+      amount,
+      timeCost,
+      isRecurring,
+    }];
+  }, [records, amount, timeCost, isRecurring]);
+
+  // Hook - 使用預覽記錄來計算 GPS
   const gps = useGPS({
     targetRetireAge: userData.targetRetireAge,
-    records,
+    records: previewRecords,
   });
-
-  // 計算時間成本
-  const timeCost = finance.calculateTimeCost(amount, isRecurring);
 
   // 處理「我買了」
   const handleBought = useCallback(async () => {
@@ -85,24 +102,35 @@ export function HomePage({
   }, [amount, timeCost, isRecurring, onAddRecord]);
 
   // 處理「我忍住了」
-  const handleSkipped = useCallback(async () => {
-    if (amount <= 0 || !onAddRecord) return;
+  const handleSkipped = useCallback(() => {
+    if (amount <= 0) return;
+    setCelebrationData({ amount, timeCost });
+    setShowCelebration(true);
+  }, [amount, timeCost]);
 
-    setLoading(true);
-    try {
-      onAddRecord({
-        type: 'save',
-        amount,
-        timeCost,
-        isRecurring,
-      });
-      // 重置
-      setAmount(0);
-      setIsRecurring(false);
-    } finally {
-      setLoading(false);
-    }
-  }, [amount, timeCost, isRecurring, onAddRecord]);
+  // 確認儲蓄 (從慶祝畫面)
+  const handleConfirmSave = useCallback(() => {
+    if (!onAddRecord) return;
+    
+    onAddRecord({
+      type: 'save',
+      amount: celebrationData.amount,
+      timeCost: celebrationData.timeCost, // 這裡的 timeCost 代表「省下的時間」
+      isRecurring: isRecurring,
+    });
+    
+    // 重置
+    setAmount(0);
+    setIsRecurring(false);
+    setShowCelebration(false);
+  }, [celebrationData, isRecurring, onAddRecord]);
+
+  // 只是不記錄 (從慶祝畫面)
+  const handleSkipRecord = useCallback(() => {
+    setAmount(0);
+    setIsRecurring(false);
+    setShowCelebration(false);
+  }, []);
 
   return (
     <div className="home-page">
@@ -182,6 +210,16 @@ export function HomePage({
           loading={loading}
         />
       </footer>
+
+      {/* 慶祝動畫 */}
+      <Celebration
+        show={showCelebration}
+        onClose={() => setShowCelebration(false)}
+        amount={celebrationData.amount}
+        timeSavedDays={celebrationData.timeCost / 24} // timeCost 是小時
+        onSave={handleConfirmSave}
+        onSkip={handleSkipRecord}
+      />
     </div>
   );
 }

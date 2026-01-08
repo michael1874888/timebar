@@ -4,11 +4,20 @@
  */
 
 import { useState, useMemo } from 'react';
+import { useGPS } from '@business/hooks';
 import { Card, Badge, Button, Modal } from '@ui/design-system';
+import { RetirementProgress } from '@ui/features';
 import type { RecordDTO } from '@data/api';
+import type { RecordItem } from '@domain/types';
 import './HistoryPage.css';
 
 export interface HistoryPageProps {
+  /** 用戶數據 */
+  userData: {
+    age: number;
+    targetRetireAge: number;
+    monthlySalary: number;
+  };
   /** 記錄列表 */
   records: RecordDTO[];
   /** 返回回調 */
@@ -72,6 +81,7 @@ function formatTimeCost(hours: number): string {
  * 新版歷史頁面
  */
 export function HistoryPage({
+  userData,
   records,
   onBack,
   onEditRecord,
@@ -79,6 +89,23 @@ export function HistoryPage({
 }: HistoryPageProps) {
   const [selectedRecord, setSelectedRecord] = useState<RecordDTO | null>(null);
   const [filter, setFilter] = useState<'all' | 'spend' | 'save'>('all');
+  const [showGPSDetail, setShowGPSDetail] = useState(false);
+
+  // 轉換 DTO 為 Domain Type
+  const recordItems = useMemo<RecordItem[]>(() => {
+    return records.map(r => ({
+      type: r.type,
+      amount: r.amount,
+      timeCost: r.timeCost,
+      isRecurring: r.isRecurring,
+    }));
+  }, [records]);
+
+  // Hook - GPS
+  const gps = useGPS({
+    targetRetireAge: userData.targetRetireAge,
+    records: recordItems,
+  });
 
   // 過濾記錄
   const filteredRecords = useMemo(() => {
@@ -126,6 +153,19 @@ export function HistoryPage({
         <h1 className="history-page__title">記錄歷史</h1>
         <div className="history-page__spacer" />
       </header>
+
+      {/* Retirement Progress */}
+      <div className="history-page__progress">
+        <RetirementProgress
+          targetAge={userData.targetRetireAge}
+          estimatedAge={gps.estimatedAge}
+          currentAge={userData.age}
+          totalSavedHours={gps.totalSavedHours}
+          totalSpentHours={gps.totalSpentHours}
+          showDetail={false} // 歷史頁面不顯示詳細彈窗，避免干擾
+          onDetailClick={() => {}} // 可選：跳轉到主頁或顯示詳細
+        />
+      </div>
 
       {/* Stats */}
       <div className="history-page__stats">

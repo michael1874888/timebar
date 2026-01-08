@@ -18,3 +18,8 @@ export type { TimeCostDisplayProps } from './time-cost-display';
 // 決策按鈕
 export { DecisionButtons } from './decision-buttons';
 export type { DecisionButtonsProps } from './decision-buttons';
+
+// 慶祝效果
+export { Celebration } from './celebration';
+export type { CelebrationProps } from './celebration';
+

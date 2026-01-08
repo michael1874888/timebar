@@ -132,6 +132,7 @@ export function NewUIPreview() {
   if (screen === 'history') {
     return (
       <HistoryPage
+        userData={mockUserData}
         records={historyRecords}
         onBack={() => setScreen('home')}
         onDeleteRecord={handleDeleteRecord}
