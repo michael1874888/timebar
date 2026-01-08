@@ -6,11 +6,20 @@
  */
 
 // Design Tokens
-export { ColorTokens, colorToken } from './tokens/colors';
-export { TypographyTokens, typographyToken } from './tokens/typography';
-export { SpacingTokens, spacingToken } from './tokens/spacing';
-export { AnimationTokens, animationToken } from './tokens/animations';
-export { resolveToken, getColorToken, getTypographyToken, getSpacingToken, getAnimationToken, generateCSSVariables } from './tokens';
+export { ColorTokens } from './tokens/colors';
+export type { ColorToken } from './tokens/colors';
+export { TypographyTokens } from './tokens/typography';
+export { SpacingTokens } from './tokens/spacing';
+export { AnimationTokens } from './tokens/animations';
+export {
+  resolveToken,
+  resolveColor,
+  resolveSpacing,
+  resolveTypography,
+  resolveAnimation,
+  getStateConfig,
+  generateCSSVariables,
+} from './tokens';
 
 // Atoms (基礎組件)
 export { Button } from './atoms/Button';
