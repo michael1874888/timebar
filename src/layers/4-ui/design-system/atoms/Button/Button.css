@@ -1,0 +1,142 @@
+/**
+ * Button 原子組件樣式
+ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.btn:active:not(.btn--disabled) {
+  transform: scale(0.98);
+}
+
+/* 變體 */
+.btn--primary {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.btn--primary:hover:not(.btn--disabled) {
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.btn--secondary {
+  background: #f4f4f5;
+  color: #52525b;
+}
+
+.btn--secondary:hover:not(.btn--disabled) {
+  background: #e4e4e7;
+}
+
+.btn--ghost {
+  background: transparent;
+  color: #52525b;
+}
+
+.btn--ghost:hover:not(.btn--disabled) {
+  background: #f4f4f5;
+}
+
+.btn--danger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+}
+
+.btn--danger:hover:not(.btn--disabled) {
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+.btn--success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+/* 大小 */
+.btn--sm {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8125rem;
+  min-height: 32px;
+}
+
+.btn--md {
+  padding: 0.5rem 1rem;
+  font-size: 0.9375rem;
+  min-height: 40px;
+}
+
+.btn--lg {
+  padding: 0.75rem 1.5rem;
+  font-size: 1.0625rem;
+  min-height: 48px;
+}
+
+/* 全寬 */
+.btn--full-width {
+  width: 100%;
+}
+
+/* 禁用 */
+.btn--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 載入中 */
+.btn--loading {
+  cursor: wait;
+}
+
+/* 內容 */
+.btn__content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* 圖標 */
+.btn__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Spinner */
+.btn__spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: btn-spin 0.8s linear infinite;
+}
+
+.btn--secondary .btn__spinner,
+.btn--ghost .btn__spinner {
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-top-color: #52525b;
+}
+
+@keyframes btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
