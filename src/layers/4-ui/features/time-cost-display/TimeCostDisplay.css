@@ -1,0 +1,131 @@
+/**
+ * 時間成本顯示組件樣式
+ */
+
+.time-cost-display {
+  text-align: center;
+  padding: 1.5rem;
+}
+
+.time-cost-display--empty {
+  opacity: 0.7;
+}
+
+.time-cost-display--visible {
+  animation: countUp 0.5s ease forwards;
+}
+
+@keyframes countUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 標題 */
+.time-cost-display__label {
+  font-size: 1rem;
+  color: #52525b;
+  margin-bottom: 0.75rem;
+}
+
+.time-cost-display__prompt {
+  font-size: 1.125rem;
+  color: #71717a;
+  line-height: 1.5;
+}
+
+/* 主數值 */
+.time-cost-display__value-container {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+}
+
+.time-cost-display__value {
+  font-size: 3rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.05em;
+  transition: all 0.3s ease;
+}
+
+.time-cost-display__unit {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #52525b;
+}
+
+/* 顏色 classes */
+.time-cost-display__value.text-emerald-400 {
+  color: #34d399;
+}
+
+.time-cost-display__value.text-yellow-400 {
+  color: #facc15;
+}
+
+.time-cost-display__value.text-orange-400 {
+  color: #fb923c;
+}
+
+.time-cost-display__value.text-orange-500 {
+  color: #f97316;
+}
+
+.time-cost-display__value.text-red-500 {
+  color: #ef4444;
+}
+
+/* 副標題 */
+.time-cost-display__subtitle {
+  font-size: 1.125rem;
+  color: #71717a;
+  margin-top: 0.25rem;
+}
+
+/* 額外說明 */
+.time-cost-display__details {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.time-cost-display__comparison,
+.time-cost-display__impact {
+  font-size: 1rem;
+  color: #52525b;
+  background: #f4f4f5;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  display: inline-block;
+  margin: 0 auto;
+}
+
+.time-cost-display__comparison {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.time-cost-display__impact {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* 響應式 */
+@media (min-width: 768px) {
+  .time-cost-display__value {
+    font-size: 4rem;
+  }
+
+  .time-cost-display__unit {
+    font-size: 2rem;
+  }
+}

@@ -12,6 +12,10 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      '@data': path.resolve(__dirname, './src/layers/1-data'),
+      '@domain': path.resolve(__dirname, './src/layers/2-domain'),
+      '@business': path.resolve(__dirname, './src/layers/3-business'),
+      '@ui': path.resolve(__dirname, './src/layers/4-ui'),
     },
   },
   build: {
