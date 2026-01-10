@@ -1,10 +1,10 @@
-// 初始設定流程（5步驟）
+// Phase 5: 初始設定流程簡化（3步驟）
 import { useState, useEffect } from 'react';
 import { FinanceCalc, Formatters, CONSTANTS } from '@/utils/financeCalc';
 import { UserData } from '@/types';
 
 const { DEFAULT_INFLATION_RATE, DEFAULT_ROI_RATE } = CONSTANTS;
-const { formatCurrency, formatCurrencyFull } = Formatters;
+const { formatCurrencyFull } = Formatters;  // Phase 5: 移除未使用的 formatCurrency
 
 interface OnboardingScreenProps {
   onComplete: (data: UserData) => void;
@@ -15,28 +15,26 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
   const [age, setAge] = useState<number>(30);
   const [salary, setSalary] = useState<number>(50000);
   const [retireAge, setRetireAge] = useState<number>(65);
-  const [currentSavings, setCurrentSavings] = useState<number>(0);
-  const [monthlySavings, setMonthlySavings] = useState<number>(10000);
   const [isAnimating, setIsAnimating] = useState<boolean>(false);
-  const [hasManuallySetSavings, setHasManuallySetSavings] = useState<boolean>(false);
 
-  // 只在未手動設定時，才根據薪水自動更新每月儲蓄
+  // Phase 5: 自動計算值
+  const currentSavings = 0;  // 自動設為 0
+  const [monthlySavings, setMonthlySavings] = useState<number>(10000);
+
+  // 根據薪水自動更新每月儲蓄（20%）
   useEffect(() => {
-    if (!hasManuallySetSavings) {
-      setMonthlySavings(Math.round(salary * 0.2));
-    }
-  }, [salary, hasManuallySetSavings]);
+    setMonthlySavings(Math.round(salary * 0.2));
+  }, [salary]);
 
   const hourlyRate = Math.round(FinanceCalc.hourlyRate(salary));
   const realRate = FinanceCalc.realRate(DEFAULT_INFLATION_RATE, DEFAULT_ROI_RATE);
   const yearsToRetire = retireAge - age;
   const projectedFund = FinanceCalc.targetFundByAge(currentSavings, monthlySavings, yearsToRetire, realRate);
-  const monthlyRetirement = FinanceCalc.fundToMonthly(projectedFund);
 
   const handleNext = (): void => {
     setIsAnimating(true);
     setTimeout(() => {
-      if (step < 4) {
+      if (step < 2) {  // Phase 5: 簡化為 3 個步驟 (0, 1, 2)
         setStep(step + 1);
       } else {
         onComplete({
@@ -106,49 +104,9 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
         </div>
       ),
     },
-    {
-      title: '目前有多少存款？',
-      subtitle: '這是你的起跑點',
-      content: (
-        <div className="flex flex-col items-center">
-          <div className="text-4xl font-black text-white mb-4 tabular-nums">{formatCurrencyFull(currentSavings)}</div>
-          <input type="range" min="0" max="10000000" step="100000" value={currentSavings}
-            onChange={(e) => setCurrentSavings(parseInt(e.target.value))} className="slider w-72" />
-          <div className="flex justify-between w-72 text-gray-500 text-sm mt-2">
-            <span>$0</span><span>$1000萬</span>
-          </div>
-          <div className="text-gray-500 text-sm mt-4">沒有也沒關係，從零開始更厲害 💪</div>
-        </div>
-      ),
-    },
-    {
-      title: '每月存多少？',
-      subtitle: '這只是估計，之後可以調整',
-      content: (
-        <div className="flex flex-col items-center">
-          <div className="text-4xl font-black text-white mb-2 tabular-nums">{formatCurrencyFull(monthlySavings)}</div>
-          <div className="text-gray-400 mb-4">/每月</div>
-          <div className="text-gray-500 text-xs mb-6">佔月薪 {Math.round(monthlySavings / salary * 100)}%</div>
-          <input type="range" min="0" max={Math.min(salary, 200000)} step="1000" value={monthlySavings}
-            onChange={(e) => {
-              setMonthlySavings(parseInt(e.target.value));
-              setHasManuallySetSavings(true);
-            }} className="slider w-72" />
-          <div className="flex justify-between w-72 text-gray-500 text-sm mt-2">
-            <span>$0</span><span>{formatCurrency(Math.min(salary, 200000))}</span>
-          </div>
-
-          {/* Preview */}
-          <div className="bg-gray-800/60 rounded-2xl p-4 mt-8 w-72 border border-gray-700/50">
-            <div className="text-gray-400 text-xs mb-2 text-center">按此計畫，{retireAge}歲時可累積</div>
-            <div className="text-emerald-400 text-2xl font-bold text-center">{formatCurrency(Math.round(projectedFund))}</div>
-            <div className="text-gray-500 text-xs text-center mt-1">
-              退休後每月可領約 {formatCurrency(Math.round(monthlyRetirement))}
-            </div>
-          </div>
-        </div>
-      ),
-    },
+    // Phase 5: 移除 Step 4 和 Step 5，改為自動計算
+    // currentSavings 自動設為 0
+    // monthlySavings 自動設為 salary × 0.2
   ];
 
   return (

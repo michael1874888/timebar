@@ -34,9 +34,7 @@ export function SettingsPage({ userData, onUpdateUser, onClose, onReset, records
   const [showConfirm, setShowConfirm] = useState<boolean>(false);
   const [confirmText, setConfirmText] = useState<string>('');
   const [isClearing, setIsClearing] = useState<boolean>(false);
-  const [calculatorMode, setCalculatorMode] = useState<'age' | 'fund' | 'lifestyle'>('age');
-  const [targetFund, setTargetFund] = useState<number>(userData.targetRetirementFund || 30000000);
-  const [monthlyRetirement, setMonthlyRetirement] = useState<number>(50000);
+  // Phase 3: 簡化計算機，移除多模式選擇，只保留年齡導向
 
   // Phase 2: Modal 狀態管理
   const [showShopModal, setShowShopModal] = useState<boolean>(false);
@@ -81,26 +79,12 @@ export function SettingsPage({ userData, onUpdateUser, onClose, onReset, records
   const realRate = useMemo(() => FinanceCalc.realRate(inflationRate, roiRate), [inflationRate, roiRate]);
   const yearsToRetire = useMemo(() => retireAge - age, [retireAge, age]);
 
-  // Calculator results
+  // Phase 3: 簡化計算機結果 - 只保留年齡導向模式
   const calcResults = useMemo(() => {
-    if (calculatorMode === 'age') {
-      const fund = FinanceCalc.targetFundByAge(currentSavings, monthlySavings, Math.max(1, yearsToRetire), realRate);
-      const monthly = FinanceCalc.fundToMonthly(fund);
-      return { fund, monthly };
-    } else if (calculatorMode === 'fund') {
-      const years = FinanceCalc.yearsToTarget(currentSavings, monthlySavings, targetFund, realRate);
-      const validYears = !isFinite(years) || years < 0 ? Infinity : years;
-      return { years: validYears, retireAge: age + validYears };
-    } else {
-      const requiredFund = FinanceCalc.monthlyToFund(monthlyRetirement);
-      const years = FinanceCalc.yearsToTarget(currentSavings, monthlySavings, requiredFund, realRate);
-      const validYears = !isFinite(years) || years < 0 ? Infinity : years;
-      const requiredSavings = yearsToRetire > 0
-        ? FinanceCalc.requiredMonthlySavings(currentSavings, requiredFund, yearsToRetire, realRate)
-        : 0;
-      return { requiredFund, years: validYears, retireAge: age + validYears, requiredSavings };
-    }
-  }, [calculatorMode, currentSavings, monthlySavings, yearsToRetire, realRate, age, targetFund, monthlyRetirement]);
+    const fund = FinanceCalc.targetFundByAge(currentSavings, monthlySavings, Math.max(1, yearsToRetire), realRate);
+    const monthly = FinanceCalc.fundToMonthly(fund);
+    return { fund, monthly };
+  }, [currentSavings, monthlySavings, yearsToRetire, realRate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800 pb-8">
@@ -172,100 +156,18 @@ export function SettingsPage({ userData, onUpdateUser, onClose, onReset, records
           </div>
         </div>
 
-        {/* Retirement Calculator */}
+        {/* Phase 3: 簡化退休計算機 - 只保留年齡導向模式 */}
         <div className="bg-gray-800/50 rounded-3xl p-6 mb-6">
           <h2 className="text-white font-bold mb-2">🧮 退休計算機</h2>
-          <p className="text-gray-500 text-xs mb-4">換個角度看你的退休計畫</p>
+          <p className="text-gray-500 text-xs mb-4">按目前設定，{retireAge} 歲退休時...</p>
 
-          {/* Mode Tabs */}
-          <div className="flex gap-2 mb-6 overflow-x-auto hide-scrollbar">
-            {([
-              { id: 'age' as const, label: '年齡導向' },
-              { id: 'fund' as const, label: '金額導向' },
-              { id: 'lifestyle' as const, label: '生活品質' },
-            ]).map(m => (
-              <button key={m.id} onClick={() => setCalculatorMode(m.id)}
-                className={`px-3 py-2 rounded-lg text-sm whitespace-nowrap transition-all ${
-                  calculatorMode === m.id ? 'bg-emerald-500 text-gray-900 font-semibold' : 'bg-gray-700 text-gray-400'
-                }`}>{m.label}</button>
-            ))}
+          <div className="bg-emerald-500/10 rounded-xl p-4 border border-emerald-500/20">
+            <div className="text-emerald-400 text-sm mb-1">可累積退休金</div>
+            <div className="text-emerald-400 text-2xl font-bold">{formatCurrency(Math.round(calcResults.fund))}</div>
+            <div className="text-emerald-400/70 text-xs mt-2">
+              退休後每月可領約 {formatCurrency(Math.round(calcResults.monthly))}（4%法則）
+            </div>
           </div>
-
-          {/* Calculator Content */}
-          {calculatorMode === 'age' && (
-            <div className="space-y-4">
-              <div className="text-gray-400 text-sm">
-                按目前設定，{retireAge} 歲退休時...
-              </div>
-              <div className="bg-emerald-500/10 rounded-xl p-4 border border-emerald-500/20">
-                <div className="text-emerald-400 text-sm mb-1">可累積退休金</div>
-                <div className="text-emerald-400 text-2xl font-bold">{formatCurrency(Math.round(calcResults.fund))}</div>
-                <div className="text-emerald-400/70 text-xs mt-2">
-                  退休後每月可領約 {formatCurrency(Math.round(calcResults.monthly))}（4%法則）
-                </div>
-              </div>
-            </div>
-          )}
-
-          {calculatorMode === 'fund' && (
-            <div className="space-y-4">
-              <div>
-                <div className="flex justify-between mb-2">
-                  <span className="text-gray-400">目標退休金</span>
-                  <span className="text-white font-bold">{formatCurrency(targetFund)}</span>
-                </div>
-                <input type="range" min="5000000" max="100000000" step="1000000" value={targetFund}
-                  onChange={(e) => setTargetFund(parseInt(e.target.value))} className="slider w-full" />
-              </div>
-              <div className="bg-blue-500/10 rounded-xl p-4 border border-blue-500/20">
-                <div className="text-blue-400 text-sm mb-1">預計達成年齡</div>
-                {isFinite(calcResults.years) ? (
-                  <>
-                    <div className="text-blue-400 text-2xl font-bold">{calcResults.retireAge.toFixed(1)} 歲</div>
-                    <div className="text-blue-400/70 text-xs mt-2">
-                      還需要 {calcResults.years.toFixed(1)} 年
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="text-orange-400 text-xl font-bold">無法達成</div>
-                    <div className="text-orange-400/70 text-xs mt-2">
-                      目前儲蓄進度不足，請增加每月儲蓄額
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-          )}
-
-          {calculatorMode === 'lifestyle' && (
-            <div className="space-y-4">
-              <div>
-                <div className="flex justify-between mb-2">
-                  <span className="text-gray-400">退休後每月想領</span>
-                  <span className="text-white font-bold">{formatCurrencyFull(monthlyRetirement)}</span>
-                </div>
-                <input type="range" min="20000" max="200000" step="5000" value={monthlyRetirement}
-                  onChange={(e) => setMonthlyRetirement(parseInt(e.target.value))} className="slider w-full" />
-              </div>
-              <div className="bg-purple-500/10 rounded-xl p-4 border border-purple-500/20">
-                <div className="text-purple-400 text-sm mb-1">需要累積</div>
-                <div className="text-purple-400 text-2xl font-bold">{formatCurrency(calcResults.requiredFund)}</div>
-                <div className="text-purple-400/70 text-xs mt-2">
-                  {isFinite(calcResults.years) ? (
-                    <>按目前進度需 {calcResults.years.toFixed(1)} 年（{calcResults.retireAge.toFixed(0)}歲）</>
-                  ) : (
-                    <span className="text-orange-400">目前儲蓄進度不足，無法達成目標</span>
-                  )}
-                </div>
-                {yearsToRetire > 0 && isFinite(calcResults.requiredSavings) && (
-                  <div className="text-purple-400/70 text-xs mt-1">
-                    若要 {retireAge} 歲達成，每月需存 {formatCurrency(Math.round(Math.max(0, calcResults.requiredSavings)))}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Financial Parameters */}
