@@ -18,19 +18,28 @@ export const ColorTokens = {
   // 狀態顏色（GPS進度條使用）
   state: {
     ahead: {
-      main: '#10b981',    // 綠色（領先）
-      light: '#34d399',   // emerald-400
-      dark: '#059669',    // emerald-600
+      main: '#10b981',       // 綠色（領先）
+      light: '#34d399',      // emerald-400
+      dark: '#059669',       // emerald-600
+      bar: '#10b981',        // 進度條顏色
+      dot: '#34d399',        // 標記點顏色
+      background: '#d1fae5', // 背景顏色 (emerald-100)
     },
     onTrack: {
-      main: '#3b82f6',    // 藍色（準時）
-      light: '#60a5fa',   // blue-400
-      dark: '#2563eb',    // blue-600
+      main: '#3b82f6',       // 藍色（準時）
+      light: '#60a5fa',      // blue-400
+      dark: '#2563eb',       // blue-600
+      bar: '#3b82f6',        // 進度條顏色
+      dot: '#60a5fa',        // 標記點顏色
+      background: '#dbeafe', // 背景顏色 (blue-100)
     },
     behind: {
-      main: '#f97316',    // 橘色（落後）
-      light: '#fb923c',   // orange-400
-      dark: '#ea580c',    // orange-600
+      main: '#f97316',       // 橘色（落後）
+      light: '#fb923c',      // orange-400
+      dark: '#ea580c',       // orange-600
+      bar: '#f97316',        // 進度條顏色
+      dot: '#fb923c',        // 標記點顏色
+      background: '#ffedd5', // 背景顏色 (orange-100)
     },
   },
 

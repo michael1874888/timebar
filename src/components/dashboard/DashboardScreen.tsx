@@ -6,12 +6,13 @@ import { AwarenessParticles } from '../AwarenessParticles';
 import { CelebrationModal } from '../common/CelebrationModal';
 import { useToast } from '../common/Toast';
 import { PointsParticles } from '../common/PointsParticles';
-import { LifeBattery } from './LifeBattery';
+import { RetirementProgress } from '@ui/features/retirement-progress';
 import { MilestoneDisplay } from './MilestoneDisplay';
 import { DailyChallenge, ChallengeCompleteResult } from './DailyChallenge';
 import { DailyBudgetWidget } from './DailyBudgetWidget';
 import { QuickActionsBar, QuickAction } from './QuickActionsBar';
 import { CatchUpPlan } from './CatchUpPlan';
+import { CategorySelectModal } from './CategorySelectModal';
 import { UserData, Record as RecordType, ChallengeDefinition } from '@/types';
 import { PointsSystem } from '@/utils/pointsSystem';
 
@@ -60,6 +61,10 @@ export function DashboardScreen({
   // v2.1: 防止重複點擊
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
+  // Phase 1: 分類選擇 Modal
+  const [showCategoryModal, setShowCategoryModal] = useState<boolean>(false);
+  const [pendingPurchase, setPendingPurchase] = useState<{ amount: number; isRecurring: boolean; timeCost: number } | null>(null);
+
   const { salary, retireAge, inflationRate, roiRate, age } = userData;
 
   const yearsToRetire = useMemo(() => retireAge - age, [retireAge, age]);
@@ -74,7 +79,7 @@ export function DashboardScreen({
 
   // GPS 計算
   const gpsResult = useMemo(() => GPSCalc.calculateEstimatedAge(retireAge, records), [retireAge, records]);
-  const { estimatedAge, totalSavedHours } = gpsResult;
+  const { estimatedAge, totalSavedHours, totalSpentHours } = gpsResult;
 
   // 計算當前金額的時間成本
   const timeCost = useMemo(() => {
@@ -94,19 +99,29 @@ export function DashboardScreen({
     return formatRetirementImpact(timeCost, true);
   }, [timeCost, amount]);
 
-  // 處理「我買了」
-  const handleBought = useCallback(async () => {
+  // 處理「我買了」- Phase 1: 打開分類選擇 Modal
+  const handleBought = useCallback(() => {
     if (amount <= 0 || isSaving) return;
+
+    // 保存當前的購買信息
+    setPendingPurchase({ amount, isRecurring, timeCost });
+    // 打開分類選擇 Modal
+    setShowCategoryModal(true);
+  }, [amount, isRecurring, timeCost, isSaving]);
+
+  // Phase 1: 處理分類選擇完成
+  const handleCategorySelect = useCallback(async (categoryId: string) => {
+    if (!pendingPurchase || isSaving) return;
 
     setIsSaving(true);
     try {
       const record: RecordType = {
         id: Date.now().toString(),
         type: 'spend',
-        amount,
-        isRecurring,
-        timeCost,
-        category: '一般消費',
+        amount: pendingPurchase.amount,
+        isRecurring: pendingPurchase.isRecurring,
+        timeCost: pendingPurchase.timeCost,
+        category: categoryId,
         note: '',
         timestamp: new Date().toISOString(),
         date: new Date().toISOString().split('T')[0],
@@ -120,10 +135,11 @@ export function DashboardScreen({
 
       showToast('已記錄消費 📝', 'success');
       setAmount(0);
+      setPendingPurchase(null); // 清除待處理的購買信息
     } finally {
       setIsSaving(false);
     }
-  }, [amount, isRecurring, timeCost, onAddRecord, isSaving, showToast]);
+  }, [pendingPurchase, onAddRecord, isSaving, showToast]);
 
   // 處理「我不買了」- v2.0: 不自動記帳，改為詢問
   const handleSkipped = useCallback(() => {
@@ -292,11 +308,13 @@ export function DashboardScreen({
             </div>
           </div>
 
-          {/* 生命電池 */}
-          <LifeBattery
+          {/* 退休進度條 */}
+          <RetirementProgress
+            targetAge={retireAge}
+            estimatedAge={estimatedAge}
             currentAge={age}
-            retireAge={retireAge}
-            estimatedRetireAge={estimatedAge}
+            totalSavedHours={totalSavedHours}
+            totalSpentHours={totalSpentHours}
           />
         </div>
       </div>
@@ -376,7 +394,7 @@ export function DashboardScreen({
         <div className="max-w-lg mx-auto">
           <div className="bg-gray-800/60 backdrop-blur-sm rounded-3xl p-6 border border-gray-700/50">
             <div className="text-center mb-4">
-              <div className="text-gray-400 text-sm mb-2">這個東西要花多少？</div>
+              <div className="text-gray-400 text-sm mb-2">這筆花費會影響你的自由多久？</div>
               <div className="text-5xl font-black text-white tabular-nums">
                 {formatCurrencyFull(amount)}
               </div>
@@ -514,6 +532,13 @@ export function DashboardScreen({
           )}
         </div>
       </div>
+
+      {/* Phase 1: 分類選擇 Modal */}
+      <CategorySelectModal
+        open={showCategoryModal}
+        onClose={() => setShowCategoryModal(false)}
+        onSelect={handleCategorySelect}
+      />
 
       {/* Bottom Nav */}
       <div className="fixed bottom-0 left-0 right-0 bg-gray-900/95 backdrop-blur border-t border-gray-800">
