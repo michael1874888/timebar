@@ -9,7 +9,7 @@ import { ChallengeSettingsPage } from './settings/ChallengeSettingsPage';
 import { CategorySettingsPage } from './settings/CategorySettingsPage';
 import { QuickActionsSettingsPage } from './settings/QuickActionsSettingsPage';
 import { SubscriptionManagerPage } from './subscription/SubscriptionManagerPage';
-import { NewUIPreview } from '@/NewUIPreview';
+// import { NewUIPreview } from '@/NewUIPreview'; // Phase 0: 暫時註釋，等待 @ui/pages 組件實現
 import { GoogleSheetsAPI } from '@/services/googleSheets';
 import { Storage } from '@/utils/storage';
 import { CONSTANTS } from '@/utils/financeCalc';
@@ -242,7 +242,7 @@ export default function App() {
           onOpenHistory={() => setScreen('history')}
           onOpenSettings={() => setScreen('settings')}
           onOpenQuickActionsSettings={() => setScreen('quick-actions-settings')}
-          onOpenNewUI={() => setScreen('new-ui')}
+          // Phase 0: onOpenNewUI 暫時移除，等待 @ui/pages 組件實現
         />
       )}
       {screen === 'tracker' && userData && (
@@ -291,6 +291,7 @@ export default function App() {
       {screen === 'quick-actions-settings' && (
         <QuickActionsSettingsPage onBack={() => setScreen('dashboard')} />
       )}
+      {/* Phase 0: 暫時註釋，等待 @ui/pages 組件實現
       {screen === 'new-ui' && userData && (
         <div className="relative">
           <button
@@ -302,6 +303,7 @@ export default function App() {
           <NewUIPreview />
         </div>
       )}
+      */}
     </div>
   );
 }

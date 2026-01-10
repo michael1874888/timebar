@@ -16,6 +16,7 @@ export default defineConfig({
       '@domain': path.resolve(__dirname, './src/layers/2-domain'),
       '@business': path.resolve(__dirname, './src/layers/3-business'),
       '@ui': path.resolve(__dirname, './src/layers/4-ui'),
+      '@tokens': path.resolve(__dirname, './src/layers/4-ui/design-system/tokens'),
     },
   },
   build: {
