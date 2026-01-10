@@ -137,7 +137,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
 
       <button onClick={handleNext}
         className="bg-emerald-500 hover:bg-emerald-400 text-gray-900 font-bold py-4 px-16 rounded-2xl text-lg transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg shadow-emerald-500/25">
-        {step < 4 ? '繼續' : '開始使用'}
+        {step < 2 ? '繼續' : '開始使用'}
       </button>
     </div>
   );
