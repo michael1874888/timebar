@@ -14,6 +14,8 @@ import { DailyBudgetWidget } from './DailyBudgetWidget';
 import { QuickActionsBar, QuickAction } from './QuickActionsBar';
 import { CatchUpPlan } from './CatchUpPlan';
 import { CategorySelectModal } from './CategorySelectModal';
+import { Modal } from '@/components/common/Modal';
+import { QuickActionsSettingsPage } from '@/components/settings/QuickActionsSettingsPage';
 import { UserData, Record as RecordType, ChallengeDefinition } from '@/types';
 import { PointsSystem } from '@/utils/pointsSystem';
 import { getUnlockStatus, checkNewUnlock, getFeatureUnlockMessage } from '@/utils/progressiveDisclosure';
@@ -26,8 +28,7 @@ interface DashboardScreenProps {
   onAddRecord: (record: RecordType) => void;
   onOpenHistory: () => void;
   onOpenSettings: () => void;
-  onOpenQuickActionsSettings?: () => void;  // v2.1: 快速記帳設定
-  onOpenNewUI?: () => void;  // v3.0: 新版 UI 預覽（已移除）
+  // Phase 2: onOpenQuickActionsSettings 已移除，改用 Modal
 }
 
 export function DashboardScreen({
@@ -36,8 +37,6 @@ export function DashboardScreen({
   onAddRecord,
   onOpenHistory,
   onOpenSettings,
-  onOpenQuickActionsSettings,
-  onOpenNewUI
 }: DashboardScreenProps) {
   const [amount, setAmount] = useState<number>(0);
   const [isRecurring, setIsRecurring] = useState<boolean>(false);
@@ -68,6 +67,9 @@ export function DashboardScreen({
   // Phase 1: 漸進式揭露
   const [showUnlockNotification, setShowUnlockNotification] = useState<boolean>(false);
   const [unlockMessage, setUnlockMessage] = useState<{ title: string; description: string; icon: string } | null>(null);
+
+  // Phase 2: 快速記帳設定 Modal
+  const [showQuickActionsModal, setShowQuickActionsModal] = useState<boolean>(false);
   const previousRecordCount = useRef<number>(records.length);
 
   const { salary, retireAge, inflationRate, roiRate, age } = userData;
@@ -313,15 +315,7 @@ export function DashboardScreen({
               )}
             </div>
             <div className="flex items-center gap-2">
-              {/* 新版 UI 預覽按鈕 */}
-              {onOpenNewUI && (
-                <button
-                  onClick={onOpenNewUI}
-                  className="bg-emerald-500/20 text-emerald-400 text-xs px-3 py-1.5 rounded-full hover:bg-emerald-500/30 transition-colors"
-                >
-                  ✨ 試用新版
-                </button>
-              )}
+              {/* Phase 2: 新版 UI 預覽按鈕已移除 */}
               <button
                 onClick={onOpenSettings}
                 className="text-gray-400 hover:text-white p-2"
@@ -413,7 +407,7 @@ export function DashboardScreen({
                 onAddRecord(record);
                 showToast(`✅ 已記錄 ${action.name} $${action.amount}`);
               }}
-              onOpenSettings={onOpenQuickActionsSettings}
+              onOpenSettings={() => setShowQuickActionsModal(true)}
             />
           </div>
         </div>
@@ -580,6 +574,16 @@ export function DashboardScreen({
           icon={unlockMessage.icon}
         />
       )}
+
+      {/* Phase 2: 快速記帳設定 Modal */}
+      <Modal
+        open={showQuickActionsModal}
+        onClose={() => setShowQuickActionsModal(false)}
+        title="快速記帳設定"
+        size="xl"
+      >
+        <QuickActionsSettingsPage onBack={() => setShowQuickActionsModal(false)} />
+      </Modal>
 
       {/* Bottom Nav - Phase 1: 簡化為 2 個按鈕 (首頁、歷史) */}
       <div className="fixed bottom-0 left-0 right-0 bg-gray-900/95 backdrop-blur border-t border-gray-800">

@@ -260,7 +260,8 @@ export default function App() {
           onUpdateUser={handleUpdateUser}
           onClose={() => setScreen('home')}
           onReset={handleReset}
-          // Phase 2: 子頁面改用 Modal 顯示，移除 onOpen 回調
+          records={records}
+          onUpdateRecords={setRecords}
         />
       )}
       {/* Phase 2: 以下路由已移除，改用 Modal 顯示

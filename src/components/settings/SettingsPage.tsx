@@ -1,9 +1,14 @@
 import { useState, useEffect, useMemo } from 'react';
 import { FinanceCalc, Formatters, CONSTANTS } from '@/utils/financeCalc';
 import { GAS_WEB_APP_URL } from '@/constants';
-import { UserData } from '@/types';
+import { UserData, Record as RecordType } from '@/types';
 import { PointsSystem } from '@/utils/pointsSystem';
 import { InventorySystem } from '@/utils/inventorySystem';
+import { Modal } from '@/components/common/Modal';
+import { ShopPage } from '@/components/shop/ShopPage';
+import { ChallengeSettingsPage } from './ChallengeSettingsPage';
+import { CategorySettingsPage } from './CategorySettingsPage';
+import { SubscriptionManagerPage } from '@/components/subscription/SubscriptionManagerPage';
 
 const { formatCurrency, formatCurrencyFull } = Formatters;
 const { DEFAULT_INFLATION_RATE, DEFAULT_ROI_RATE } = CONSTANTS;
@@ -13,13 +18,12 @@ interface SettingsPageProps {
   onUpdateUser: (data: UserData) => void;
   onClose: () => void;
   onReset: () => void;
-  onOpenShop?: () => void;
-  onOpenChallengeSettings?: () => void;
-  onOpenSubscriptionManager?: () => void;
-  onOpenCategorySettings?: () => void;
+  // Phase 2: 添加 records 用於 SubscriptionManagerPage Modal
+  records?: RecordType[];
+  onUpdateRecords?: (records: RecordType[]) => void;
 }
 
-export function SettingsPage({ userData, onUpdateUser, onClose, onReset, onOpenShop, onOpenChallengeSettings, onOpenSubscriptionManager, onOpenCategorySettings }: SettingsPageProps) {
+export function SettingsPage({ userData, onUpdateUser, onClose, onReset, records = [], onUpdateRecords }: SettingsPageProps) {
   const [age, setAge] = useState<number>(userData.age);
   const [salary, setSalary] = useState<number>(userData.salary);
   const [retireAge, setRetireAge] = useState<number>(userData.retireAge);
@@ -33,6 +37,12 @@ export function SettingsPage({ userData, onUpdateUser, onClose, onReset, onOpenS
   const [calculatorMode, setCalculatorMode] = useState<'age' | 'fund' | 'lifestyle'>('age');
   const [targetFund, setTargetFund] = useState<number>(userData.targetRetirementFund || 30000000);
   const [monthlyRetirement, setMonthlyRetirement] = useState<number>(50000);
+
+  // Phase 2: Modal 狀態管理
+  const [showShopModal, setShowShopModal] = useState<boolean>(false);
+  const [showChallengeModal, setShowChallengeModal] = useState<boolean>(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState<boolean>(false);
+  const [showCategoryModal, setShowCategoryModal] = useState<boolean>(false);
 
   // 確保退休年齡不小於當前年齡 + 5
   useEffect(() => {
@@ -289,95 +299,88 @@ export function SettingsPage({ userData, onUpdateUser, onClose, onReset, onOpenS
         </div>
 
         {/* Shop Entry */}
-        {onOpenShop && (
-          <div className="bg-gradient-to-r from-amber-900/40 to-orange-900/40 rounded-3xl p-6 mb-6 border border-amber-500/30">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="text-3xl">🛒</div>
-                <div>
-                  <h2 className="text-white font-bold">時間沙商店</h2>
-                  <div className="text-gray-400 text-sm">用積分兌換道具</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="text-right">
-                  <div className="text-amber-400 text-sm">⏳ {PointsSystem.getBalance()}</div>
-                  {InventorySystem.getItemCount('guilt_free_pass') > 0 && (
-                    <div className="text-emerald-400 text-xs">🎫 ×{InventorySystem.getItemCount('guilt_free_pass')}</div>
-                  )}
-                </div>
-                <button
-                  onClick={onOpenShop}
-                  className="bg-amber-500 hover:bg-amber-400 text-gray-900 font-bold py-2 px-4 rounded-xl text-sm"
-                >
-                  進入
-                </button>
+        <div className="bg-gradient-to-r from-amber-900/40 to-orange-900/40 rounded-3xl p-6 mb-6 border border-amber-500/30">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="text-3xl">🛒</div>
+              <div>
+                <h2 className="text-white font-bold">時間沙商店</h2>
+                <div className="text-gray-400 text-sm">用積分兌換道具</div>
               </div>
             </div>
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <div className="text-amber-400 text-sm">⏳ {PointsSystem.getBalance()}</div>
+                {InventorySystem.getItemCount('guilt_free_pass') > 0 && (
+                  <div className="text-emerald-400 text-xs">🎫 ×{InventorySystem.getItemCount('guilt_free_pass')}</div>
+                )}
+              </div>
+              <button
+                onClick={() => setShowShopModal(true)}
+                className="bg-amber-500 hover:bg-amber-400 text-gray-900 font-bold py-2 px-4 rounded-xl text-sm"
+              >
+                進入
+              </button>
+            </div>
           </div>
-        )}
+        </div>
 
         {/* Challenge Management Entry */}
-        {onOpenChallengeSettings && (
-          <div className="bg-gradient-to-r from-emerald-900/40 to-teal-900/40 rounded-3xl p-6 mb-6 border border-emerald-500/30">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="text-3xl">🎯</div>
-                <div>
-                  <h2 className="text-white font-bold">管理每日挑戰</h2>
-                  <div className="text-gray-400 text-sm">新增或編輯自定義挑戰</div>
-                </div>
+        <div className="bg-gradient-to-r from-emerald-900/40 to-teal-900/40 rounded-3xl p-6 mb-6 border border-emerald-500/30">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="text-3xl">🎯</div>
+              <div>
+                <h2 className="text-white font-bold">管理每日挑戰</h2>
+                <div className="text-gray-400 text-sm">新增或編輯自定義挑戰</div>
               </div>
-              <button
-                onClick={onOpenChallengeSettings}
-                className="bg-emerald-500 hover:bg-emerald-400 text-gray-900 font-bold py-2 px-4 rounded-xl text-sm"
-              >
-                管理
-              </button>
             </div>
+            <button
+              onClick={() => setShowChallengeModal(true)}
+              className="bg-emerald-500 hover:bg-emerald-400 text-gray-900 font-bold py-2 px-4 rounded-xl text-sm"
+            >
+              管理
+            </button>
           </div>
-        )}
+        </div>
 
         {/* v2.1: Subscription Manager Entry */}
-        {onOpenSubscriptionManager && (
-          <div className="bg-gradient-to-r from-pink-900/40 to-purple-900/40 rounded-3xl p-6 mb-6 border border-pink-500/30">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="text-3xl">📱</div>
-                <div>
-                  <h2 className="text-white font-bold">訂閱管理</h2>
-                  <div className="text-gray-400 text-sm">管理每月固定支出</div>
-                </div>
+        <div className="bg-gradient-to-r from-pink-900/40 to-purple-900/40 rounded-3xl p-6 mb-6 border border-pink-500/30">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="text-3xl">📱</div>
+              <div>
+                <h2 className="text-white font-bold">訂閱管理</h2>
+                <div className="text-gray-400 text-sm">管理每月固定支出</div>
               </div>
-              <button
-                onClick={onOpenSubscriptionManager}
-                className="bg-pink-500 hover:bg-pink-400 text-gray-900 font-bold py-2 px-4 rounded-xl text-sm"
-              >
-                管理
-              </button>
             </div>
+            <button
+              onClick={() => setShowSubscriptionModal(true)}
+              className="bg-pink-500 hover:bg-pink-400 text-gray-900 font-bold py-2 px-4 rounded-xl text-sm"
+            >
+              管理
+            </button>
           </div>
-        )}
+        </div>
+
         {/* v2.1: Category Settings Entry */}
-        {onOpenCategorySettings && (
-          <div className="bg-gradient-to-r from-cyan-900/40 to-blue-900/40 rounded-3xl p-6 mb-6 border border-cyan-500/30">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="text-3xl">🏷️</div>
-                <div>
-                  <h2 className="text-white font-bold">分類管理</h2>
-                  <div className="text-gray-400 text-sm">自訂消費分類</div>
-                </div>
+        <div className="bg-gradient-to-r from-cyan-900/40 to-blue-900/40 rounded-3xl p-6 mb-6 border border-cyan-500/30">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="text-3xl">🏷️</div>
+              <div>
+                <h2 className="text-white font-bold">分類管理</h2>
+                <div className="text-gray-400 text-sm">自訂消費分類</div>
               </div>
-              <button
-                onClick={onOpenCategorySettings}
-                className="bg-cyan-500 hover:bg-cyan-400 text-gray-900 font-bold py-2 px-4 rounded-xl text-sm"
-              >
-                管理
-              </button>
             </div>
+            <button
+              onClick={() => setShowCategoryModal(true)}
+              className="bg-cyan-500 hover:bg-cyan-400 text-gray-900 font-bold py-2 px-4 rounded-xl text-sm"
+            >
+              管理
+            </button>
           </div>
-        )}
+        </div>
 
         {/* Cloud Status */}
         <div className="bg-gray-800/50 rounded-3xl p-6 mb-6">
@@ -431,6 +434,49 @@ export function SettingsPage({ userData, onUpdateUser, onClose, onReset, onOpenS
 
         <div className="text-center text-gray-600 text-sm mt-8">TimeBar v2.5</div>
       </div>
+
+      {/* Phase 2: Modal 渲染 */}
+      <Modal
+        open={showShopModal}
+        onClose={() => setShowShopModal(false)}
+        title="時間沙商店"
+        size="lg"
+      >
+        <ShopPage onClose={() => setShowShopModal(false)} />
+      </Modal>
+
+      <Modal
+        open={showChallengeModal}
+        onClose={() => setShowChallengeModal(false)}
+        title="管理每日挑戰"
+        size="xl"
+      >
+        <ChallengeSettingsPage onClose={() => setShowChallengeModal(false)} />
+      </Modal>
+
+      {onUpdateRecords && (
+        <Modal
+          open={showSubscriptionModal}
+          onClose={() => setShowSubscriptionModal(false)}
+          title="訂閱管理"
+          size="xl"
+        >
+          <SubscriptionManagerPage
+            records={records}
+            onUpdateRecords={onUpdateRecords}
+            onClose={() => setShowSubscriptionModal(false)}
+          />
+        </Modal>
+      )}
+
+      <Modal
+        open={showCategoryModal}
+        onClose={() => setShowCategoryModal(false)}
+        title="分類管理"
+        size="lg"
+      >
+        <CategorySettingsPage onClose={() => setShowCategoryModal(false)} />
+      </Modal>
     </div>
   );
 }
