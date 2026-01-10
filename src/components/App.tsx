@@ -5,11 +5,12 @@ import { DashboardScreen } from './dashboard/DashboardScreen';
 // import { MainTracker } from './tracker/MainTracker';
 import { HistoryPage } from './history/HistoryPage';
 import { SettingsPage } from './settings/SettingsPage';
-import { ShopPage } from './shop/ShopPage';
-import { ChallengeSettingsPage } from './settings/ChallengeSettingsPage';
-import { CategorySettingsPage } from './settings/CategorySettingsPage';
-import { QuickActionsSettingsPage } from './settings/QuickActionsSettingsPage';
-import { SubscriptionManagerPage } from './subscription/SubscriptionManagerPage';
+// Phase 2: 以下組件改用 Modal 顯示，不再需要 import
+// import { ShopPage } from './shop/ShopPage';
+// import { ChallengeSettingsPage } from './settings/ChallengeSettingsPage';
+// import { CategorySettingsPage } from './settings/CategorySettingsPage';
+// import { QuickActionsSettingsPage } from './settings/QuickActionsSettingsPage';
+// import { SubscriptionManagerPage } from './subscription/SubscriptionManagerPage';
 // import { NewUIPreview } from '@/NewUIPreview'; // Phase 0: 暫時註釋，等待 @ui/pages 組件實現
 import { GoogleSheetsAPI } from '@/services/googleSheets';
 import { Storage } from '@/utils/storage';
@@ -17,7 +18,6 @@ import { CONSTANTS } from '@/utils/financeCalc';
 import { PointsSystem } from '@/utils/pointsSystem';
 import { InventorySystem } from '@/utils/inventorySystem';
 import { RecordSystem } from '@/utils/recordSystem';
-import { QuickActionsUtils } from './dashboard/QuickActionsBar';
 import { SettingsSystem } from '@/utils/settingsSystem';
 import { UserData, Record as RecordType, Screen } from '@/types';
 
@@ -58,7 +58,7 @@ export default function App() {
               PointsSystem.setBalance(cloudUserData.pointsBalance);
             }
             if (cloudUserData.inventory) {
-              InventorySystem.save(cloudUserData.inventory);
+              InventorySystem.setInventory(cloudUserData.inventory);
             }
 
             // v2.1: 同步快速記帳按鈕
@@ -86,7 +86,7 @@ export default function App() {
             Storage.save('records', cloudRecords);
 
             setSyncStatus('synced');
-            setScreen('dashboard');
+            setScreen('home');
             return;
           } else if (cloudData.success && !cloudData.userData) {
             // 雲端成功回應但沒有資料 = 資料已被其他裝置清除
@@ -114,7 +114,7 @@ export default function App() {
         };
         setUserData(userData);
         setRecords(localRecords || []);
-        setScreen('dashboard');
+        setScreen('home');
       } else {
         // 都沒資料，進入 onboarding
         setScreen('onboarding');
@@ -145,7 +145,7 @@ export default function App() {
     }
   }, [records, userData]);
 
-  const handleOnboardingComplete = (data: UserData): void => { setUserData(data); setScreen('dashboard'); };
+  const handleOnboardingComplete = (data: UserData): void => { setUserData(data); setScreen('home'); };
 
   const handleAddRecord = async (record: RecordType): Promise<void> => {
     // v2.1: 新增 createdAt 時間戳記
@@ -234,15 +234,14 @@ export default function App() {
   return (
     <div>
       {screen === 'onboarding' && <OnboardingScreen onComplete={handleOnboardingComplete} />}
-      {screen === 'dashboard' && userData && (
+      {screen === 'home' && userData && (
         <DashboardScreen
           userData={userData}
           records={records}
           onAddRecord={handleAddRecord}
           onOpenHistory={() => setScreen('history')}
           onOpenSettings={() => setScreen('settings')}
-          onOpenQuickActionsSettings={() => setScreen('quick-actions-settings')}
-          // Phase 0: onOpenNewUI 暫時移除，等待 @ui/pages 組件實現
+          // Phase 2: onOpenQuickActionsSettings 已移除，改用 Modal 顯示
         />
       )}
       {/* Phase 1: tracker 路由已移除，功能已整合到 DashboardScreen */}
@@ -250,19 +249,21 @@ export default function App() {
         <HistoryPage
           records={records}
           userData={userData}
-          onClose={() => setScreen('dashboard')}
+          onClose={() => setScreen('home')}
           onUpdateRecord={handleUpdateRecord}
           onDeleteRecord={handleDeleteRecord}
         />
       )}
       {screen === 'settings' && userData && (
-        <SettingsPage userData={userData} onUpdateUser={handleUpdateUser}
-          onClose={() => setScreen('dashboard')} onReset={handleReset}
-          onOpenShop={() => setScreen('shop')}
-          onOpenChallengeSettings={() => setScreen('challenge-settings')}
-          onOpenSubscriptionManager={() => setScreen('subscription-manager')}
-          onOpenCategorySettings={() => setScreen('category-settings')} />
+        <SettingsPage
+          userData={userData}
+          onUpdateUser={handleUpdateUser}
+          onClose={() => setScreen('home')}
+          onReset={handleReset}
+          // Phase 2: 子頁面改用 Modal 顯示，移除 onOpen 回調
+        />
       )}
+      {/* Phase 2: 以下路由已移除，改用 Modal 顯示
       {screen === 'shop' && userData && (
         <ShopPage onClose={() => setScreen('settings')} />
       )}
@@ -280,13 +281,14 @@ export default function App() {
         <CategorySettingsPage onClose={() => setScreen('settings')} />
       )}
       {screen === 'quick-actions-settings' && (
-        <QuickActionsSettingsPage onBack={() => setScreen('dashboard')} />
+        <QuickActionsSettingsPage onBack={() => setScreen('home')} />
       )}
+      */}
       {/* Phase 0: 暫時註釋，等待 @ui/pages 組件實現
       {screen === 'new-ui' && userData && (
         <div className="relative">
           <button
-            onClick={() => setScreen('dashboard')}
+            onClick={() => setScreen('home')}
             className="fixed top-4 left-4 z-50 bg-white/90 backdrop-blur px-4 py-2 rounded-lg shadow-lg text-gray-700 hover:bg-white transition"
           >
             ← 返回舊版
