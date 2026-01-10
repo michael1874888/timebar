@@ -1,9 +1,10 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { FinanceCalc, GPSCalc, Formatters } from '@/utils/financeCalc';
 import { getVividComparison, formatRetirementImpact } from '@/utils/lifeCostCalc';
 import { Confetti } from '../Confetti';
 import { AwarenessParticles } from '../AwarenessParticles';
 import { CelebrationModal } from '../common/CelebrationModal';
+import { UnlockNotification } from '../common/UnlockNotification';
 import { useToast } from '../common/Toast';
 import { PointsParticles } from '../common/PointsParticles';
 import { RetirementProgress } from '@ui/features/retirement-progress';
@@ -15,6 +16,7 @@ import { CatchUpPlan } from './CatchUpPlan';
 import { CategorySelectModal } from './CategorySelectModal';
 import { UserData, Record as RecordType, ChallengeDefinition } from '@/types';
 import { PointsSystem } from '@/utils/pointsSystem';
+import { getUnlockStatus, checkNewUnlock, getFeatureUnlockMessage } from '@/utils/progressiveDisclosure';
 
 const { formatCurrencyFull, formatCurrency } = Formatters;
 
@@ -63,17 +65,43 @@ export function DashboardScreen({
   const [showCategoryModal, setShowCategoryModal] = useState<boolean>(false);
   const [pendingPurchase, setPendingPurchase] = useState<{ amount: number; isRecurring: boolean; timeCost: number } | null>(null);
 
+  // Phase 1: 漸進式揭露
+  const [showUnlockNotification, setShowUnlockNotification] = useState<boolean>(false);
+  const [unlockMessage, setUnlockMessage] = useState<{ title: string; description: string; icon: string } | null>(null);
+  const previousRecordCount = useRef<number>(records.length);
+
   const { salary, retireAge, inflationRate, roiRate, age } = userData;
 
   const yearsToRetire = useMemo(() => retireAge - age, [retireAge, age]);
   const hourlyRate = useMemo(() => FinanceCalc.hourlyRate(salary), [salary]);
   const realRate = useMemo(() => FinanceCalc.realRate(inflationRate, roiRate), [inflationRate, roiRate]);
 
+  // Phase 1: 計算功能解鎖狀態
+  const unlockStatus = useMemo(() => getUnlockStatus(userData, records), [userData, records]);
+
   // 載入積分
   useEffect(() => {
     const balance = PointsSystem.load();
     setPointsBalance(balance);
   }, []);
+
+  // Phase 1: 檢測功能解鎖
+  useEffect(() => {
+    const currentCount = records.length;
+    const previousCount = previousRecordCount.current;
+
+    // 檢查是否有新功能解鎖
+    const newUnlock = checkNewUnlock(previousCount, currentCount, userData);
+
+    if (newUnlock) {
+      const message = getFeatureUnlockMessage(newUnlock);
+      setUnlockMessage(message);
+      setShowUnlockNotification(true);
+    }
+
+    // 更新記錄數量
+    previousRecordCount.current = currentCount;
+  }, [records.length, userData]);
 
   // GPS 計算
   const gpsResult = useMemo(() => GPSCalc.calculateEstimatedAge(retireAge, records), [retireAge, records]);
@@ -335,15 +363,17 @@ export function DashboardScreen({
         </div>
       </div>
 
-      {/* 每日挑戰 - v2.0: 傳遞積分和新的回調 */}
-      <div className="px-4 py-2">
-        <div className="max-w-lg mx-auto">
-          <DailyChallenge
-            totalPoints={pointsBalance}
-            onCompleteChallenge={handleChallengeComplete}
-          />
+      {/* 每日挑戰 - Phase 1: 根據解鎖狀態顯示 */}
+      {unlockStatus.challenges && (
+        <div className="px-4 py-2">
+          <div className="max-w-lg mx-auto">
+            <DailyChallenge
+              totalPoints={pointsBalance}
+              onCompleteChallenge={handleChallengeComplete}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* 追趕計劃（落後時顯示） */}
       {gpsResult.isBehind && (
@@ -354,38 +384,40 @@ export function DashboardScreen({
         </div>
       )}
 
-      {/* v2.1: 快速記帳按鈕列 */}
-      <div className="px-4 py-2">
-        <div className="max-w-lg mx-auto">
-          <QuickActionsBar
-            onQuickAdd={(action: QuickAction) => {
-              // 快速記帳
-              const timeCost = FinanceCalc.calculateTimeCost(
-                action.amount,
-                action.isRecurring,
-                FinanceCalc.hourlyRate(userData.salary),
-                FinanceCalc.realRate(userData.inflationRate, userData.roiRate),
-                userData.retireAge - userData.age
-              );
-              const record: RecordType = {
-                id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                type: 'spend',
-                amount: action.amount,
-                isRecurring: action.isRecurring,
-                timeCost,
-                category: action.categoryId,
-                note: action.name,
-                timestamp: new Date().toISOString(),
-                date: new Date().toISOString().split('T')[0],
-                createdAt: Date.now()
-              };
-              onAddRecord(record);
-              showToast(`✅ 已記錄 ${action.name} $${action.amount}`);
-            }}
-            onOpenSettings={onOpenQuickActionsSettings}
-          />
+      {/* v2.1: 快速記帳按鈕列 - Phase 1: 根據解鎖狀態顯示 */}
+      {unlockStatus.quickActions && (
+        <div className="px-4 py-2">
+          <div className="max-w-lg mx-auto">
+            <QuickActionsBar
+              onQuickAdd={(action: QuickAction) => {
+                // 快速記帳
+                const timeCost = FinanceCalc.calculateTimeCost(
+                  action.amount,
+                  action.isRecurring,
+                  FinanceCalc.hourlyRate(userData.salary),
+                  FinanceCalc.realRate(userData.inflationRate, userData.roiRate),
+                  userData.retireAge - userData.age
+                );
+                const record: RecordType = {
+                  id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                  type: 'spend',
+                  amount: action.amount,
+                  isRecurring: action.isRecurring,
+                  timeCost,
+                  category: action.categoryId,
+                  note: action.name,
+                  timestamp: new Date().toISOString(),
+                  date: new Date().toISOString().split('T')[0],
+                  createdAt: Date.now()
+                };
+                onAddRecord(record);
+                showToast(`✅ 已記錄 ${action.name} $${action.amount}`);
+              }}
+              onOpenSettings={onOpenQuickActionsSettings}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* 金額輸入區 */}
       <div className="px-4 py-4">
@@ -537,6 +569,17 @@ export function DashboardScreen({
         onClose={() => setShowCategoryModal(false)}
         onSelect={handleCategorySelect}
       />
+
+      {/* Phase 1: 功能解鎖通知 */}
+      {unlockMessage && (
+        <UnlockNotification
+          isOpen={showUnlockNotification}
+          onClose={() => setShowUnlockNotification(false)}
+          title={unlockMessage.title}
+          description={unlockMessage.description}
+          icon={unlockMessage.icon}
+        />
+      )}
 
       {/* Bottom Nav - Phase 1: 簡化為 2 個按鈕 (首頁、歷史) */}
       <div className="fixed bottom-0 left-0 right-0 bg-gray-900/95 backdrop-blur border-t border-gray-800">

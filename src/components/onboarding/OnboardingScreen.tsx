@@ -44,6 +44,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
           targetRetirementFund: Math.round(projectedFund),
           inflationRate: DEFAULT_INFLATION_RATE,
           roiRate: DEFAULT_ROI_RATE,
+          createdAt: new Date().toISOString(),  // Phase 1: 記錄完成 onboarding 的時間
         });
       }
       setIsAnimating(false);

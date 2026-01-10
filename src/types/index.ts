@@ -75,6 +75,9 @@ export interface UserData {
   hiddenCategories?: string[];         // 隱藏的分類ID
   deletedDefaultChallenges?: string[]; // 刪除的預設挑戰ID
   modifiedDefaultChallenges?: Record<string, ChallengeDefinition>; // 修改的預設挑戰
+
+  // Phase 1: 漸進式揭露功能
+  createdAt?: string;                  // 用戶完成 onboarding 的時間戳（ISO 8601格式）
 }
 
 // ==================== 記帳系統 ====================
