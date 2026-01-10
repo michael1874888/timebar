@@ -525,34 +525,36 @@ describe('App Component Integration Tests', () => {
       expect(dashboardScreen).toBeInTheDocument()
     })
 
-    test('應該能從 Dashboard 導航到 Tracker', async () => {
-      render(<App />)
+    // Phase 1: Tracker 已移除，功能已整合到 Dashboard
+    // test('應該能從 Dashboard 導航到 Tracker', async () => {
+    //   render(<App />)
 
-      await screen.findByTestId('dashboard-screen')
+    //   await screen.findByTestId('dashboard-screen')
 
-      fireEvent.click(screen.getByRole('button', { name: 'Open Tracker' }))
+    //   fireEvent.click(screen.getByRole('button', { name: 'Open Tracker' }))
 
-      const tracker = await screen.findByTestId('main-tracker')
-      expect(tracker).toBeInTheDocument()
-    })
+    //   const tracker = await screen.findByTestId('main-tracker')
+    //   expect(tracker).toBeInTheDocument()
+    // })
 
-    test('應該能從 Tracker 返回 Dashboard', async () => {
-      render(<App />)
+    // Phase 1: Tracker 已移除，功能已整合到 Dashboard
+    // test('應該能從 Tracker 返回 Dashboard', async () => {
+    //   render(<App />)
 
-      await screen.findByTestId('dashboard-screen')
+    //   await screen.findByTestId('dashboard-screen')
 
-      fireEvent.click(screen.getByRole('button', { name: 'Open Tracker' }))
-      await screen.findByTestId('main-tracker')
+    //   fireEvent.click(screen.getByRole('button', { name: 'Open Tracker' }))
+    //   await screen.findByTestId('main-tracker')
 
-      // Tracker 沒有返回按鈕，通過導航到其他頁面再返回來測試
-      fireEvent.click(screen.getByRole('button', { name: 'Open History' }))
-      await screen.findByTestId('history-page')
+    //   // Tracker 沒有返回按鈕，通過導航到其他頁面再返回來測試
+    //   fireEvent.click(screen.getByRole('button', { name: 'Open History' }))
+    //   await screen.findByTestId('history-page')
 
-      fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+    //   fireEvent.click(screen.getByRole('button', { name: 'Close' }))
 
-      const dashboardScreen = await screen.findByTestId('dashboard-screen')
-      expect(dashboardScreen).toBeInTheDocument()
-    })
+    //   const dashboardScreen = await screen.findByTestId('dashboard-screen')
+    //   expect(dashboardScreen).toBeInTheDocument()
+    // })
   })
 
   describe('Adding Records', () => {

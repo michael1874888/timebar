@@ -145,7 +145,8 @@ export interface QuickAction {
 
 // ==================== 畫面路由 ====================
 
-export type Screen = 'loading' | 'onboarding' | 'dashboard' | 'tracker' | 'history' | 'settings' | 'shop' | 'challenge-settings' | 'subscription-manager' | 'category-settings' | 'budget-settings' | 'quick-actions-settings' | 'new-ui';
+// Phase 1: 移除 'tracker'，功能已整合到 'dashboard'
+export type Screen = 'loading' | 'onboarding' | 'dashboard' | 'history' | 'settings' | 'shop' | 'challenge-settings' | 'subscription-manager' | 'category-settings' | 'budget-settings' | 'quick-actions-settings' | 'new-ui';
 
 export interface GPSResult {
   estimatedAge: number;

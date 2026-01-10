@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { OnboardingScreen } from './onboarding/OnboardingScreen';
 import { DashboardScreen } from './dashboard/DashboardScreen';
-import { MainTracker } from './tracker/MainTracker';
+// Phase 1: MainTracker 已合併到 DashboardScreen
+// import { MainTracker } from './tracker/MainTracker';
 import { HistoryPage } from './history/HistoryPage';
 import { SettingsPage } from './settings/SettingsPage';
 import { ShopPage } from './shop/ShopPage';
@@ -238,23 +239,13 @@ export default function App() {
           userData={userData}
           records={records}
           onAddRecord={handleAddRecord}
-          onOpenTracker={() => setScreen('tracker')}
           onOpenHistory={() => setScreen('history')}
           onOpenSettings={() => setScreen('settings')}
           onOpenQuickActionsSettings={() => setScreen('quick-actions-settings')}
           // Phase 0: onOpenNewUI 暫時移除，等待 @ui/pages 組件實現
         />
       )}
-      {screen === 'tracker' && userData && (
-        <MainTracker
-          userData={userData}
-          records={records}
-          onAddRecord={handleAddRecord}
-          onOpenHome={() => setScreen('dashboard')}
-          onOpenHistory={() => setScreen('history')}
-          onOpenSettings={() => setScreen('settings')}
-        />
-      )}
+      {/* Phase 1: tracker 路由已移除，功能已整合到 DashboardScreen */}
       {screen === 'history' && userData && (
         <HistoryPage
           records={records}
