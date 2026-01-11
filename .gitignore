@@ -29,6 +29,7 @@ nul
 # .claude/skills/
 # .agent/
 # .agent/workflows/
+*.pyc
 
 # Logs
 *.log

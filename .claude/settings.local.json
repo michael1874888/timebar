@@ -23,7 +23,8 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(if exist node_modules.vitest rmdir /s /q node_modules.vitest)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(python:*)"
     ]
   }
 }
