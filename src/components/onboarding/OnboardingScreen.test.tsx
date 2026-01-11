@@ -7,8 +7,10 @@
  * - 完成 onboarding 的回調
  */
 
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import { OnboardingScreen } from './OnboardingScreen'
+
+const ANIMATION_DELAY = 300
 
 describe('OnboardingScreen', () => {
   beforeEach(() => {
@@ -20,44 +22,35 @@ describe('OnboardingScreen', () => {
     vi.useRealTimers()
   })
 
+  // 輔助函數：點擊按鈕並等待動畫完成
+  const clickAndWait = async () => {
+    const button = screen.getByRole('button')
+    fireEvent.click(button)
+    await act(async () => {
+      vi.advanceTimersByTime(ANIMATION_DELAY)
+    })
+  }
+
   describe('Button Text Display', () => {
     test('按鈕文字應該在前兩步顯示「繼續」，最後一步顯示「開始使用」', async () => {
       const mockOnComplete = vi.fn()
       render(<OnboardingScreen onComplete={mockOnComplete} />)
 
-      // Step 0: 應該顯示「繼續」
       const button = screen.getByRole('button')
+
+      // Step 0: 應該顯示「繼續」
       expect(button).toHaveTextContent('繼續')
-
-      // 點擊進入 Step 1
-      fireEvent.click(button)
-
-      // 等待動畫完成（300ms）
-      await act(async () => {
-        vi.advanceTimersByTime(300)
-      })
 
       // Step 1: 確認仍然顯示「繼續」
+      await clickAndWait()
       expect(button).toHaveTextContent('繼續')
 
-      // 點擊進入 Step 2（最後一步）
-      fireEvent.click(button)
-
-      // 等待動畫完成
-      await act(async () => {
-        vi.advanceTimersByTime(300)
-      })
-
       // Step 2: 確認顯示「開始使用」
+      await clickAndWait()
       expect(button).toHaveTextContent('開始使用')
 
       // 點擊「開始使用」應該調用 onComplete
-      fireEvent.click(button)
-
-      await act(async () => {
-        vi.advanceTimersByTime(300)
-      })
-
+      await clickAndWait()
       expect(mockOnComplete).toHaveBeenCalled()
     })
 
@@ -65,19 +58,14 @@ describe('OnboardingScreen', () => {
       const mockOnComplete = vi.fn()
       render(<OnboardingScreen onComplete={mockOnComplete} />)
 
-      // Step 0: 確認顯示「繼續」
       const button = screen.getByRole('button')
+
+      // Step 0: 確認顯示「繼續」
       expect(button).toHaveTextContent('繼續')
       expect(button).not.toHaveTextContent('開始使用')
 
-      // 進入 Step 1
-      fireEvent.click(button)
-
-      await act(async () => {
-        vi.advanceTimersByTime(300)
-      })
-
       // Step 1: 確認仍然顯示「繼續」
+      await clickAndWait()
       expect(button).toHaveTextContent('繼續')
       expect(button).not.toHaveTextContent('開始使用')
     })
@@ -86,21 +74,12 @@ describe('OnboardingScreen', () => {
       const mockOnComplete = vi.fn()
       render(<OnboardingScreen onComplete={mockOnComplete} />)
 
-      const button = screen.getByRole('button')
-
-      // 點擊進入 Step 1
-      fireEvent.click(button)
-      await act(async () => {
-        vi.advanceTimersByTime(300)
-      })
-
-      // 點擊進入 Step 2
-      fireEvent.click(button)
-      await act(async () => {
-        vi.advanceTimersByTime(300)
-      })
+      // 導航到 Step 2
+      await clickAndWait() // Step 0 → 1
+      await clickAndWait() // Step 1 → 2
 
       // Step 2: 確認顯示「開始使用」
+      const button = screen.getByRole('button')
       expect(button).toHaveTextContent('開始使用')
       expect(button).not.toHaveTextContent('繼續')
     })
@@ -111,23 +90,10 @@ describe('OnboardingScreen', () => {
       const mockOnComplete = vi.fn()
       render(<OnboardingScreen onComplete={mockOnComplete} />)
 
-      const button = screen.getByRole('button')
-
       // 完成 3 個步驟
-      fireEvent.click(button)
-      await act(async () => {
-        vi.advanceTimersByTime(300)
-      })
-
-      fireEvent.click(button)
-      await act(async () => {
-        vi.advanceTimersByTime(300)
-      })
-
-      fireEvent.click(button)
-      await act(async () => {
-        vi.advanceTimersByTime(300)
-      })
+      await clickAndWait()
+      await clickAndWait()
+      await clickAndWait()
 
       // 驗證 onComplete 被調用且包含必要欄位
       expect(mockOnComplete).toHaveBeenCalledWith(
@@ -149,14 +115,9 @@ describe('OnboardingScreen', () => {
       const mockOnComplete = vi.fn()
       render(<OnboardingScreen onComplete={mockOnComplete} />)
 
-      const button = screen.getByRole('button')
-
       // 完成所有步驟
       for (let i = 0; i < 3; i++) {
-        fireEvent.click(button)
-        await act(async () => {
-          vi.advanceTimersByTime(300)
-        })
+        await clickAndWait()
       }
 
       // 驗證 monthlySavings = salary × 0.2

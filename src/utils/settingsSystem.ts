@@ -127,30 +127,21 @@ export class SettingsService {
       if (result.success && result.data) {
         const cloudData = result.data
 
+        // 設定欄位與 Storage Key 的映射
+        const settingsToSync: Array<{ key: keyof typeof SETTING_KEYS; field: keyof typeof cloudData }> = [
+          { key: 'CUSTOM_CATEGORIES', field: 'customCategories' },
+          { key: 'HIDDEN_CATEGORIES', field: 'hiddenCategories' },
+          { key: 'CUSTOM_CHALLENGES', field: 'customChallenges' },
+          { key: 'DELETED_CHALLENGES', field: 'deletedDefaultChallenges' },
+          { key: 'MODIFIED_CHALLENGES', field: 'modifiedDefaultChallenges' },
+          { key: 'BUDGET_SETTINGS', field: 'budgetSettings' },
+        ]
+
         // 同步各个设置到本地
-        if (cloudData.customCategories) {
-          this.storage.save(SETTING_KEYS.CUSTOM_CATEGORIES, cloudData.customCategories)
-        }
-        if (cloudData.hiddenCategories) {
-          this.storage.save(SETTING_KEYS.HIDDEN_CATEGORIES, cloudData.hiddenCategories)
-        }
-        if (cloudData.customChallenges) {
-          this.storage.save(SETTING_KEYS.CUSTOM_CHALLENGES, cloudData.customChallenges)
-        }
-        if (cloudData.deletedDefaultChallenges) {
-          this.storage.save(
-            SETTING_KEYS.DELETED_CHALLENGES,
-            cloudData.deletedDefaultChallenges
-          )
-        }
-        if (cloudData.modifiedDefaultChallenges) {
-          this.storage.save(
-            SETTING_KEYS.MODIFIED_CHALLENGES,
-            cloudData.modifiedDefaultChallenges
-          )
-        }
-        if (cloudData.budgetSettings) {
-          this.storage.save(SETTING_KEYS.BUDGET_SETTINGS, cloudData.budgetSettings)
+        for (const { key, field } of settingsToSync) {
+          if (cloudData[field] !== undefined) {
+            this.storage.save(SETTING_KEYS[key], cloudData[field])
+          }
         }
 
         console.log('[SettingsSystem] Settings synced from cloud')

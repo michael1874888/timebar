@@ -187,29 +187,3 @@ export function getFeatureUnlockMessage(featureName: string): {
   }
 }
 
-/**
- * Progressive Features (漸進式功能)
- * 向後兼容的靜態導出，用於現有代碼
- */
-export const ProgressiveFeatures = {
-  /**
-   * 檢查快速記帳功能是否解鎖
-   */
-  quickActions: (_userData: UserData, records: RecordType[]): boolean => {
-    return isQuickActionsUnlocked(records).isUnlocked;
-  },
-
-  /**
-   * 檢查每日挑戰功能是否解鎖
-   */
-  challenges: (userData: UserData): boolean => {
-    return isChallengesUnlocked(userData).isUnlocked;
-  },
-
-  /**
-   * 檢查遊戲化系統是否解鎖
-   */
-  gamification: (userData: UserData, records: RecordType[]): boolean => {
-    return isGamificationUnlocked(userData, records).isUnlocked;
-  },
-};

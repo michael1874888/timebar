@@ -4,26 +4,27 @@ import { FinanceCalc, Formatters, CONSTANTS } from '@/utils/financeCalc';
 import { UserData } from '@/types';
 
 const { DEFAULT_INFLATION_RATE, DEFAULT_ROI_RATE } = CONSTANTS;
-const { formatCurrencyFull } = Formatters;  // Phase 5: 移除未使用的 formatCurrency
+const { formatCurrencyFull } = Formatters;
+const ANIMATION_DELAY = 300;
+const TOTAL_STEPS = 3;
+const MONTHLY_SAVINGS_RATE = 0.2;
 
 interface OnboardingScreenProps {
   onComplete: (data: UserData) => void;
 }
 
 export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
-  const [step, setStep] = useState<number>(0);
-  const [age, setAge] = useState<number>(30);
-  const [salary, setSalary] = useState<number>(50000);
-  const [retireAge, setRetireAge] = useState<number>(65);
-  const [isAnimating, setIsAnimating] = useState<boolean>(false);
+  const [step, setStep] = useState(0);
+  const [age, setAge] = useState(30);
+  const [salary, setSalary] = useState(50000);
+  const [retireAge, setRetireAge] = useState(65);
+  const [isAnimating, setIsAnimating] = useState(false);
 
-  // Phase 5: 自動計算值
-  const currentSavings = 0;  // 自動設為 0
-  const [monthlySavings, setMonthlySavings] = useState<number>(10000);
+  const currentSavings = 0;
+  const [monthlySavings, setMonthlySavings] = useState(10000);
 
-  // 根據薪水自動更新每月儲蓄（20%）
   useEffect(() => {
-    setMonthlySavings(Math.round(salary * 0.2));
+    setMonthlySavings(Math.round(salary * MONTHLY_SAVINGS_RATE));
   }, [salary]);
 
   const hourlyRate = Math.round(FinanceCalc.hourlyRate(salary));
@@ -31,10 +32,10 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
   const yearsToRetire = retireAge - age;
   const projectedFund = FinanceCalc.targetFundByAge(currentSavings, monthlySavings, yearsToRetire, realRate);
 
-  const handleNext = (): void => {
+  const handleNext = () => {
     setIsAnimating(true);
     setTimeout(() => {
-      if (step < 2) {  // Phase 5: 簡化為 3 個步驟 (0, 1, 2)
+      if (step < TOTAL_STEPS - 1) {
         setStep(step + 1);
       } else {
         onComplete({
@@ -42,11 +43,11 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
           targetRetirementFund: Math.round(projectedFund),
           inflationRate: DEFAULT_INFLATION_RATE,
           roiRate: DEFAULT_ROI_RATE,
-          createdAt: new Date().toISOString(),  // Phase 1: 記錄完成 onboarding 的時間
+          createdAt: new Date().toISOString(),
         });
       }
       setIsAnimating(false);
-    }, 300);
+    }, ANIMATION_DELAY);
   };
 
   const steps = [
@@ -137,7 +138,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
 
       <button onClick={handleNext}
         className="bg-emerald-500 hover:bg-emerald-400 text-gray-900 font-bold py-4 px-16 rounded-2xl text-lg transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg shadow-emerald-500/25">
-        {step < 2 ? '繼續' : '開始使用'}
+        {step < TOTAL_STEPS - 1 ? '繼續' : '開始使用'}
       </button>
     </div>
   );
