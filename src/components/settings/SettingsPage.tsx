@@ -5,6 +5,7 @@ import { UserData, Record as RecordType } from '@/types';
 import { PointsSystem } from '@/utils/pointsSystem';
 import { InventorySystem } from '@/utils/inventorySystem';
 import { Modal } from '@/components/common/Modal';
+import { Collapsible } from '@/components/common/Collapsible';
 import { ShopPage } from '@/components/shop/ShopPage';
 import { ChallengeSettingsPage } from './ChallengeSettingsPage';
 import { CategorySettingsPage } from './CategorySettingsPage';
@@ -200,89 +201,115 @@ export function SettingsPage({ userData, onUpdateUser, onClose, onReset, records
           </div>
         </div>
 
-        {/* Shop Entry */}
-        <div className="bg-gradient-to-r from-amber-900/40 to-orange-900/40 rounded-3xl p-6 mb-6 border border-amber-500/30">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="text-3xl">🛒</div>
-              <div>
-                <h2 className="text-white font-bold">時間沙商店</h2>
-                <div className="text-gray-400 text-sm">用積分兌換道具</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="text-right">
-                <div className="text-amber-400 text-sm">⏳ {PointsSystem.getBalance()}</div>
-                {InventorySystem.getItemCount('guilt_free_pass') > 0 && (
-                  <div className="text-emerald-400 text-xs">🎫 ×{InventorySystem.getItemCount('guilt_free_pass')}</div>
-                )}
-              </div>
-              <button
-                onClick={() => setShowShopModal(true)}
-                className="bg-amber-500 hover:bg-amber-400 text-gray-900 font-bold py-2 px-4 rounded-xl text-sm"
-              >
-                進入
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Challenge Management Entry */}
-        <div className="bg-gradient-to-r from-emerald-900/40 to-teal-900/40 rounded-3xl p-6 mb-6 border border-emerald-500/30">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="text-3xl">🎯</div>
-              <div>
-                <h2 className="text-white font-bold">管理每日挑戰</h2>
-                <div className="text-gray-400 text-sm">新增或編輯自定義挑戰</div>
-              </div>
-            </div>
-            <button
-              onClick={() => setShowChallengeModal(true)}
-              className="bg-emerald-500 hover:bg-emerald-400 text-gray-900 font-bold py-2 px-4 rounded-xl text-sm"
-            >
-              管理
-            </button>
-          </div>
-        </div>
-
-        {/* v2.1: Subscription Manager Entry */}
-        <div className="bg-gradient-to-r from-pink-900/40 to-purple-900/40 rounded-3xl p-6 mb-6 border border-pink-500/30">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="text-3xl">📱</div>
-              <div>
-                <h2 className="text-white font-bold">訂閱管理</h2>
-                <div className="text-gray-400 text-sm">管理每月固定支出</div>
-              </div>
-            </div>
+        {/* Phase 3: 進階設定 - Collapsible（預設收合） */}
+        <Collapsible
+          title="進階設定"
+          icon="⚙️"
+          defaultOpen={false}
+          storageKey="timebar_settings_advanced_open"
+        >
+          <div className="space-y-4">
+            {/* 訂閱管理 */}
             <button
               onClick={() => setShowSubscriptionModal(true)}
-              className="bg-pink-500 hover:bg-pink-400 text-gray-900 font-bold py-2 px-4 rounded-xl text-sm"
+              className="w-full bg-gradient-to-r from-pink-900/40 to-purple-900/40 rounded-xl p-4 border border-pink-500/30 hover:border-pink-500/50 transition-colors"
             >
-              管理
-            </button>
-          </div>
-        </div>
-
-        {/* v2.1: Category Settings Entry */}
-        <div className="bg-gradient-to-r from-cyan-900/40 to-blue-900/40 rounded-3xl p-6 mb-6 border border-cyan-500/30">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="text-3xl">🏷️</div>
-              <div>
-                <h2 className="text-white font-bold">分類管理</h2>
-                <div className="text-gray-400 text-sm">自訂消費分類</div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="text-2xl">📱</div>
+                  <div className="text-left">
+                    <div className="text-white font-bold">訂閱管理</div>
+                    <div className="text-gray-400 text-sm">管理每月固定支出</div>
+                  </div>
+                </div>
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
               </div>
-            </div>
+            </button>
+
+            {/* 分類管理 */}
             <button
               onClick={() => setShowCategoryModal(true)}
-              className="bg-cyan-500 hover:bg-cyan-400 text-gray-900 font-bold py-2 px-4 rounded-xl text-sm"
+              className="w-full bg-gradient-to-r from-cyan-900/40 to-blue-900/40 rounded-xl p-4 border border-cyan-500/30 hover:border-cyan-500/50 transition-colors"
             >
-              管理
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="text-2xl">🏷️</div>
+                  <div className="text-left">
+                    <div className="text-white font-bold">分類管理</div>
+                    <div className="text-gray-400 text-sm">自訂消費分類</div>
+                  </div>
+                </div>
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
             </button>
           </div>
-        </div>
+        </Collapsible>
+
+        {/* Phase 3: 遊戲化設定 - Collapsible（預設收合） */}
+        <Collapsible
+          title="遊戲化設定"
+          icon="🎮"
+          defaultOpen={false}
+          storageKey="timebar_settings_gamification_open"
+        >
+          <div className="space-y-4">
+            {/* 積分與道具顯示 */}
+            <div className="bg-gray-800/50 rounded-xl p-4 mb-4">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-400 text-sm">積分餘額</span>
+                <span className="text-amber-400 font-bold">⏳ {PointsSystem.getBalance()}</span>
+              </div>
+              {InventorySystem.getItemCount('guilt_free_pass') > 0 && (
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-gray-400 text-sm">道具</span>
+                  <span className="text-emerald-400 font-bold">🎫 ×{InventorySystem.getItemCount('guilt_free_pass')}</span>
+                </div>
+              )}
+            </div>
+
+            {/* 每日挑戰設定 */}
+            <button
+              onClick={() => setShowChallengeModal(true)}
+              className="w-full bg-gradient-to-r from-emerald-900/40 to-teal-900/40 rounded-xl p-4 border border-emerald-500/30 hover:border-emerald-500/50 transition-colors"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="text-2xl">🎯</div>
+                  <div className="text-left">
+                    <div className="text-white font-bold">每日挑戰設定</div>
+                    <div className="text-gray-400 text-sm">新增或編輯自定義挑戰</div>
+                  </div>
+                </div>
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </button>
+
+            {/* 時間沙商店 */}
+            <button
+              onClick={() => setShowShopModal(true)}
+              className="w-full bg-gradient-to-r from-amber-900/40 to-orange-900/40 rounded-xl p-4 border border-amber-500/30 hover:border-amber-500/50 transition-colors"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="text-2xl">🛒</div>
+                  <div className="text-left">
+                    <div className="text-white font-bold">時間沙商店</div>
+                    <div className="text-gray-400 text-sm">用積分兌換道具</div>
+                  </div>
+                </div>
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </button>
+          </div>
+        </Collapsible>
 
         {/* Cloud Status */}
         <div className="bg-gray-800/50 rounded-3xl p-6 mb-6">

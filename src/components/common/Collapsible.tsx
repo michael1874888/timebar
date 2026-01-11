@@ -5,7 +5,7 @@
  * 用於設定頁的分區折疊功能，讓用戶可以收起不常用的設定
  */
 
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 
 export interface CollapsibleProps {
   /** 標題 */
@@ -18,6 +18,8 @@ export interface CollapsibleProps {
   defaultOpen?: boolean;
   /** 自定義樣式類名 */
   className?: string;
+  /** localStorage 鍵名，用於持久化展開狀態（可選） */
+  storageKey?: string;
 }
 
 export function Collapsible({
@@ -26,8 +28,23 @@ export function Collapsible({
   children,
   defaultOpen = true,
   className = '',
+  storageKey,
 }: CollapsibleProps) {
-  const [isOpen, setIsOpen] = useState<boolean>(defaultOpen);
+  // 從 localStorage 讀取狀態，若無則使用 defaultOpen
+  const [isOpen, setIsOpen] = useState<boolean>(() => {
+    if (storageKey) {
+      const saved = localStorage.getItem(storageKey);
+      return saved !== null ? saved === 'true' : defaultOpen;
+    }
+    return defaultOpen;
+  });
+
+  // 儲存狀態到 localStorage
+  useEffect(() => {
+    if (storageKey) {
+      localStorage.setItem(storageKey, String(isOpen));
+    }
+  }, [isOpen, storageKey]);
 
   return (
     <div className={`bg-gray-800/50 rounded-3xl overflow-hidden mb-6 ${className}`}>

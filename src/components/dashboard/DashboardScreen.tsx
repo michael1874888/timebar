@@ -8,11 +8,8 @@ import { UnlockNotification } from '../common/UnlockNotification';
 import { useToast } from '../common/Toast';
 import { PointsParticles } from '../common/PointsParticles';
 import { RetirementProgress } from '@ui/features/retirement-progress';
-import { MilestoneDisplay } from './MilestoneDisplay';
 import { DailyChallenge, ChallengeCompleteResult } from './DailyChallenge';
-import { DailyBudgetWidget } from './DailyBudgetWidget';
 import { QuickActionsBar, QuickAction } from './QuickActionsBar';
-import { CatchUpPlan } from './CatchUpPlan';
 import { CategorySelectModal } from './CategorySelectModal';
 import { Modal } from '@/components/common/Modal';
 import { QuickActionsSettingsPage } from '@/components/settings/QuickActionsSettingsPage';
@@ -339,24 +336,6 @@ export function DashboardScreen({
         </div>
       </div>
 
-      {/* 里程碑顯示 */}
-      <div className="px-4 py-2">
-        <div className="max-w-lg mx-auto">
-          <MilestoneDisplay totalSavedHours={totalSavedHours} />
-        </div>
-      </div>
-
-      {/* v2.1: 今日額度進度條 */}
-      <div className="px-4 py-2">
-        <div className="max-w-lg mx-auto">
-          <DailyBudgetWidget
-            records={records}
-            userData={userData}
-            onOpenSettings={onOpenSettings}
-          />
-        </div>
-      </div>
-
       {/* 每日挑戰 - Phase 1: 根據解鎖狀態顯示 */}
       {unlockStatus.challenges && (
         <div className="px-4 py-2">
@@ -369,11 +348,18 @@ export function DashboardScreen({
         </div>
       )}
 
-      {/* 追趕計劃（落後時顯示） */}
+      {/* Phase 3: 追趕提示（簡化版） - 落後時顯示 */}
       {gpsResult.isBehind && (
         <div className="px-4 py-2">
           <div className="max-w-lg mx-auto">
-            <CatchUpPlan userData={userData} gpsResult={gpsResult} />
+            <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-4">
+              <div className="flex items-center gap-2 text-center">
+                <span className="text-lg">⏰</span>
+                <p className="text-orange-400 text-sm flex-1">
+                  目前會延後 {Math.abs((estimatedAge - retireAge)).toFixed(1)} 年退休，建議每月多存 ${Math.round(salary * 0.1).toLocaleString()}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       )}
