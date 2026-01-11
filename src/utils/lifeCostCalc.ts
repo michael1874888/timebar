@@ -19,15 +19,15 @@ export const getVividComparison = (
   isSpend: boolean
 ): VividComparison => {
   const absHours = Math.abs(workingHours);
-  
+
   // 計算工作時間單位
-  const workTime = formatWorkTimeDetailed(absHours);
-  
+  const workTime = formatWorkTimeDetailed(absHours, isSpend);
+
   const salaryEquivalent = getSalaryEquivalent(absHours, salary);
-  
+
   // 生活化比喻
   const lifeEquivalent = getLifeEquivalent(absHours, isSpend);
-  
+
   return {
     workTime: workTime.short,
     workTimeDetail: workTime.detail,
@@ -44,36 +44,38 @@ interface WorkTimeFormat {
 /**
  * 格式化工作時間（詳細版）
  */
-const formatWorkTimeDetailed = (hours: number): WorkTimeFormat => {
+const formatWorkTimeDetailed = (hours: number, isSpend: boolean): WorkTimeFormat => {
+  const verb = isSpend ? '需要工作' : '贏回了';
+
   if (hours < 1) {
     const mins = Math.round(hours * 60);
-    return { short: `${mins} 分鐘`, detail: `需要工作 ${mins} 分鐘` };
+    return { short: `${mins} 分鐘`, detail: `${verb} ${mins} 分鐘` };
   }
   if (hours < WORKING_HOURS_PER_DAY) {
     const h = Math.round(hours * 10) / 10;
-    return { short: `${h} 小時`, detail: `需要工作 ${h} 小時` };
+    return { short: `${h} 小時`, detail: `${verb} ${h} 小時` };
   }
   if (hours < WORKING_HOURS_PER_DAY * WORKING_DAYS_PER_MONTH) {
     const days = Math.round(hours / WORKING_HOURS_PER_DAY * 10) / 10;
     if (days < 7) {
-      return { short: `${days} 天`, detail: `需要工作 ${days} 天` };
+      return { short: `${days} 天`, detail: `${verb} ${days} 天` };
     }
     const weeks = Math.round(days / 5 * 10) / 10;
-    return { short: `${weeks} 週`, detail: `需要工作約 ${weeks} 週` };
+    return { short: `${weeks} 週`, detail: `${verb}約 ${weeks} 週` };
   }
   if (hours < WORKING_HOURS_PER_YEAR) {
     const months = Math.round(hours / (WORKING_HOURS_PER_DAY * WORKING_DAYS_PER_MONTH) * 10) / 10;
-    return { short: `${months} 個月`, detail: `需要工作 ${months} 個月` };
+    return { short: `${months} 個月`, detail: `${verb} ${months} 個月` };
   }
   const years = Math.round(hours / WORKING_HOURS_PER_YEAR * 10) / 10;
   if (years < 2) {
     const months = Math.round((hours % WORKING_HOURS_PER_YEAR) / (WORKING_HOURS_PER_DAY * WORKING_DAYS_PER_MONTH));
     if (months > 0) {
-      return { short: `1 年 ${months} 個月`, detail: `需要工作 1 年 ${months} 個月` };
+      return { short: `1 年 ${months} 個月`, detail: `${verb} 1 年 ${months} 個月` };
     }
-    return { short: `1 年`, detail: `需要工作整整 1 年` };
+    return { short: `1 年`, detail: isSpend ? `需要工作整整 1 年` : `贏回整整 1 年` };
   }
-  return { short: `${years} 年`, detail: `需要工作 ${years} 年` };
+  return { short: `${years} 年`, detail: `${verb} ${years} 年` };
 };
 
 /**

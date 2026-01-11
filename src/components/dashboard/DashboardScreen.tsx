@@ -37,6 +37,7 @@ export function DashboardScreen({
 }: DashboardScreenProps) {
   const [amount, setAmount] = useState<number>(0);
   const [isRecurring, setIsRecurring] = useState<boolean>(false);
+  const [recordMode, setRecordMode] = useState<'spend' | 'save'>('spend'); // 記錄模式：消費或儲蓄
   const [showCelebration, setShowCelebration] = useState<boolean>(false);
   const [showConfetti, setShowConfetti] = useState<boolean>(false);
   const [showAwareness, setShowAwareness] = useState<boolean>(false);
@@ -115,14 +116,16 @@ export function DashboardScreen({
   // 生動比喻
   const vividComparison = useMemo(() => {
     if (amount <= 0) return null;
-    return getVividComparison(timeCost, salary, true);
-  }, [timeCost, salary, amount]);
+    const isSpend = recordMode === 'spend';
+    return getVividComparison(timeCost, salary, isSpend);
+  }, [timeCost, salary, amount, recordMode]);
 
   // 退休影響
   const retirementImpact = useMemo(() => {
     if (amount <= 0) return '';
-    return formatRetirementImpact(timeCost, true);
-  }, [timeCost, amount]);
+    const isSpend = recordMode === 'spend';
+    return formatRetirementImpact(timeCost, isSpend);
+  }, [timeCost, amount, recordMode]);
 
   // 處理「我買了」- Phase 1: 打開分類選擇 Modal
   const handleBought = useCallback(() => {
@@ -172,7 +175,7 @@ export function DashboardScreen({
 
     // 記住待確認的金額
     setPendingSave({ amount, timeCost });
-    
+
     // 觸發慶祝
     setLastSavedAmount(amount);
     setLastSavedHours(timeCost);
@@ -185,6 +188,39 @@ export function DashboardScreen({
     // 3秒後關閉彩帶
     setTimeout(() => setShowConfetti(false), 3000);
   }, [amount, timeCost]);
+
+  // 處理「存下來了」- 儲蓄模式專用
+  const handleSaved = useCallback(async () => {
+    if (amount <= 0 || isSaving) return;
+
+    setIsSaving(true);
+    try {
+      const record: RecordType = {
+        id: Date.now().toString(),
+        type: 'save',
+        amount: amount,
+        isRecurring: isRecurring,
+        timeCost: timeCost,
+        category: '主動儲蓄',
+        note: isRecurring ? '每月固定儲蓄' : '一次性儲蓄',
+        timestamp: new Date().toISOString(),
+        date: new Date().toISOString().split('T')[0],
+      };
+
+      await onAddRecord(record);
+
+      // 觸發慶祝效果
+      setLastSavedAmount(amount);
+      setLastSavedHours(timeCost);
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 3000);
+
+      showToast('已記錄儲蓄 💰', 'success');
+      setAmount(0);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [amount, isRecurring, timeCost, isSaving, onAddRecord, showToast]);
 
   // v2.0: 確認儲蓄
   const handleConfirmSave = useCallback(async () => {
@@ -353,11 +389,26 @@ export function DashboardScreen({
         <div className="px-4 py-2">
           <div className="max-w-lg mx-auto">
             <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-4">
-              <div className="flex items-center gap-2 text-center">
+              <div className="flex items-center gap-3">
                 <span className="text-lg">⏰</span>
-                <p className="text-orange-400 text-sm flex-1">
-                  目前會延後 {Math.abs((estimatedAge - retireAge)).toFixed(1)} 年退休，建議每月多存 ${Math.round(salary * 0.1).toLocaleString()}
-                </p>
+                <div className="flex-1">
+                  <p className="text-orange-400 text-sm mb-2">
+                    目前會延後 {Math.abs((estimatedAge - retireAge)).toFixed(1)} 年退休，建議每月多存 ${Math.round(salary * 0.1).toLocaleString()}
+                  </p>
+                  <button
+                    onClick={() => {
+                      const suggestedAmount = Math.round(salary * 0.1);
+                      setAmount(suggestedAmount);
+                      setRecordMode('save');
+                      setIsRecurring(true);
+                      // 滾動到金額輸入區
+                      window.scrollTo({ top: 300, behavior: 'smooth' });
+                    }}
+                    className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-gray-900 text-xs font-medium rounded-lg transition-all"
+                  >
+                    💰 立即記錄儲蓄
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -403,8 +454,34 @@ export function DashboardScreen({
       <div className="px-4 py-4">
         <div className="max-w-lg mx-auto">
           <div className="bg-gray-800/60 backdrop-blur-sm rounded-3xl p-6 border border-gray-700/50">
+            {/* 模式切換 Toggle */}
+            <div className="flex gap-2 mb-6">
+              <button
+                onClick={() => setRecordMode('spend')}
+                className={`flex-1 py-3 rounded-xl font-medium text-sm transition-all duration-200 ${
+                  recordMode === 'spend'
+                    ? 'bg-orange-500 text-gray-900 shadow-lg shadow-orange-500/25'
+                    : 'bg-gray-700/50 text-gray-400 hover:bg-gray-700'
+                }`}
+              >
+                💸 記錄消費
+              </button>
+              <button
+                onClick={() => setRecordMode('save')}
+                className={`flex-1 py-3 rounded-xl font-medium text-sm transition-all duration-200 ${
+                  recordMode === 'save'
+                    ? 'bg-emerald-500 text-gray-900 shadow-lg shadow-emerald-500/25'
+                    : 'bg-gray-700/50 text-gray-400 hover:bg-gray-700'
+                }`}
+              >
+                💰 記錄儲蓄
+              </button>
+            </div>
+
             <div className="text-center mb-4">
-              <div className="text-gray-400 text-sm mb-2">這筆花費會影響你的自由多久？</div>
+              <div className="text-gray-400 text-sm mb-2">
+                {recordMode === 'spend' ? '這筆花費會影響你的自由多久？' : '這筆儲蓄讓你贏回多少自由？'}
+              </div>
               <div className="text-5xl font-black text-white tabular-nums">
                 {formatCurrencyFull(amount)}
               </div>
@@ -465,30 +542,38 @@ export function DashboardScreen({
       {amount > 0 && vividComparison && (
         <div className="px-4 py-2 animate-fade-in">
           <div className="max-w-lg mx-auto">
-            <div className="bg-gradient-to-br from-orange-900/40 to-red-900/40 backdrop-blur-sm rounded-3xl p-6 border border-orange-500/30">
+            <div className={`backdrop-blur-sm rounded-3xl p-6 border ${
+              recordMode === 'spend'
+                ? 'bg-gradient-to-br from-orange-900/40 to-red-900/40 border-orange-500/30'
+                : 'bg-gradient-to-br from-emerald-900/40 to-teal-900/40 border-emerald-500/30'
+            }`}>
               <div className="text-center">
-                {/* 工作時間成本 */}
+                {/* 工作時間成本 / 贏回的自由時間 */}
                 <div className="mb-4">
-                  <div className="text-orange-300 text-sm mb-1">⏰ 工作時間成本</div>
-                  <div className="text-3xl font-black text-orange-400">
+                  <div className={`text-sm mb-1 ${recordMode === 'spend' ? 'text-orange-300' : 'text-emerald-300'}`}>
+                    {recordMode === 'spend' ? '⏰ 工作時間成本' : '⏰ 贏回的自由時間'}
+                  </div>
+                  <div className={`text-3xl font-black ${recordMode === 'spend' ? 'text-orange-400' : 'text-emerald-400'}`}>
                     {vividComparison.workTime}
                   </div>
                   <div className="text-gray-400 text-sm">{vividComparison.workTimeDetail}</div>
                 </div>
 
                 {/* 分隔線 */}
-                <div className="border-t border-orange-500/20 my-4"></div>
+                <div className={`border-t my-4 ${recordMode === 'spend' ? 'border-orange-500/20' : 'border-emerald-500/20'}`}></div>
 
                 {/* 退休影響 */}
                 <div className="mb-4">
-                  <div className="text-red-300 text-sm mb-1">📅 退休影響</div>
-                  <div className="text-2xl font-bold text-red-400">
+                  <div className={`text-sm mb-1 ${recordMode === 'spend' ? 'text-red-300' : 'text-emerald-300'}`}>
+                    📅 退休影響
+                  </div>
+                  <div className={`text-2xl font-bold ${recordMode === 'spend' ? 'text-red-400' : 'text-emerald-400'}`}>
                     {retirementImpact}
                   </div>
                 </div>
 
                 {/* 分隔線 */}
-                <div className="border-t border-orange-500/20 my-4"></div>
+                <div className={`border-t my-4 ${recordMode === 'spend' ? 'border-orange-500/20' : 'border-emerald-500/20'}`}></div>
 
                 {/* 生動比喻 */}
                 <div className="bg-gray-900/50 rounded-xl p-3">
@@ -498,11 +583,18 @@ export function DashboardScreen({
                   </div>
                 </div>
 
-                {/* 每月固定警告 */}
+                {/* 每月固定提示 */}
                 {isRecurring && (
-                  <div className="mt-4 bg-red-500/10 border border-red-500/30 rounded-xl p-3">
-                    <div className="text-red-400 text-sm">
-                      ⚠️ 每月訂閱的複利威力驚人！長期累積更可怕
+                  <div className={`mt-4 rounded-xl p-3 ${
+                    recordMode === 'spend'
+                      ? 'bg-red-500/10 border border-red-500/30'
+                      : 'bg-emerald-500/10 border border-emerald-500/30'
+                  }`}>
+                    <div className={`text-sm ${recordMode === 'spend' ? 'text-red-400' : 'text-emerald-400'}`}>
+                      {recordMode === 'spend'
+                        ? '⚠️ 每月訂閱的複利威力驚人！長期累積更可怕'
+                        : '✨ 每月固定儲蓄的複利威力驚人！長期累積更強大'
+                      }
                     </div>
                   </div>
                 )}
@@ -515,29 +607,44 @@ export function DashboardScreen({
       {/* 決策按鈕區 */}
       <div className="px-4 py-4 pb-24">
         <div className="max-w-lg mx-auto">
-          <div className="grid grid-cols-2 gap-4">
-            {/* 我買了 */}
-            <button
-              onClick={handleBought}
-              disabled={amount <= 0 || isSaving}
-              className="py-4 rounded-2xl font-bold text-lg transition-all duration-300 active:scale-95 disabled:opacity-30 bg-gray-700 hover:bg-gray-600 text-gray-300"
-            >
-              {isSaving ? '記錄中...' : '我買了 💸'}
-            </button>
+          {recordMode === 'spend' ? (
+            // 消費模式：兩個按鈕
+            <div className="grid grid-cols-2 gap-4">
+              {/* 我買了 */}
+              <button
+                onClick={handleBought}
+                disabled={amount <= 0 || isSaving}
+                className="py-4 rounded-2xl font-bold text-lg transition-all duration-300 active:scale-95 disabled:opacity-30 bg-gray-700 hover:bg-gray-600 text-gray-300"
+              >
+                {isSaving ? '記錄中...' : '我買了 💸'}
+              </button>
 
-            {/* 我不買了 */}
+              {/* 我不買了 */}
+              <button
+                onClick={handleSkipped}
+                disabled={amount <= 0}
+                className="py-4 rounded-2xl font-bold text-lg transition-all duration-300 active:scale-95 disabled:opacity-30 bg-emerald-500 hover:bg-emerald-400 text-gray-900 shadow-lg shadow-emerald-500/25"
+              >
+                我不買了 💪
+              </button>
+            </div>
+          ) : (
+            // 儲蓄模式：單一按鈕
             <button
-              onClick={handleSkipped}
-              disabled={amount <= 0}
-              className="py-4 rounded-2xl font-bold text-lg transition-all duration-300 active:scale-95 disabled:opacity-30 bg-emerald-500 hover:bg-emerald-400 text-gray-900 shadow-lg shadow-emerald-500/25"
+              onClick={handleSaved}
+              disabled={amount <= 0 || isSaving}
+              className="w-full py-4 rounded-2xl font-bold text-lg transition-all duration-300 active:scale-95 disabled:opacity-30 bg-emerald-500 hover:bg-emerald-400 text-gray-900 shadow-lg shadow-emerald-500/25"
             >
-              我不買了 💪
+              {isSaving ? '記錄中...' : '存下來了 💰'}
             </button>
-          </div>
+          )}
 
           {amount <= 0 && (
             <div className="text-center mt-4 text-gray-500 text-sm">
-              👆 輸入金額來看看這個東西值多少生命
+              {recordMode === 'spend'
+                ? '👆 輸入金額來看看這個東西值多少生命'
+                : '👆 輸入金額來記錄這筆儲蓄'
+              }
             </div>
           )}
         </div>
