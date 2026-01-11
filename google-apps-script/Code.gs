@@ -1,7 +1,8 @@
 /**
- * TimeBar - Google Apps Script Backend v2.3
- * 
+ * TimeBar - Google Apps Script Backend v3.2
+ *
  * ⚠️ 重要：請先設定下方的 SPREADSHEET_ID！
+ * v3.2 更新：新增 createdAt 欄位以支援漸進式揭露系統
  * v2.3 更新：新增積分系統欄位
  */
 
@@ -40,13 +41,13 @@ function getOrCreateSheet(name) {
       sheet.setColumnWidth(7, 200);
       sheet.setColumnWidth(8, 180);
     } else if (name === SHEET_NAMES.USER_DATA) {
-      // 使用者資料：v2.2 擴充設置欄位
-      sheet.getRange(1, 1, 1, 16).setValues([[
+      // 使用者資料：v3.2 新增 createdAt 欄位（17 欄）
+      sheet.getRange(1, 1, 1, 17).setValues([[
         '年齡', '月薪', '目標退休年齡', '目前存款', '每月儲蓄', '目標退休金', '通膨率(%)', '投資報酬率(%)', '更新時間',
         '積分餘額', '道具庫存(JSON)', '自定義挑戰(JSON)',
-        '自訂分類(JSON)', '隱藏分類(JSON)', '刪除挑戰(JSON)', '預算設定(JSON)'
+        '自訂分類(JSON)', '隱藏分類(JSON)', '刪除挑戰(JSON)', '預算設定(JSON)', '建立時間'
       ]]);
-      sheet.getRange(1, 1, 1, 16).setFontWeight('bold').setBackground('#10b981').setFontColor('white');
+      sheet.getRange(1, 1, 1, 17).setFontWeight('bold').setBackground('#10b981').setFontColor('white');
       sheet.setFrozenRows(1);
     } else if (name === SHEET_NAMES.QUICK_ACTIONS) {
       // 快速記帳按鈕
@@ -209,15 +210,15 @@ function saveUserData(userData) {
   const sheet = getOrCreateSheet(SHEET_NAMES.USER_DATA);
   const timestamp = Utilities.formatDate(new Date(), 'Asia/Taipei', 'yyyy-MM-dd HH:mm:ss');
 
-  // 確保標題列是 v2.2 格式（16 欄）
-  const headers = sheet.getRange(1, 1, 1, 16).getValues()[0];
-  if (headers[12] !== '自訂分類(JSON)') {
-    sheet.getRange(1, 1, 1, 16).setValues([[
+  // 確保標題列是 v3.2 格式（17 欄）
+  const headers = sheet.getRange(1, 1, 1, 17).getValues()[0];
+  if (headers[16] !== '建立時間') {
+    sheet.getRange(1, 1, 1, 17).setValues([[
       '年齡', '月薪', '目標退休年齡', '目前存款', '每月儲蓄', '目標退休金', '通膨率(%)', '投資報酬率(%)', '更新時間',
       '積分餘額', '道具庫存(JSON)', '自定義挑戰(JSON)',
-      '自訂分類(JSON)', '隱藏分類(JSON)', '刪除挑戰(JSON)', '預算設定(JSON)'
+      '自訂分類(JSON)', '隱藏分類(JSON)', '刪除挑戰(JSON)', '預算設定(JSON)', '建立時間'
     ]]);
-    sheet.getRange(1, 1, 1, 16).setFontWeight('bold').setBackground('#10b981').setFontColor('white');
+    sheet.getRange(1, 1, 1, 17).setFontWeight('bold').setBackground('#10b981').setFontColor('white');
   }
 
   // 清除舊資料
@@ -242,6 +243,9 @@ function saveUserData(userData) {
   const deletedDefaultChallenges = userData.deletedDefaultChallenges ? JSON.stringify(userData.deletedDefaultChallenges) : '[]';
   const budgetSettings = userData.budgetSettings ? JSON.stringify(userData.budgetSettings) : '{"method":"auto"}';
 
+  // v3.2: createdAt 欄位（漸進式揭露系統需要）
+  const createdAt = userData.createdAt || new Date().toISOString();
+
   sheet.appendRow([
     userData.age,
     userData.salary,
@@ -258,7 +262,8 @@ function saveUserData(userData) {
     customCategories,
     hiddenCategories,
     deletedDefaultChallenges,
-    budgetSettings
+    budgetSettings,
+    createdAt
   ]);
 
   // 格式化
@@ -310,7 +315,9 @@ function getUserData() {
       customCategories: parseJSON(row[12], []),
       hiddenCategories: parseJSON(row[13], []),
       deletedDefaultChallenges: parseJSON(row[14], []),
-      budgetSettings: parseJSON(row[15], { method: 'auto' })
+      budgetSettings: parseJSON(row[15], { method: 'auto' }),
+      // v3.2: createdAt 欄位（漸進式揭露系統需要）
+      createdAt: row[16] || undefined
     }
   };
 }
@@ -537,28 +544,88 @@ function upgradeToV21() {
 function checkVersion() {
   try {
     const ss = getSpreadsheet();
-    const sheet = ss.getSheetByName(SHEET_NAMES.RECORDS);
-    
-    if (!sheet) {
-      Logger.log('消費紀錄工作表不存在');
-      return;
-    }
-    
-    const headers = sheet.getRange(1, 1, 1, 14).getValues()[0];
-    const columnCount = headers.filter(h => h !== '').length;
-    
+    const recordsSheet = ss.getSheetByName(SHEET_NAMES.RECORDS);
+    const userSheet = ss.getSheetByName(SHEET_NAMES.USER_DATA);
+
     Logger.log('=== 版本檢查 ===');
-    Logger.log('標題列欄位數：' + columnCount);
-    Logger.log('標題列內容：' + headers.join(', '));
-    
-    if (columnCount >= 14 && headers[10] === '訂閱狀態') {
-      Logger.log('✅ 版本：v2.1（完整支援訂閱管理）');
-    } else if (columnCount >= 10) {
-      Logger.log('⚠️ 版本：v2.0（需要執行 upgradeToV21() 來支援訂閱管理）');
+
+    // 檢查消費紀錄工作表
+    if (!recordsSheet) {
+      Logger.log('❌ 消費紀錄工作表不存在');
     } else {
-      Logger.log('❌ 版本：未知（結構不完整）');
+      const recordsHeaders = recordsSheet.getRange(1, 1, 1, 14).getValues()[0];
+      const recordsColumnCount = recordsHeaders.filter(h => h !== '').length;
+      Logger.log('消費紀錄標題列欄位數：' + recordsColumnCount);
+
+      if (recordsColumnCount >= 14 && recordsHeaders[10] === '訂閱狀態') {
+        Logger.log('✅ 消費紀錄：v2.1+（支援訂閱管理）');
+      } else if (recordsColumnCount >= 10) {
+        Logger.log('⚠️ 消費紀錄：v2.0（需要執行 upgradeToV21()）');
+      } else {
+        Logger.log('❌ 消費紀錄：版本未知');
+      }
+    }
+
+    // 檢查使用者資料工作表
+    if (!userSheet) {
+      Logger.log('❌ 使用者資料工作表不存在');
+    } else {
+      const userHeaders = userSheet.getRange(1, 1, 1, 17).getValues()[0];
+      const userColumnCount = userHeaders.filter(h => h !== '').length;
+      Logger.log('使用者資料標題列欄位數：' + userColumnCount);
+
+      if (userColumnCount >= 17 && userHeaders[16] === '建立時間') {
+        Logger.log('✅ 使用者資料：v3.2（支援漸進式揭露）');
+      } else if (userColumnCount >= 16) {
+        Logger.log('⚠️ 使用者資料：v2.2（需要執行 upgradeToV32()）');
+      } else {
+        Logger.log('❌ 使用者資料：版本未知');
+      }
     }
   } catch (error) {
     Logger.log('❌ 檢查失敗：' + error.toString());
+  }
+}
+
+/**
+ * 升級使用者資料工作表至 v3.2（17 欄）
+ * ⚠️ 請手動執行此函數一次以更新現有試算表
+ */
+function upgradeToV32() {
+  try {
+    const ss = getSpreadsheet();
+    const sheet = ss.getSheetByName(SHEET_NAMES.USER_DATA);
+
+    if (!sheet) {
+      Logger.log('❌ 找不到使用者資料工作表');
+      return { success: false, message: '找不到使用者資料工作表' };
+    }
+
+    // 檢查當前標題列
+    const currentHeaders = sheet.getRange(1, 1, 1, 17).getValues()[0];
+
+    // 如果第 17 欄不是「建立時間」，則添加新標題
+    if (currentHeaders[16] !== '建立時間') {
+      // 設定新的標題列（擴充到 17 欄）
+      sheet.getRange(1, 17, 1, 1).setValue('建立時間');
+      sheet.getRange(1, 17, 1, 1).setFontWeight('bold').setBackground('#10b981').setFontColor('white');
+
+      // 如果已有使用者資料，為舊資料補上 createdAt（使用當前時間）
+      const lastRow = sheet.getLastRow();
+      if (lastRow > 1) {
+        const now = new Date().toISOString();
+        sheet.getRange(2, 17, lastRow - 1, 1).setValue(now);
+        Logger.log('✅ 為 ' + (lastRow - 1) + ' 筆使用者資料補上 createdAt');
+      }
+
+      Logger.log('✅ 已升級使用者資料工作表至 v3.2（新增 createdAt 欄位）');
+      return { success: true, message: '已升級至 v3.2' };
+    } else {
+      Logger.log('ℹ️ 工作表已是 v3.2 格式，無需升級');
+      return { success: true, message: '已是最新版本' };
+    }
+  } catch (error) {
+    Logger.log('❌ 升級失敗：' + error.toString());
+    return { success: false, message: error.toString() };
   }
 }
