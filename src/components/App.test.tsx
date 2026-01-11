@@ -60,61 +60,17 @@ vi.mock('./dashboard/DashboardScreen', () => ({
     userData,
     records,
     onAddRecord,
-    onOpenTracker,
     onOpenHistory,
     onOpenSettings,
   }: {
     userData: UserData
     records: RecordType[]
     onAddRecord: (record: RecordType) => void
-    onOpenTracker: () => void
     onOpenHistory: () => void
     onOpenSettings: () => void
   }) => (
     <div data-testid="dashboard-screen">
       <h1>Dashboard Screen</h1>
-      <div>Age: {userData.age}</div>
-      <div>Records: {records.length}</div>
-      <button
-        onClick={() =>
-          onAddRecord({
-            id: `record-${Date.now()}`,
-            type: 'spend',
-            amount: 1000,
-            isRecurring: false,
-            timeCost: 2,
-            category: 'food',
-            note: 'Test',
-            timestamp: new Date().toISOString(),
-            date: new Date().toISOString().split('T')[0],
-          })
-        }
-      >
-        Add Record
-      </button>
-      <button onClick={onOpenTracker}>Open Tracker</button>
-      <button onClick={onOpenHistory}>Open History</button>
-      <button onClick={onOpenSettings}>Open Settings</button>
-    </div>
-  ),
-}))
-
-vi.mock('./tracker/MainTracker', () => ({
-  MainTracker: ({
-    userData,
-    records,
-    onAddRecord,
-    onOpenHistory,
-    onOpenSettings,
-  }: {
-    userData: UserData
-    records: RecordType[]
-    onAddRecord: (record: RecordType) => void
-    onOpenHistory: () => void
-    onOpenSettings: () => void
-  }) => (
-    <div data-testid="main-tracker">
-      <h1>Main Tracker</h1>
       <div>Age: {userData.age}</div>
       <div>Records: {records.length}</div>
       <button

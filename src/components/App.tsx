@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { OnboardingScreen } from './onboarding/OnboardingScreen';
 import { DashboardScreen } from './dashboard/DashboardScreen';
-// Phase 1: MainTracker 已合併到 DashboardScreen
-// import { MainTracker } from './tracker/MainTracker';
 import { HistoryPage } from './history/HistoryPage';
 import { SettingsPage } from './settings/SettingsPage';
 // Phase 2: 以下組件改用 Modal 顯示，不再需要 import

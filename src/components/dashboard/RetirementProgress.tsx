@@ -33,10 +33,11 @@ export function RetirementProgress({
 
   // 計算進度條位置百分比
   const progressPositions = useMemo(() => {
-    // 使用當前年齡到目標年齡+10年作為範圍
+    // 動態調整範圍以適應極端情況
     const rangeStart = currentAge;
-    const rangeEnd = targetAge + 10;
-    const totalRange = rangeEnd - rangeStart;
+    // 確保範圍能涵蓋 estimatedAge，即使它遠大於或小於 targetAge
+    const rangeEnd = Math.max(targetAge + 10, estimatedAge + 5, currentAge + 10);
+    const totalRange = Math.max(1, rangeEnd - rangeStart); // 避免除以零
 
     // 計算目標年齡位置（百分比）
     const targetPosition = ((targetAge - rangeStart) / totalRange) * 100;
