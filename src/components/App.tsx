@@ -242,6 +242,7 @@ export default function App() {
             monthlySalary: userData.salary,
             targetRetireAge: userData.retireAge,
           }}
+          fullUserData={userData}
           records={records.map(r => ({
             type: r.type === 'spend' ? 'spend' : 'save',
             amount: r.amount,
@@ -249,12 +250,18 @@ export default function App() {
             isRecurring: r.isRecurring || false,
           }))}
           onAddRecord={(record) => {
-            // 轉換為完整 RecordType
-            // 根據類型設定預設分類
-            const category = record.type === 'save' ? '主動儲蓄' : '一般消費';
-            const note = record.type === 'save'
+            // 如果已經是完整的 RecordType (有 id 和 timestamp)，直接使用
+            if ('id' in record && 'timestamp' in record) {
+              handleAddRecord(record as RecordType);
+              return;
+            }
+
+            // 否則轉換為完整 RecordType
+            // 根據類型設定預設分類（如果沒有提供）
+            const category = record.category || (record.type === 'save' ? '主動儲蓄' : '一般消費');
+            const note = record.note || (record.type === 'save'
               ? (record.isRecurring ? '每月固定儲蓄' : '一次性儲蓄')
-              : '';
+              : '');
 
             handleAddRecord({
               id: Date.now().toString(),

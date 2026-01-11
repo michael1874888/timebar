@@ -96,6 +96,43 @@ vi.mock('./dashboard/DashboardScreen', () => ({
   ),
 }))
 
+// v4.0: Mock HomePage (新版首頁)
+vi.mock('@ui/pages/HomePage', () => ({
+  HomePage: ({
+    userData,
+    records,
+    onAddRecord,
+    onHistoryClick,
+    onSettingsClick,
+  }: {
+    userData: { age: number; monthlySalary: number; targetRetireAge: number }
+    records: { type: 'save' | 'spend'; amount: number; timeCost: number; isRecurring: boolean }[]
+    onAddRecord?: (record: { type: 'save' | 'spend'; amount: number; timeCost: number; isRecurring: boolean }) => void
+    onHistoryClick?: () => void
+    onSettingsClick?: () => void
+  }) => (
+    <div data-testid="dashboard-screen">
+      <h1>Dashboard Screen</h1>
+      <div>Age: {userData.age}</div>
+      <div>Records: {records.length}</div>
+      <button
+        onClick={() =>
+          onAddRecord?.({
+            type: 'spend',
+            amount: 1000,
+            timeCost: 2,
+            isRecurring: false,
+          })
+        }
+      >
+        Add Record
+      </button>
+      <button onClick={onHistoryClick}>Open History</button>
+      <button onClick={onSettingsClick}>Open Settings</button>
+    </div>
+  ),
+}))
+
 vi.mock('./history/HistoryPage', () => ({
   HistoryPage: ({
     records,
