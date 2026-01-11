@@ -1,22 +1,29 @@
 /**
  * 退休進度條組件樣式
+ * 使用 CSS Variables 和 Glassmorphism 效果
  */
 
 .retirement-progress {
-  padding: 1rem;
-  border-radius: 0.75rem;
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-xl);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all var(--duration-slow) var(--ease-out);
   position: relative;
+  /* Glassmorphism */
+  background: var(--color-bg-overlay);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-md);
 }
 
 .retirement-progress:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
 }
 
 .retirement-progress:focus {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
@@ -29,15 +36,15 @@
 }
 
 .retirement-progress__title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #18181b;
+  font-size: var(--font-base);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
 }
 
 .retirement-progress__hint {
-  font-size: 0.75rem;
-  color: #71717a;
-  animation: fadeIn 0.3s ease;
+  font-size: var(--font-xs);
+  color: var(--color-text-muted);
+  animation: fadeIn var(--duration-slow) var(--ease-out);
 }
 
 /* Progress Bar Container */
@@ -111,8 +118,8 @@
   left: 0;
   right: 0;
   height: 12px;
-  background: #e4e4e7;
-  border-radius: 6px;
+  background: var(--color-border);
+  border-radius: var(--radius-full);
   transform: translateY(-50%);
 }
 
@@ -121,9 +128,15 @@
   top: 50%;
   left: 0;
   height: 12px;
-  border-radius: 6px;
+  border-radius: var(--radius-full);
   transform: translateY(-50%);
-  transition: width 0.5s ease;
+  transition: width var(--duration-slower) var(--ease-out);
+  animation: progressFill 0.8s var(--ease-out);
+  box-shadow: 0 0 12px var(--color-primary-glow);
+}
+
+@keyframes progressFill {
+  from { width: 0; }
 }
 
 /* 標記點 */
@@ -134,19 +147,30 @@
   height: 16px;
   border-radius: 50%;
   transform: translate(-50%, -50%);
-  border: 3px solid #fff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  border: 3px solid var(--color-bg-elevated);
+  box-shadow: var(--shadow-md);
   z-index: 2;
+  transition: transform var(--duration-normal) var(--ease-spring);
+}
+
+.retirement-progress__marker:hover {
+  transform: translate(-50%, -50%) scale(1.15);
 }
 
 .retirement-progress__marker--target {
-  background: #3b82f6;
+  background: var(--color-info);
 }
 
 .retirement-progress__marker--estimated {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   z-index: 3;
+  animation: pulse 2s var(--ease-in-out) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: var(--shadow-md), 0 0 0 0 var(--color-primary-glow); }
+  50% { box-shadow: var(--shadow-md), 0 0 0 8px transparent; }
 }
 
 /* Badge */

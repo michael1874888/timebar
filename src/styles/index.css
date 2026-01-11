@@ -2,6 +2,125 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================
+   TimeBar Design System - CSS Variables
+   ============================================ */
+
+:root {
+  /* === 主色 (Emerald) === */
+  --color-primary: #10b981;
+  --color-primary-hover: #059669;
+  --color-primary-active: #047857;
+  --color-primary-light: #34d399;
+  --color-primary-glow: rgba(16, 185, 129, 0.3);
+
+  /* === 語義化顏色 === */
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-info: #3b82f6;
+
+  /* === 狀態顏色 (GPS 進度條) === */
+  --color-ahead: #10b981;
+  --color-ahead-light: #34d399;
+  --color-ahead-bg: #d1fae5;
+  
+  --color-ontrack: #3b82f6;
+  --color-ontrack-light: #60a5fa;
+  --color-ontrack-bg: #dbeafe;
+  
+  --color-behind: #f97316;
+  --color-behind-light: #fb923c;
+  --color-behind-bg: #ffedd5;
+
+  /* === 背景層級 (Light Mode) === */
+  --color-bg-base: #f8fafc;
+  --color-bg-elevated: #ffffff;
+  --color-bg-overlay: rgba(255, 255, 255, 0.85);
+  --color-bg-muted: #f1f5f9;
+
+  /* === 文字顏色 === */
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #94a3b8;
+  --color-text-inverse: #ffffff;
+
+  /* === 邊框 === */
+  --color-border: #e2e8f0;
+  --color-border-hover: #cbd5e1;
+  --color-border-focus: var(--color-primary);
+
+  /* === 間距系統 === */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+
+  /* === 字體大小 === */
+  --font-xs: 0.75rem;
+  --font-sm: 0.875rem;
+  --font-base: 1rem;
+  --font-lg: 1.125rem;
+  --font-xl: 1.25rem;
+  --font-2xl: 1.5rem;
+  --font-3xl: 1.875rem;
+  --font-4xl: 2.25rem;
+  --font-5xl: 3rem;
+
+  /* === 字重 === */
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+  --font-extrabold: 800;
+
+  /* === 圓角 === */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-full: 9999px;
+
+  /* === 陰影 === */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+  --shadow-glow: 0 0 20px var(--color-primary-glow);
+
+  /* === 動畫時間 === */
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
+  --duration-slower: 500ms;
+
+  /* === 動畫曲線 === */
+  --ease-out: cubic-bezier(0.33, 1, 0.68, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Dark Mode */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg-base: #0f172a;
+    --color-bg-elevated: #1e293b;
+    --color-bg-overlay: rgba(30, 41, 59, 0.9);
+    --color-bg-muted: #1e293b;
+
+    --color-text-primary: #f1f5f9;
+    --color-text-secondary: #94a3b8;
+    --color-text-muted: #64748b;
+
+    --color-border: #334155;
+    --color-border-hover: #475569;
+
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+  }
+}
+
 /* 全域樣式 */
 * {
   -webkit-tap-highlight-color: transparent;
@@ -10,11 +129,13 @@
 
 body {
   font-family: 'Inter', 'Noto Sans TC', system-ui, sans-serif;
-  background: #111827;
+  background: var(--color-bg-base);
+  color: var(--color-text-primary);
   margin: 0;
   padding: 0;
   min-height: 100vh;
   overflow-x: hidden;
+  transition: background var(--duration-slow) ease, color var(--duration-slow) ease;
 }
 
 /* Slider 自訂樣式 */
@@ -22,8 +143,8 @@ body {
   -webkit-appearance: none;
   appearance: none;
   height: 8px;
-  border-radius: 9999px;
-  background: linear-gradient(to right, #374151, #4b5563);
+  border-radius: var(--radius-full);
+  background: linear-gradient(to right, var(--color-border), var(--color-border-hover));
   outline: none;
 }
 
@@ -33,10 +154,10 @@ body {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #10b981, #059669);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover));
   cursor: pointer;
-  box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
-  transition: transform 0.15s ease;
+  box-shadow: var(--shadow-glow);
+  transition: transform var(--duration-fast) var(--ease-out);
 }
 
 .slider::-webkit-slider-thumb:hover {
@@ -51,19 +172,19 @@ body {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #10b981, #059669);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover));
   cursor: pointer;
   border: none;
-  box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+  box-shadow: var(--shadow-glow);
 }
 
 .slider.orange::-webkit-slider-thumb {
-  background: linear-gradient(135deg, #f97316, #ea580c);
+  background: linear-gradient(135deg, var(--color-behind), var(--color-behind-light));
   box-shadow: 0 0 20px rgba(249, 115, 22, 0.4);
 }
 
 .slider.orange::-moz-range-thumb {
-  background: linear-gradient(135deg, #f97316, #ea580c);
+  background: linear-gradient(135deg, var(--color-behind), var(--color-behind-light));
   box-shadow: 0 0 20px rgba(249, 115, 22, 0.4);
 }
 

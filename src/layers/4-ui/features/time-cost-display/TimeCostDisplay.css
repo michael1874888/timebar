@@ -1,10 +1,11 @@
 /**
  * 時間成本顯示組件樣式
+ * 使用 CSS Variables
  */
 
 .time-cost-display {
   text-align: center;
-  padding: 1.5rem;
+  padding: var(--spacing-xl);
 }
 
 .time-cost-display--empty {
@@ -12,30 +13,30 @@
 }
 
 .time-cost-display--visible {
-  animation: countUp 0.5s ease forwards;
+  animation: countUp var(--duration-slower) var(--ease-out) forwards;
 }
 
 @keyframes countUp {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(10px) scale(0.95);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 
 /* 標題 */
 .time-cost-display__label {
-  font-size: 1rem;
-  color: #52525b;
-  margin-bottom: 0.75rem;
+  font-size: var(--font-base);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-md);
 }
 
 .time-cost-display__prompt {
-  font-size: 1.125rem;
-  color: #71717a;
+  font-size: var(--font-lg);
+  color: var(--color-text-muted);
   line-height: 1.5;
 }
 
@@ -44,22 +45,23 @@
   display: flex;
   align-items: baseline;
   justify-content: center;
-  gap: 0.5rem;
-  margin: 0.5rem 0;
+  gap: var(--spacing-sm);
+  margin: var(--spacing-sm) 0;
 }
 
 .time-cost-display__value {
-  font-size: 3rem;
-  font-weight: 800;
+  font-size: var(--font-5xl);
+  font-weight: var(--font-extrabold);
   line-height: 1;
-  letter-spacing: -0.05em;
-  transition: all 0.3s ease;
+  letter-spacing: -0.03em;
+  transition: all var(--duration-slow) var(--ease-out);
+  font-variant-numeric: tabular-nums;
 }
 
 .time-cost-display__unit {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #52525b;
+  font-size: var(--font-2xl);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-secondary);
 }
 
 /* 顏色 classes */
@@ -85,37 +87,43 @@
 
 /* 副標題 */
 .time-cost-display__subtitle {
-  font-size: 1.125rem;
-  color: #71717a;
-  margin-top: 0.25rem;
+  font-size: var(--font-lg);
+  color: var(--color-text-muted);
+  margin-top: var(--spacing-xs);
 }
 
 /* 額外說明 */
 .time-cost-display__details {
-  margin-top: 1rem;
+  margin-top: var(--spacing-lg);
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--spacing-sm);
 }
 
 .time-cost-display__comparison,
 .time-cost-display__impact {
-  font-size: 1rem;
-  color: #52525b;
-  background: #f4f4f5;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
+  font-size: var(--font-base);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
   display: inline-block;
   margin: 0 auto;
+  font-weight: var(--font-medium);
+  transition: transform var(--duration-normal) var(--ease-out);
+}
+
+.time-cost-display__comparison:hover,
+.time-cost-display__impact:hover {
+  transform: scale(1.02);
 }
 
 .time-cost-display__comparison {
-  background: #fef3c7;
+  background: var(--color-warning);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.1));
   color: #92400e;
 }
 
 .time-cost-display__impact {
-  background: #fee2e2;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.1));
   color: #991b1b;
 }
 
