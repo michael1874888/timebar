@@ -79,44 +79,44 @@ export function HistoryPage({ records, userData, onClose, onUpdateRecord, onDele
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800 pb-8">
-      <div className="sticky top-0 bg-gray-900/95 backdrop-blur border-b border-gray-800 z-10">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-slate-100 to-slate-50 pb-8">
+      <div className="sticky top-0 bg-white/80 backdrop-blur-md border-b border-slate-200 z-10 shadow-sm">
         <div className="max-w-lg mx-auto px-4 py-4 flex items-center">
-          <button onClick={onClose} className="text-gray-400 hover:text-white mr-4 p-1">
+          <button onClick={onClose} className="text-slate-500 hover:text-slate-900 mr-4 p-1 transition-colors">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <h1 className="text-xl font-bold text-white">歷史紀錄</h1>
+          <h1 className="text-xl font-bold text-slate-900">歷史紀錄</h1>
         </div>
       </div>
 
       <div className="max-w-lg mx-auto px-4 pt-4">
         {/* GPS Summary */}
-        <div className="bg-gradient-to-br from-gray-800/80 to-gray-800/40 rounded-3xl p-6 mb-6 border border-gray-700/50">
+        <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 mb-6 border border-slate-200 shadow-md">
           <div className="grid grid-cols-2 gap-6 mb-6">
             <div className="text-center">
-              <div className="text-3xl font-black text-emerald-400">{formatCurrency(totalSaved)}</div>
-              <div className="text-gray-500 text-sm">累積儲蓄</div>
+              <div className="text-3xl font-black text-emerald-600">{formatCurrency(totalSaved)}</div>
+              <div className="text-slate-500 text-sm">累積儲蓄</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-black text-orange-400">{formatCurrency(totalSpent)}</div>
-              <div className="text-gray-500 text-sm">累積花費</div>
+              <div className="text-3xl font-black text-orange-500">{formatCurrency(totalSpent)}</div>
+              <div className="text-slate-500 text-sm">累積花費</div>
             </div>
           </div>
 
-          <div className="h-px bg-gray-700 mb-6" />
+          <div className="h-px bg-slate-200 mb-6" />
 
           {/* GPS Timeline */}
           <div className="text-center mb-4">
-            <div className="text-gray-400 text-sm mb-3">退休 GPS</div>
+            <div className="text-slate-500 text-sm mb-3">退休 GPS</div>
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-gray-500 text-xs">🎯 目標</div>
-                <div className="text-white font-bold text-lg">{retireAge} 歲</div>
+                <div className="text-slate-500 text-xs">🎯 目標</div>
+                <div className="text-slate-900 font-bold text-lg">{retireAge} 歲</div>
               </div>
               <div className="flex-1 mx-4">
-                <div className="h-3 bg-gray-700 rounded-full overflow-hidden relative">
+                <div className="h-3 bg-slate-200 rounded-full overflow-hidden relative">
                   <div className={`h-full rounded-full transition-all ${
                     isOnTrack ? 'bg-gray-500' : isAhead ? 'bg-emerald-500' : 'bg-orange-500'
                   }`}
@@ -125,10 +125,10 @@ export function HistoryPage({ records, userData, onClose, onUpdateRecord, onDele
                 </div>
               </div>
               <div>
-                <div className={`text-xs ${isOnTrack ? 'text-gray-400' : isAhead ? 'text-emerald-400' : 'text-orange-400'}`}>
+                <div className={`text-xs ${isOnTrack ? 'text-slate-500' : isAhead ? 'text-emerald-600' : 'text-orange-500'}`}>
                   📍 預估
                 </div>
-                <div className={`font-bold text-lg ${isOnTrack ? 'text-white' : isAhead ? 'text-emerald-400' : 'text-orange-400'}`}>
+                <div className={`font-bold text-lg ${isOnTrack ? 'text-slate-900' : isAhead ? 'text-emerald-600' : 'text-orange-500'}`}>
                   {estimatedAge.toFixed(1)} 歲
                 </div>
               </div>
@@ -136,8 +136,8 @@ export function HistoryPage({ records, userData, onClose, onUpdateRecord, onDele
           </div>
 
           <div className={`text-center text-sm px-4 py-2 rounded-xl ${
-            isOnTrack ? 'bg-gray-700 text-gray-300' :
-            isAhead ? 'bg-emerald-500/20 text-emerald-400' : 'bg-orange-500/20 text-orange-400'
+            isOnTrack ? 'bg-slate-100 text-slate-700' :
+            isAhead ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700'
           }`}>
             {isOnTrack
               ? `✅ 完美！目前剛好符合計畫`
@@ -159,8 +159,8 @@ export function HistoryPage({ records, userData, onClose, onUpdateRecord, onDele
         {Object.keys(groupedRecords).length === 0 ? (
           <div className="text-center py-16">
             <div className="text-5xl mb-4">📝</div>
-            <div className="text-gray-400">還沒有任何紀錄</div>
-            <div className="text-gray-600 text-sm mt-1">開始記錄你的第一筆吧！</div>
+            <div className="text-slate-500">還沒有任何紀錄</div>
+            <div className="text-slate-400 text-sm mt-1">開始記錄你的第一筆吧！</div>
           </div>
         ) : (
           Object.entries(groupedRecords).map(([monthKey, monthRecords]) => {
@@ -171,13 +171,13 @@ export function HistoryPage({ records, userData, onClose, onUpdateRecord, onDele
             return (
               <div key={monthKey} className="mb-6">
                 <div data-testid="month-summary" className="flex justify-between items-center mb-3 px-1">
-                  <div className="text-gray-400 font-medium">{year}年{month}月</div>
+                  <div className="text-slate-600 font-medium">{year}年{month}月</div>
                   <div className="flex gap-3 text-sm">
-                    <span className="text-emerald-400">+{formatCurrency(monthSaved)}</span>
-                    <span className="text-orange-400">-{formatCurrency(monthSpent)}</span>
+                    <span className="text-emerald-600">+{formatCurrency(monthSaved)}</span>
+                    <span className="text-orange-500">-{formatCurrency(monthSpent)}</span>
                   </div>
                 </div>
-                <div className="bg-gray-800/40 rounded-2xl overflow-hidden">
+                <div className="bg-white/80 backdrop-blur-sm rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
                   {monthRecords.map((record, i) => {
                     const time = formatTime(record.timeCost);
                     const date = new Date(record.timestamp);
@@ -185,11 +185,11 @@ export function HistoryPage({ records, userData, onClose, onUpdateRecord, onDele
                     const categoryDisplay = getCategoryDisplay(record.category);
                     
                     return (
-                      <div key={record.id} className={`flex items-center gap-3 p-4 ${i > 0 ? 'border-t border-gray-700/50' : ''} ${isExempted ? 'opacity-60' : ''}`}>
+                      <div key={record.id} className={`flex items-center gap-3 p-4 ${i > 0 ? 'border-t border-slate-200' : ''} ${isExempted ? 'opacity-60' : ''}`}>
                         {/* 分類圖示 */}
                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${
-                          isExempted ? 'bg-gray-600/20' :
-                          record.type === 'save' ? 'bg-emerald-500/20' : 'bg-orange-500/20'
+                          isExempted ? 'bg-slate-200' :
+                          record.type === 'save' ? 'bg-emerald-100' : 'bg-orange-100'
                         }`}>
                           {isExempted ? '🎫' : categoryDisplay.icon}
                         </div>
@@ -198,25 +198,25 @@ export function HistoryPage({ records, userData, onClose, onUpdateRecord, onDele
                         <div className="flex-1 min-w-0">
                           <div className="flex justify-between items-start">
                             <div className="min-w-0">
-                              <div className={`font-medium truncate ${isExempted ? 'text-gray-400 line-through' : 'text-white'}`}>
+                              <div className={`font-medium truncate ${isExempted ? 'text-slate-400 line-through' : 'text-slate-900'}`}>
                                 {record.note || categoryDisplay.name || (record.type === 'save' ? '儲蓄' : '消費')}
-                                {isExempted && <span className="text-amber-400 text-xs ml-1 no-underline">(已豁免)</span>}
+                                {isExempted && <span className="text-amber-500 text-xs ml-1 no-underline">(已豁免)</span>}
                               </div>
-                              <div className="text-gray-500 text-xs">
+                              <div className="text-slate-400 text-xs">
                                 {record.isRecurring ? '🔄 ' : ''}{date.getMonth() + 1}/{date.getDate()}
-                                {record.recurringStatus === 'ended' && <span className="text-gray-600 ml-1">(已終止)</span>}
+                                {record.recurringStatus === 'ended' && <span className="text-slate-500 ml-1">(已終止)</span>}
                               </div>
                             </div>
                             <div className="text-right ml-2">
                               <div className={`font-bold ${
-                                isExempted ? 'text-gray-500' :
-                                record.type === 'save' ? 'text-emerald-400' : 'text-orange-400'
+                                isExempted ? 'text-slate-400' :
+                                record.type === 'save' ? 'text-emerald-600' : 'text-orange-500'
                               }`}>
                                 {record.type === 'save' ? '+' : '-'}{formatCurrency(record.amount)}
                               </div>
                               <div className={`text-xs ${
-                                isExempted ? 'text-gray-600' :
-                                record.type === 'save' ? 'text-emerald-500/70' : 'text-orange-500/70'
+                                isExempted ? 'text-slate-400' :
+                                record.type === 'save' ? 'text-emerald-500/70' : 'text-orange-400/70'
                               }`}>
                                 {isExempted ? '不計入統計' : `${record.type === 'save' ? '+' : '-'}${time.value}${time.unit}`}
                               </div>
@@ -230,7 +230,7 @@ export function HistoryPage({ records, userData, onClose, onUpdateRecord, onDele
                             {onUpdateRecord && (
                               <button
                                 onClick={() => setEditingRecord(record)}
-                                className="w-8 h-8 rounded-lg bg-gray-700/50 hover:bg-gray-600 flex items-center justify-center transition-colors"
+                                className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
                                 title="編輯"
                               >
                                 <span className="text-sm">✏️</span>
@@ -239,7 +239,7 @@ export function HistoryPage({ records, userData, onClose, onUpdateRecord, onDele
                             {onDeleteRecord && (
                               <button
                                 onClick={() => setDeletingRecord(record)}
-                                className="w-8 h-8 rounded-lg bg-gray-700/50 hover:bg-red-500/30 flex items-center justify-center transition-colors"
+                                className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-red-100 flex items-center justify-center transition-colors"
                                 title="刪除"
                               >
                                 <span className="text-sm">🗑️</span>
@@ -277,10 +277,10 @@ export function HistoryPage({ records, userData, onClose, onUpdateRecord, onDele
 
       {/* Loading overlay */}
       {isLoading && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]">
-          <div className="bg-gray-800 rounded-xl px-6 py-4 flex items-center gap-3">
+        <div className="fixed inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center z-[60]">
+          <div className="bg-white rounded-xl px-6 py-4 flex items-center gap-3 shadow-lg border border-slate-200">
             <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-            <span className="text-white">處理中...</span>
+            <span className="text-slate-900">處理中...</span>
           </div>
         </div>
       )}

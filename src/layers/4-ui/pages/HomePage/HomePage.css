@@ -1,0 +1,155 @@
+/**
+ * 新版首頁樣式
+ * 使用 CSS Variables 實現統一配色
+ */
+
+.home-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  max-width: 600px;
+  margin: 0 auto;
+  background: var(--color-bg-base);
+}
+
+/* Header */
+.home-page__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md);
+  background: var(--color-bg-overlay);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.home-page__logo {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.home-page__logo-icon {
+  font-size: var(--font-2xl);
+}
+
+.home-page__logo-text {
+  font-size: var(--font-xl);
+  font-weight: var(--font-bold);
+  color: var(--color-text-primary);
+}
+
+.home-page__header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.home-page__points {
+  padding: var(--spacing-xs) var(--spacing-md);
+  background: var(--color-bg-muted);
+  border-radius: var(--radius-full);
+  font-size: var(--font-sm);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-secondary);
+  transition: all var(--duration-normal) var(--ease-out);
+}
+
+.home-page__points:hover {
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+}
+
+.home-page__settings-btn {
+  background: none;
+  border: none;
+  font-size: var(--font-xl);
+  cursor: pointer;
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-md);
+  transition: background var(--duration-normal) var(--ease-out);
+}
+
+.home-page__settings-btn:hover {
+  background: var(--color-bg-muted);
+}
+
+/* Main Content */
+.home-page__main {
+  flex: 1;
+  padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.home-page__section {
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--duration-normal) var(--ease-out);
+}
+
+.home-page__section:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* Question Section */
+.home-page__question {
+  padding: var(--spacing-lg);
+  text-align: center;
+  background: linear-gradient(135deg, var(--color-ahead-bg) 0%, #ecfdf5 100%);
+}
+
+.home-page__question h2 {
+  font-size: var(--font-xl);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Footer */
+.home-page__footer {
+  position: sticky;
+  bottom: 0;
+  background: var(--color-bg-overlay);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid var(--color-border);
+  padding: 0;
+}
+
+/* 響應式 */
+@media (min-width: 768px) {
+  .home-page {
+    padding: var(--spacing-md);
+  }
+
+  .home-page__header {
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .home-page__footer {
+    border-radius: var(--radius-lg);
+    margin-top: var(--spacing-md);
+  }
+
+  .home-page__question h2 {
+    font-size: var(--font-2xl);
+  }
+}
+
+/* Dark Mode - 問句區域 */
+@media (prefers-color-scheme: dark) {
+  .home-page__question {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+  }
+}
+

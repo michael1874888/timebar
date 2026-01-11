@@ -75,6 +75,9 @@ export interface UserData {
   hiddenCategories?: string[];         // 隱藏的分類ID
   deletedDefaultChallenges?: string[]; // 刪除的預設挑戰ID
   modifiedDefaultChallenges?: Record<string, ChallengeDefinition>; // 修改的預設挑戰
+
+  // Phase 1: 漸進式揭露功能
+  createdAt?: string;                  // 用戶完成 onboarding 的時間戳（ISO 8601格式）
 }
 
 // ==================== 記帳系統 ====================
@@ -145,7 +148,11 @@ export interface QuickAction {
 
 // ==================== 畫面路由 ====================
 
-export type Screen = 'loading' | 'onboarding' | 'dashboard' | 'tracker' | 'history' | 'settings' | 'shop' | 'challenge-settings' | 'subscription-manager' | 'category-settings' | 'budget-settings' | 'quick-actions-settings';
+// Phase 2: 簡化導航結構，從 11 個畫面減少到 5 個核心畫面
+// - 移除: 'shop', 'challenge-settings', 'subscription-manager', 'category-settings', 'budget-settings', 'quick-actions-settings', 'new-ui'
+// - 重命名: 'dashboard' → 'home'
+// - 這些功能將改用 Modal 顯示
+export type Screen = 'loading' | 'onboarding' | 'home' | 'history' | 'settings';
 
 export interface GPSResult {
   estimatedAge: number;

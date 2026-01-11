@@ -1,0 +1,324 @@
+/**
+ * 退休進度條組件樣式
+ * 使用 CSS Variables 和 Glassmorphism 效果
+ */
+
+.retirement-progress {
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-xl);
+  cursor: pointer;
+  transition: all var(--duration-slow) var(--ease-out);
+  position: relative;
+  /* Glassmorphism */
+  background: var(--color-bg-overlay);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-md);
+}
+
+.retirement-progress:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
+.retirement-progress:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Header */
+.retirement-progress__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.retirement-progress__title {
+  font-size: var(--font-base);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+}
+
+.retirement-progress__hint {
+  font-size: var(--font-xs);
+  color: var(--color-text-muted);
+  animation: fadeIn var(--duration-slow) var(--ease-out);
+}
+
+/* Progress Bar Container */
+.retirement-progress__bar-container {
+  position: relative;
+  padding: 0;
+}
+
+/* 上方標籤區 */
+.retirement-progress__labels-top {
+  position: relative;
+  height: 2rem;
+  margin-bottom: 0.25rem;
+}
+
+/* 下方標籤區 */
+.retirement-progress__labels-bottom {
+  position: relative;
+  height: 2rem;
+  margin-top: 0.25rem;
+}
+
+/* 標籤項目 */
+.retirement-progress__label-item {
+  position: absolute;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 標籤文字 */
+.retirement-progress__label-text {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  white-space: nowrap;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.retirement-progress__label-text--target {
+  color: #3b82f6;
+}
+
+.retirement-progress__label-text--estimated {
+  font-weight: 600;
+}
+
+/* 連接線 */
+.retirement-progress__label-line {
+  width: 2px;
+  height: 8px;
+  background: #d4d4d8;
+}
+
+.retirement-progress__label-line--bottom {
+  order: -1;
+}
+
+/* 進度條本體 */
+.retirement-progress__bar {
+  position: relative;
+  height: 12px;
+  width: 100%;
+}
+
+.retirement-progress__track {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 12px;
+  background: var(--color-border);
+  border-radius: var(--radius-full);
+  transform: translateY(-50%);
+}
+
+.retirement-progress__fill {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: 12px;
+  border-radius: var(--radius-full);
+  transform: translateY(-50%);
+  transition: width var(--duration-slower) var(--ease-out);
+  animation: progressFill 0.8s var(--ease-out);
+  box-shadow: 0 0 12px var(--color-primary-glow);
+}
+
+@keyframes progressFill {
+  from { width: 0; }
+}
+
+/* 標記點 */
+.retirement-progress__marker {
+  position: absolute;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  border: 3px solid var(--color-bg-elevated);
+  box-shadow: var(--shadow-md);
+  z-index: 2;
+  transition: transform var(--duration-normal) var(--ease-spring);
+}
+
+.retirement-progress__marker:hover {
+  transform: translate(-50%, -50%) scale(1.15);
+}
+
+.retirement-progress__marker--target {
+  background: var(--color-info);
+}
+
+.retirement-progress__marker--estimated {
+  width: 22px;
+  height: 22px;
+  z-index: 3;
+  animation: pulse 2s var(--ease-in-out) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: var(--shadow-md), 0 0 0 0 var(--color-primary-glow); }
+  50% { box-shadow: var(--shadow-md), 0 0 0 8px transparent; }
+}
+
+/* Badge */
+.retirement-progress__badge-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 0.75rem;
+}
+
+.retirement-progress__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #fff;
+}
+
+/* Detail Overlay */
+.retirement-progress__detail-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  animation: fadeIn 0.2s ease;
+}
+
+.retirement-progress__detail {
+  background: #fff;
+  border-radius: 1rem;
+  width: 90%;
+  max-width: 400px;
+  max-height: 80vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+}
+
+.retirement-progress__detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e4e4e7;
+}
+
+.retirement-progress__detail-header h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.retirement-progress__detail-close {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  color: #71717a;
+  cursor: pointer;
+  padding: 0.25rem;
+}
+
+.retirement-progress__detail-close:hover {
+  color: #18181b;
+}
+
+.retirement-progress__detail-content {
+  padding: 1.5rem;
+}
+
+.retirement-progress__detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  font-size: 0.9375rem;
+}
+
+.retirement-progress__detail-value {
+  font-weight: 600;
+}
+
+.retirement-progress__detail-row--highlight {
+  background: #fafafa;
+  margin: 0 -1.5rem;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+}
+
+.retirement-progress__detail-divider {
+  height: 1px;
+  background: #e4e4e7;
+  margin: 1rem 0;
+}
+
+.retirement-progress__detail-section h4 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #52525b;
+  margin-bottom: 0.5rem;
+}
+
+.retirement-progress__detail-summary {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: #f4f4f5;
+  border-radius: 0.5rem;
+  text-align: center;
+}
+
+.retirement-progress__detail-summary p {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+/* Utility Classes */
+.text-emerald-500 {
+  color: #10b981;
+}
+
+.text-orange-500 {
+  color: #f97316;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

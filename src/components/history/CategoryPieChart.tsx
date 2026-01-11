@@ -82,8 +82,8 @@ export function CategoryPieChart({ records, type = 'spend' }: CategoryPieChartPr
   // 空狀態
   if (chartData.length === 0) {
     return (
-      <div className="bg-gray-800/40 rounded-2xl p-4 text-center">
-        <div className="text-gray-500 text-sm">
+      <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 text-center border border-slate-200 shadow-sm">
+        <div className="text-slate-500 text-sm">
           {type === 'spend' ? '還沒有消費記錄' : '還沒有儲蓄記錄'}
         </div>
       </div>
@@ -105,15 +105,15 @@ export function CategoryPieChart({ records, type = 'spend' }: CategoryPieChartPr
       const data = payload[0].payload as CategoryData;
       const percent = ((data.value / total) * 100).toFixed(1);
       return (
-        <div className="bg-gray-900 border border-gray-700 rounded-lg p-3 shadow-lg">
-          <div className="text-white font-medium">{data.name}</div>
-          <div className="text-gray-400 text-sm">
+        <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-lg">
+          <div className="text-slate-900 font-medium">{data.name}</div>
+          <div className="text-slate-600 text-sm">
             金額: {formatCurrency(data.value)} ({percent}%)
           </div>
-          <div className="text-orange-400 text-sm">
+          <div className="text-orange-500 text-sm">
             時間成本: {formatHours(data.hours)}
           </div>
-          <div className="text-gray-500 text-xs">
+          <div className="text-slate-500 text-xs">
             {data.count} 筆記錄
           </div>
         </div>
@@ -123,13 +123,13 @@ export function CategoryPieChart({ records, type = 'spend' }: CategoryPieChartPr
   };
 
   return (
-    <div className="bg-gray-800/40 rounded-2xl p-4">
+    <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 border border-slate-200 shadow-sm">
       {/* 標題 */}
       <div className="flex justify-between items-center mb-3">
-        <div className="text-gray-400 text-sm">
+        <div className="text-slate-600 text-sm">
           {type === 'spend' ? '📊 支出分布' : '📊 儲蓄分布'}
         </div>
-        <div className={`text-sm font-medium ${type === 'spend' ? 'text-orange-400' : 'text-emerald-400'}`}>
+        <div className={`text-sm font-medium ${type === 'spend' ? 'text-orange-500' : 'text-emerald-500'}`}>
           總計 {formatCurrency(total)}
         </div>
       </div>
@@ -183,7 +183,7 @@ export function CategoryPieChart({ records, type = 'spend' }: CategoryPieChartPr
               className="w-2 h-2 rounded-full" 
               style={{ backgroundColor: COLORS[index % COLORS.length] }}
             />
-            <span className="text-gray-400 text-xs">{entry.name}</span>
+            <span className="text-slate-600 text-xs">{entry.name}</span>
           </div>
         ))}
         {chartData.length > 6 && (
@@ -192,10 +192,10 @@ export function CategoryPieChart({ records, type = 'spend' }: CategoryPieChartPr
       </div>
 
       {/* 時間總計 */}
-      <div className="mt-3 pt-3 border-t border-gray-700/50 text-center">
-        <div className="text-gray-500 text-xs">
+      <div className="mt-3 pt-3 border-t border-slate-200 text-center">
+        <div className="text-slate-500 text-xs">
           {type === 'spend' ? '總共消耗' : '總共贏回'}
-          <span className={`ml-1 font-medium ${type === 'spend' ? 'text-orange-400' : 'text-emerald-400'}`}>
+          <span className={`ml-1 font-medium ${type === 'spend' ? 'text-orange-500' : 'text-emerald-500'}`}>
             {formatHours(totalHours)}
           </span>
           的工作時間

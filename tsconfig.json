@@ -24,7 +24,12 @@
     /* Paths */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@data/*": ["./src/layers/1-data/*"],
+      "@domain/*": ["./src/layers/2-domain/*"],
+      "@business/*": ["./src/layers/3-business/*"],
+      "@ui/*": ["./src/layers/4-ui/*"],
+      "@tokens": ["./src/layers/4-ui/design-system/tokens"]
     }
   },
   "include": ["src"],

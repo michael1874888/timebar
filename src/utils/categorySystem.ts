@@ -203,17 +203,8 @@ let defaultService: CategoryService | null = null
 
 function getDefaultService(): CategoryService {
   if (!defaultService) {
-    // 創建一個 wrapper 適配器來使用靜態的 SettingsSystem
-    const settingsAdapter: SettingsService = {
-      getAllSettings: () => SettingsSystemImport.getAllSettings(),
-      saveSetting: (key: any, value: any) => SettingsSystemImport.saveSetting(key, value),
-      getSetting: (key: any, defaultValue?: any) => SettingsSystemImport.getSetting(key, defaultValue),
-      syncFromCloud: () => SettingsSystemImport.syncFromCloud(),
-      forceSyncToCloud: () => SettingsSystemImport.forceSyncToCloud(),
-      getStorageKey: (key: any) => SettingsSystemImport.getStorageKey(key),
-    } as any
-
-    defaultService = new CategoryService(settingsAdapter)
+    // 直接使用 SettingsSystem 作為 SettingsService（duck typing）
+    defaultService = new CategoryService(SettingsSystemImport as unknown as SettingsService)
   }
   return defaultService
 }

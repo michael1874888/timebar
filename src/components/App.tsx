@@ -1,21 +1,24 @@
 import { useState, useEffect } from 'react';
 import { OnboardingScreen } from './onboarding/OnboardingScreen';
-import { DashboardScreen } from './dashboard/DashboardScreen';
-import { MainTracker } from './tracker/MainTracker';
+// v4.0: 使用新版 HomePage 替代 DashboardScreen
+import { HomePage } from '@ui/pages/HomePage';
+// 保留舊版以便回退（暫時註釋）
+// import { DashboardScreen } from './dashboard/DashboardScreen';
 import { HistoryPage } from './history/HistoryPage';
 import { SettingsPage } from './settings/SettingsPage';
-import { ShopPage } from './shop/ShopPage';
-import { ChallengeSettingsPage } from './settings/ChallengeSettingsPage';
-import { CategorySettingsPage } from './settings/CategorySettingsPage';
-import { QuickActionsSettingsPage } from './settings/QuickActionsSettingsPage';
-import { SubscriptionManagerPage } from './subscription/SubscriptionManagerPage';
+// Phase 2: 以下組件改用 Modal 顯示，不再需要 import
+// import { ShopPage } from './shop/ShopPage';
+// import { ChallengeSettingsPage } from './settings/ChallengeSettingsPage';
+// import { CategorySettingsPage } from './settings/CategorySettingsPage';
+// import { QuickActionsSettingsPage } from './settings/QuickActionsSettingsPage';
+// import { SubscriptionManagerPage } from './subscription/SubscriptionManagerPage';
+// import { NewUIPreview } from '@/NewUIPreview'; // Phase 0: 暫時註釋，等待 @ui/pages 組件實現
 import { GoogleSheetsAPI } from '@/services/googleSheets';
 import { Storage } from '@/utils/storage';
 import { CONSTANTS } from '@/utils/financeCalc';
 import { PointsSystem } from '@/utils/pointsSystem';
 import { InventorySystem } from '@/utils/inventorySystem';
 import { RecordSystem } from '@/utils/recordSystem';
-import { QuickActionsUtils } from './dashboard/QuickActionsBar';
 import { SettingsSystem } from '@/utils/settingsSystem';
 import { UserData, Record as RecordType, Screen } from '@/types';
 
@@ -56,7 +59,7 @@ export default function App() {
               PointsSystem.setBalance(cloudUserData.pointsBalance);
             }
             if (cloudUserData.inventory) {
-              InventorySystem.save(cloudUserData.inventory);
+              InventorySystem.setInventory(cloudUserData.inventory);
             }
 
             // v2.1: 同步快速記帳按鈕
@@ -84,7 +87,7 @@ export default function App() {
             Storage.save('records', cloudRecords);
 
             setSyncStatus('synced');
-            setScreen('dashboard');
+            setScreen('home');
             return;
           } else if (cloudData.success && !cloudData.userData) {
             // 雲端成功回應但沒有資料 = 資料已被其他裝置清除
@@ -112,7 +115,7 @@ export default function App() {
         };
         setUserData(userData);
         setRecords(localRecords || []);
-        setScreen('dashboard');
+        setScreen('home');
       } else {
         // 都沒資料，進入 onboarding
         setScreen('onboarding');
@@ -143,7 +146,7 @@ export default function App() {
     }
   }, [records, userData]);
 
-  const handleOnboardingComplete = (data: UserData): void => { setUserData(data); setScreen('dashboard'); };
+  const handleOnboardingComplete = (data: UserData): void => { setUserData(data); setScreen('home'); };
 
   const handleAddRecord = async (record: RecordType): Promise<void> => {
     // v2.1: 新增 createdAt 時間戳記
@@ -232,44 +235,72 @@ export default function App() {
   return (
     <div>
       {screen === 'onboarding' && <OnboardingScreen onComplete={handleOnboardingComplete} />}
-      {screen === 'dashboard' && userData && (
-        <DashboardScreen
-          userData={userData}
-          records={records}
-          onAddRecord={handleAddRecord}
-          onOpenTracker={() => setScreen('tracker')}
-          onOpenHistory={() => setScreen('history')}
-          onOpenSettings={() => setScreen('settings')}
-          onOpenQuickActionsSettings={() => setScreen('quick-actions-settings')}
+      {screen === 'home' && userData && (
+        <HomePage
+          userData={{
+            age: userData.age,
+            monthlySalary: userData.salary,
+            targetRetireAge: userData.retireAge,
+          }}
+          fullUserData={userData}
+          records={records.map(r => ({
+            type: r.type === 'spend' ? 'spend' : 'save',
+            amount: r.amount,
+            timeCost: r.timeCost || 0,
+            isRecurring: r.isRecurring || false,
+          }))}
+          onAddRecord={(record) => {
+            // 如果已經是完整的 RecordType (有 id 和 timestamp)，直接使用
+            if ('id' in record && 'timestamp' in record) {
+              handleAddRecord(record as RecordType);
+              return;
+            }
+
+            // 否則轉換為完整 RecordType
+            // 根據類型設定預設分類（如果沒有提供）
+            const category = record.category || (record.type === 'save' ? '主動儲蓄' : '一般消費');
+            const note = record.note || (record.type === 'save'
+              ? (record.isRecurring ? '每月固定儲蓄' : '一次性儲蓄')
+              : '');
+
+            handleAddRecord({
+              id: Date.now().toString(),
+              timestamp: new Date().toISOString(),
+              date: new Date().toISOString().split('T')[0],
+              type: record.type,
+              amount: record.amount,
+              timeCost: record.timeCost,
+              category,
+              note,
+              isRecurring: record.isRecurring,
+            } as RecordType);
+          }}
+          points={userData.pointsBalance || 0}
+          onSettingsClick={() => setScreen('settings')}
+          onHistoryClick={() => setScreen('history')}
         />
       )}
-      {screen === 'tracker' && userData && (
-        <MainTracker
-          userData={userData}
-          records={records}
-          onAddRecord={handleAddRecord}
-          onOpenHome={() => setScreen('dashboard')}
-          onOpenHistory={() => setScreen('history')}
-          onOpenSettings={() => setScreen('settings')}
-        />
-      )}
+      {/* Phase 1: tracker 路由已移除，功能已整合到 DashboardScreen */}
       {screen === 'history' && userData && (
         <HistoryPage
           records={records}
           userData={userData}
-          onClose={() => setScreen('dashboard')}
+          onClose={() => setScreen('home')}
           onUpdateRecord={handleUpdateRecord}
           onDeleteRecord={handleDeleteRecord}
         />
       )}
       {screen === 'settings' && userData && (
-        <SettingsPage userData={userData} onUpdateUser={handleUpdateUser}
-          onClose={() => setScreen('dashboard')} onReset={handleReset}
-          onOpenShop={() => setScreen('shop')}
-          onOpenChallengeSettings={() => setScreen('challenge-settings')}
-          onOpenSubscriptionManager={() => setScreen('subscription-manager')}
-          onOpenCategorySettings={() => setScreen('category-settings')} />
+        <SettingsPage
+          userData={userData}
+          onUpdateUser={handleUpdateUser}
+          onClose={() => setScreen('home')}
+          onReset={handleReset}
+          records={records}
+          onUpdateRecords={setRecords}
+        />
       )}
+      {/* Phase 2: 以下路由已移除，改用 Modal 顯示
       {screen === 'shop' && userData && (
         <ShopPage onClose={() => setScreen('settings')} />
       )}
@@ -287,8 +318,22 @@ export default function App() {
         <CategorySettingsPage onClose={() => setScreen('settings')} />
       )}
       {screen === 'quick-actions-settings' && (
-        <QuickActionsSettingsPage onBack={() => setScreen('dashboard')} />
+        <QuickActionsSettingsPage onBack={() => setScreen('home')} />
       )}
+      */}
+      {/* Phase 0: 暫時註釋，等待 @ui/pages 組件實現
+      {screen === 'new-ui' && userData && (
+        <div className="relative">
+          <button
+            onClick={() => setScreen('home')}
+            className="fixed top-4 left-4 z-50 bg-white/90 backdrop-blur px-4 py-2 rounded-lg shadow-lg text-gray-700 hover:bg-white transition"
+          >
+            ← 返回舊版
+          </button>
+          <NewUIPreview />
+        </div>
+      )}
+      */}
     </div>
   );
 }

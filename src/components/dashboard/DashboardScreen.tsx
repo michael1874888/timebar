@@ -1,19 +1,21 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { FinanceCalc, GPSCalc, Formatters } from '@/utils/financeCalc';
 import { getVividComparison, formatRetirementImpact } from '@/utils/lifeCostCalc';
 import { Confetti } from '../Confetti';
 import { AwarenessParticles } from '../AwarenessParticles';
 import { CelebrationModal } from '../common/CelebrationModal';
+import { UnlockNotification } from '../common/UnlockNotification';
 import { useToast } from '../common/Toast';
 import { PointsParticles } from '../common/PointsParticles';
-import { LifeBattery } from './LifeBattery';
-import { MilestoneDisplay } from './MilestoneDisplay';
+import { RetirementProgress } from '@ui/features/retirement-progress';
 import { DailyChallenge, ChallengeCompleteResult } from './DailyChallenge';
-import { DailyBudgetWidget } from './DailyBudgetWidget';
 import { QuickActionsBar, QuickAction } from './QuickActionsBar';
-import { CatchUpPlan } from './CatchUpPlan';
+import { CategorySelectModal } from './CategorySelectModal';
+import { Modal } from '@/components/common/Modal';
+import { QuickActionsSettingsPage } from '@/components/settings/QuickActionsSettingsPage';
 import { UserData, Record as RecordType, ChallengeDefinition } from '@/types';
 import { PointsSystem } from '@/utils/pointsSystem';
+import { getUnlockStatus, checkNewUnlock, getFeatureUnlockMessage } from '@/utils/progressiveDisclosure';
 
 const { formatCurrencyFull, formatCurrency } = Formatters;
 
@@ -21,23 +23,21 @@ interface DashboardScreenProps {
   userData: UserData;
   records: RecordType[];
   onAddRecord: (record: RecordType) => void;
-  onOpenTracker: () => void;
   onOpenHistory: () => void;
   onOpenSettings: () => void;
-  onOpenQuickActionsSettings?: () => void;  // v2.1: 快速記帳設定
+  // Phase 2: onOpenQuickActionsSettings 已移除，改用 Modal
 }
 
 export function DashboardScreen({
   userData,
   records,
   onAddRecord,
-  onOpenTracker,
   onOpenHistory,
   onOpenSettings,
-  onOpenQuickActionsSettings
 }: DashboardScreenProps) {
   const [amount, setAmount] = useState<number>(0);
   const [isRecurring, setIsRecurring] = useState<boolean>(false);
+  const [recordMode, setRecordMode] = useState<'spend' | 'save'>('spend'); // 記錄模式：消費或儲蓄
   const [showCelebration, setShowCelebration] = useState<boolean>(false);
   const [showConfetti, setShowConfetti] = useState<boolean>(false);
   const [showAwareness, setShowAwareness] = useState<boolean>(false);
@@ -58,11 +58,26 @@ export function DashboardScreen({
   // v2.1: 防止重複點擊
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
+  // Phase 1: 分類選擇 Modal
+  const [showCategoryModal, setShowCategoryModal] = useState<boolean>(false);
+  const [pendingPurchase, setPendingPurchase] = useState<{ amount: number; isRecurring: boolean; timeCost: number } | null>(null);
+
+  // Phase 1: 漸進式揭露
+  const [showUnlockNotification, setShowUnlockNotification] = useState<boolean>(false);
+  const [unlockMessage, setUnlockMessage] = useState<{ title: string; description: string; icon: string } | null>(null);
+
+  // Phase 2: 快速記帳設定 Modal
+  const [showQuickActionsModal, setShowQuickActionsModal] = useState<boolean>(false);
+  const previousRecordCount = useRef<number>(records.length);
+
   const { salary, retireAge, inflationRate, roiRate, age } = userData;
 
   const yearsToRetire = useMemo(() => retireAge - age, [retireAge, age]);
   const hourlyRate = useMemo(() => FinanceCalc.hourlyRate(salary), [salary]);
   const realRate = useMemo(() => FinanceCalc.realRate(inflationRate, roiRate), [inflationRate, roiRate]);
+
+  // Phase 1: 計算功能解鎖狀態
+  const unlockStatus = useMemo(() => getUnlockStatus(userData, records), [userData, records]);
 
   // 載入積分
   useEffect(() => {
@@ -70,9 +85,27 @@ export function DashboardScreen({
     setPointsBalance(balance);
   }, []);
 
+  // Phase 1: 檢測功能解鎖
+  useEffect(() => {
+    const currentCount = records.length;
+    const previousCount = previousRecordCount.current;
+
+    // 檢查是否有新功能解鎖
+    const newUnlock = checkNewUnlock(previousCount, currentCount, userData);
+
+    if (newUnlock) {
+      const message = getFeatureUnlockMessage(newUnlock);
+      setUnlockMessage(message);
+      setShowUnlockNotification(true);
+    }
+
+    // 更新記錄數量
+    previousRecordCount.current = currentCount;
+  }, [records.length, userData]);
+
   // GPS 計算
   const gpsResult = useMemo(() => GPSCalc.calculateEstimatedAge(retireAge, records), [retireAge, records]);
-  const { estimatedAge, totalSavedHours } = gpsResult;
+  const { estimatedAge, totalSavedHours, totalSpentHours } = gpsResult;
 
   // 計算當前金額的時間成本
   const timeCost = useMemo(() => {
@@ -83,28 +116,40 @@ export function DashboardScreen({
   // 生動比喻
   const vividComparison = useMemo(() => {
     if (amount <= 0) return null;
-    return getVividComparison(timeCost, salary, true);
-  }, [timeCost, salary, amount]);
+    const isSpend = recordMode === 'spend';
+    return getVividComparison(timeCost, salary, isSpend);
+  }, [timeCost, salary, amount, recordMode]);
 
   // 退休影響
   const retirementImpact = useMemo(() => {
     if (amount <= 0) return '';
-    return formatRetirementImpact(timeCost, true);
-  }, [timeCost, amount]);
+    const isSpend = recordMode === 'spend';
+    return formatRetirementImpact(timeCost, isSpend);
+  }, [timeCost, amount, recordMode]);
 
-  // 處理「我買了」
-  const handleBought = useCallback(async () => {
+  // 處理「我買了」- Phase 1: 打開分類選擇 Modal
+  const handleBought = useCallback(() => {
     if (amount <= 0 || isSaving) return;
+
+    // 保存當前的購買信息
+    setPendingPurchase({ amount, isRecurring, timeCost });
+    // 打開分類選擇 Modal
+    setShowCategoryModal(true);
+  }, [amount, isRecurring, timeCost, isSaving]);
+
+  // Phase 1: 處理分類選擇完成
+  const handleCategorySelect = useCallback(async (categoryId: string) => {
+    if (!pendingPurchase || isSaving) return;
 
     setIsSaving(true);
     try {
       const record: RecordType = {
         id: Date.now().toString(),
         type: 'spend',
-        amount,
-        isRecurring,
-        timeCost,
-        category: '一般消費',
+        amount: pendingPurchase.amount,
+        isRecurring: pendingPurchase.isRecurring,
+        timeCost: pendingPurchase.timeCost,
+        category: categoryId,
         note: '',
         timestamp: new Date().toISOString(),
         date: new Date().toISOString().split('T')[0],
@@ -118,10 +163,11 @@ export function DashboardScreen({
 
       showToast('已記錄消費 📝', 'success');
       setAmount(0);
+      setPendingPurchase(null); // 清除待處理的購買信息
     } finally {
       setIsSaving(false);
     }
-  }, [amount, isRecurring, timeCost, onAddRecord, isSaving, showToast]);
+  }, [pendingPurchase, onAddRecord, isSaving, showToast]);
 
   // 處理「我不買了」- v2.0: 不自動記帳，改為詢問
   const handleSkipped = useCallback(() => {
@@ -129,7 +175,7 @@ export function DashboardScreen({
 
     // 記住待確認的金額
     setPendingSave({ amount, timeCost });
-    
+
     // 觸發慶祝
     setLastSavedAmount(amount);
     setLastSavedHours(timeCost);
@@ -142,6 +188,39 @@ export function DashboardScreen({
     // 3秒後關閉彩帶
     setTimeout(() => setShowConfetti(false), 3000);
   }, [amount, timeCost]);
+
+  // 處理「存下來了」- 儲蓄模式專用
+  const handleSaved = useCallback(async () => {
+    if (amount <= 0 || isSaving) return;
+
+    setIsSaving(true);
+    try {
+      const record: RecordType = {
+        id: Date.now().toString(),
+        type: 'save',
+        amount: amount,
+        isRecurring: isRecurring,
+        timeCost: timeCost,
+        category: '主動儲蓄',
+        note: isRecurring ? '每月固定儲蓄' : '一次性儲蓄',
+        timestamp: new Date().toISOString(),
+        date: new Date().toISOString().split('T')[0],
+      };
+
+      await onAddRecord(record);
+
+      // 觸發慶祝效果
+      setLastSavedAmount(amount);
+      setLastSavedHours(timeCost);
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 3000);
+
+      showToast('已記錄儲蓄 💰', 'success');
+      setAmount(0);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [amount, isRecurring, timeCost, isSaving, onAddRecord, showToast]);
 
   // v2.0: 確認儲蓄
   const handleConfirmSave = useCallback(async () => {
@@ -268,102 +347,141 @@ export function DashboardScreen({
                 </div>
               )}
             </div>
-            <button
-              onClick={onOpenSettings}
-              className="text-gray-400 hover:text-white p-2"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-            </button>
+            <div className="flex items-center gap-2">
+              {/* Phase 2: 新版 UI 預覽按鈕已移除 */}
+              <button
+                onClick={onOpenSettings}
+                className="text-gray-400 hover:text-white p-2"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </button>
+            </div>
           </div>
 
-          {/* 生命電池 */}
-          <LifeBattery
+          {/* 退休進度條 */}
+          <RetirementProgress
+            targetAge={retireAge}
+            estimatedAge={estimatedAge}
             currentAge={age}
-            retireAge={retireAge}
-            estimatedRetireAge={estimatedAge}
+            totalSavedHours={totalSavedHours}
+            totalSpentHours={totalSpentHours}
           />
         </div>
       </div>
 
-      {/* 里程碑顯示 */}
-      <div className="px-4 py-2">
-        <div className="max-w-lg mx-auto">
-          <MilestoneDisplay totalSavedHours={totalSavedHours} />
-        </div>
-      </div>
-
-      {/* v2.1: 今日額度進度條 */}
-      <div className="px-4 py-2">
-        <div className="max-w-lg mx-auto">
-          <DailyBudgetWidget
-            records={records}
-            userData={userData}
-            onOpenSettings={onOpenSettings}
-          />
-        </div>
-      </div>
-
-      {/* 每日挑戰 - v2.0: 傳遞積分和新的回調 */}
-      <div className="px-4 py-2">
-        <div className="max-w-lg mx-auto">
-          <DailyChallenge
-            totalPoints={pointsBalance}
-            onCompleteChallenge={handleChallengeComplete}
-          />
-        </div>
-      </div>
-
-      {/* 追趕計劃（落後時顯示） */}
-      {gpsResult.isBehind && (
+      {/* 每日挑戰 - Phase 1: 根據解鎖狀態顯示 */}
+      {unlockStatus.challenges && (
         <div className="px-4 py-2">
           <div className="max-w-lg mx-auto">
-            <CatchUpPlan userData={userData} gpsResult={gpsResult} />
+            <DailyChallenge
+              totalPoints={pointsBalance}
+              onCompleteChallenge={handleChallengeComplete}
+            />
           </div>
         </div>
       )}
 
-      {/* v2.1: 快速記帳按鈕列 */}
-      <div className="px-4 py-2">
-        <div className="max-w-lg mx-auto">
-          <QuickActionsBar
-            onQuickAdd={(action: QuickAction) => {
-              // 快速記帳
-              const timeCost = FinanceCalc.calculateTimeCost(
-                action.amount,
-                action.isRecurring,
-                FinanceCalc.hourlyRate(userData.salary),
-                FinanceCalc.realRate(userData.inflationRate, userData.roiRate),
-                userData.retireAge - userData.age
-              );
-              const record: RecordType = {
-                id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                type: 'spend',
-                amount: action.amount,
-                isRecurring: action.isRecurring,
-                timeCost,
-                category: action.categoryId,
-                note: action.name,
-                timestamp: new Date().toISOString(),
-                date: new Date().toISOString().split('T')[0],
-                createdAt: Date.now()
-              };
-              onAddRecord(record);
-              showToast(`✅ 已記錄 ${action.name} $${action.amount}`);
-            }}
-            onOpenSettings={onOpenQuickActionsSettings}
-          />
+      {/* Phase 3: 追趕提示（簡化版） - 落後時顯示 */}
+      {gpsResult.isBehind && (
+        <div className="px-4 py-2">
+          <div className="max-w-lg mx-auto">
+            <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-4">
+              <div className="flex items-center gap-3">
+                <span className="text-lg">⏰</span>
+                <div className="flex-1">
+                  <p className="text-orange-400 text-sm mb-2">
+                    目前會延後 {Math.abs((estimatedAge - retireAge)).toFixed(1)} 年退休，建議每月多存 ${Math.round(salary * 0.1).toLocaleString()}
+                  </p>
+                  <button
+                    onClick={() => {
+                      const suggestedAmount = Math.round(salary * 0.1);
+                      setAmount(suggestedAmount);
+                      setRecordMode('save');
+                      setIsRecurring(true);
+                      // 滾動到金額輸入區
+                      window.scrollTo({ top: 300, behavior: 'smooth' });
+                    }}
+                    className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-gray-900 text-xs font-medium rounded-lg transition-all"
+                  >
+                    💰 立即記錄儲蓄
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* v2.1: 快速記帳按鈕列 - Phase 1: 根據解鎖狀態顯示 */}
+      {unlockStatus.quickActions && (
+        <div className="px-4 py-2">
+          <div className="max-w-lg mx-auto">
+            <QuickActionsBar
+              onQuickAdd={(action: QuickAction) => {
+                // 快速記帳
+                const timeCost = FinanceCalc.calculateTimeCost(
+                  action.amount,
+                  action.isRecurring,
+                  FinanceCalc.hourlyRate(userData.salary),
+                  FinanceCalc.realRate(userData.inflationRate, userData.roiRate),
+                  userData.retireAge - userData.age
+                );
+                const record: RecordType = {
+                  id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                  type: 'spend',
+                  amount: action.amount,
+                  isRecurring: action.isRecurring,
+                  timeCost,
+                  category: action.categoryId,
+                  note: action.name,
+                  timestamp: new Date().toISOString(),
+                  date: new Date().toISOString().split('T')[0],
+                  createdAt: Date.now()
+                };
+                onAddRecord(record);
+                showToast(`✅ 已記錄 ${action.name} $${action.amount}`);
+              }}
+              onOpenSettings={() => setShowQuickActionsModal(true)}
+            />
+          </div>
+        </div>
+      )}
 
       {/* 金額輸入區 */}
       <div className="px-4 py-4">
         <div className="max-w-lg mx-auto">
           <div className="bg-gray-800/60 backdrop-blur-sm rounded-3xl p-6 border border-gray-700/50">
+            {/* 模式切換 Toggle */}
+            <div className="flex gap-2 mb-6">
+              <button
+                onClick={() => setRecordMode('spend')}
+                className={`flex-1 py-3 rounded-xl font-medium text-sm transition-all duration-200 ${
+                  recordMode === 'spend'
+                    ? 'bg-orange-500 text-gray-900 shadow-lg shadow-orange-500/25'
+                    : 'bg-gray-700/50 text-gray-400 hover:bg-gray-700'
+                }`}
+              >
+                💸 記錄消費
+              </button>
+              <button
+                onClick={() => setRecordMode('save')}
+                className={`flex-1 py-3 rounded-xl font-medium text-sm transition-all duration-200 ${
+                  recordMode === 'save'
+                    ? 'bg-emerald-500 text-gray-900 shadow-lg shadow-emerald-500/25'
+                    : 'bg-gray-700/50 text-gray-400 hover:bg-gray-700'
+                }`}
+              >
+                💰 記錄儲蓄
+              </button>
+            </div>
+
             <div className="text-center mb-4">
-              <div className="text-gray-400 text-sm mb-2">這個東西要花多少？</div>
+              <div className="text-gray-400 text-sm mb-2">
+                {recordMode === 'spend' ? '這筆花費會影響你的自由多久？' : '這筆儲蓄讓你贏回多少自由？'}
+              </div>
               <div className="text-5xl font-black text-white tabular-nums">
                 {formatCurrencyFull(amount)}
               </div>
@@ -424,30 +542,38 @@ export function DashboardScreen({
       {amount > 0 && vividComparison && (
         <div className="px-4 py-2 animate-fade-in">
           <div className="max-w-lg mx-auto">
-            <div className="bg-gradient-to-br from-orange-900/40 to-red-900/40 backdrop-blur-sm rounded-3xl p-6 border border-orange-500/30">
+            <div className={`backdrop-blur-sm rounded-3xl p-6 border ${
+              recordMode === 'spend'
+                ? 'bg-gradient-to-br from-orange-900/40 to-red-900/40 border-orange-500/30'
+                : 'bg-gradient-to-br from-emerald-900/40 to-teal-900/40 border-emerald-500/30'
+            }`}>
               <div className="text-center">
-                {/* 工作時間成本 */}
+                {/* 工作時間成本 / 贏回的自由時間 */}
                 <div className="mb-4">
-                  <div className="text-orange-300 text-sm mb-1">⏰ 工作時間成本</div>
-                  <div className="text-3xl font-black text-orange-400">
+                  <div className={`text-sm mb-1 ${recordMode === 'spend' ? 'text-orange-300' : 'text-emerald-300'}`}>
+                    {recordMode === 'spend' ? '⏰ 工作時間成本' : '⏰ 贏回的自由時間'}
+                  </div>
+                  <div className={`text-3xl font-black ${recordMode === 'spend' ? 'text-orange-400' : 'text-emerald-400'}`}>
                     {vividComparison.workTime}
                   </div>
                   <div className="text-gray-400 text-sm">{vividComparison.workTimeDetail}</div>
                 </div>
 
                 {/* 分隔線 */}
-                <div className="border-t border-orange-500/20 my-4"></div>
+                <div className={`border-t my-4 ${recordMode === 'spend' ? 'border-orange-500/20' : 'border-emerald-500/20'}`}></div>
 
                 {/* 退休影響 */}
                 <div className="mb-4">
-                  <div className="text-red-300 text-sm mb-1">📅 退休影響</div>
-                  <div className="text-2xl font-bold text-red-400">
+                  <div className={`text-sm mb-1 ${recordMode === 'spend' ? 'text-red-300' : 'text-emerald-300'}`}>
+                    📅 退休影響
+                  </div>
+                  <div className={`text-2xl font-bold ${recordMode === 'spend' ? 'text-red-400' : 'text-emerald-400'}`}>
                     {retirementImpact}
                   </div>
                 </div>
 
                 {/* 分隔線 */}
-                <div className="border-t border-orange-500/20 my-4"></div>
+                <div className={`border-t my-4 ${recordMode === 'spend' ? 'border-orange-500/20' : 'border-emerald-500/20'}`}></div>
 
                 {/* 生動比喻 */}
                 <div className="bg-gray-900/50 rounded-xl p-3">
@@ -457,11 +583,18 @@ export function DashboardScreen({
                   </div>
                 </div>
 
-                {/* 每月固定警告 */}
+                {/* 每月固定提示 */}
                 {isRecurring && (
-                  <div className="mt-4 bg-red-500/10 border border-red-500/30 rounded-xl p-3">
-                    <div className="text-red-400 text-sm">
-                      ⚠️ 每月訂閱的複利威力驚人！長期累積更可怕
+                  <div className={`mt-4 rounded-xl p-3 ${
+                    recordMode === 'spend'
+                      ? 'bg-red-500/10 border border-red-500/30'
+                      : 'bg-emerald-500/10 border border-emerald-500/30'
+                  }`}>
+                    <div className={`text-sm ${recordMode === 'spend' ? 'text-red-400' : 'text-emerald-400'}`}>
+                      {recordMode === 'spend'
+                        ? '⚠️ 每月訂閱的複利威力驚人！長期累積更可怕'
+                        : '✨ 每月固定儲蓄的複利威力驚人！長期累積更強大'
+                      }
                     </div>
                   </div>
                 )}
@@ -474,35 +607,78 @@ export function DashboardScreen({
       {/* 決策按鈕區 */}
       <div className="px-4 py-4 pb-24">
         <div className="max-w-lg mx-auto">
-          <div className="grid grid-cols-2 gap-4">
-            {/* 我買了 */}
-            <button
-              onClick={handleBought}
-              disabled={amount <= 0 || isSaving}
-              className="py-4 rounded-2xl font-bold text-lg transition-all duration-300 active:scale-95 disabled:opacity-30 bg-gray-700 hover:bg-gray-600 text-gray-300"
-            >
-              {isSaving ? '記錄中...' : '我買了 💸'}
-            </button>
+          {recordMode === 'spend' ? (
+            // 消費模式：兩個按鈕
+            <div className="grid grid-cols-2 gap-4">
+              {/* 我買了 */}
+              <button
+                onClick={handleBought}
+                disabled={amount <= 0 || isSaving}
+                className="py-4 rounded-2xl font-bold text-lg transition-all duration-300 active:scale-95 disabled:opacity-30 bg-gray-700 hover:bg-gray-600 text-gray-300"
+              >
+                {isSaving ? '記錄中...' : '我買了 💸'}
+              </button>
 
-            {/* 我不買了 */}
+              {/* 我不買了 */}
+              <button
+                onClick={handleSkipped}
+                disabled={amount <= 0}
+                className="py-4 rounded-2xl font-bold text-lg transition-all duration-300 active:scale-95 disabled:opacity-30 bg-emerald-500 hover:bg-emerald-400 text-gray-900 shadow-lg shadow-emerald-500/25"
+              >
+                我不買了 💪
+              </button>
+            </div>
+          ) : (
+            // 儲蓄模式：單一按鈕
             <button
-              onClick={handleSkipped}
-              disabled={amount <= 0}
-              className="py-4 rounded-2xl font-bold text-lg transition-all duration-300 active:scale-95 disabled:opacity-30 bg-emerald-500 hover:bg-emerald-400 text-gray-900 shadow-lg shadow-emerald-500/25"
+              onClick={handleSaved}
+              disabled={amount <= 0 || isSaving}
+              className="w-full py-4 rounded-2xl font-bold text-lg transition-all duration-300 active:scale-95 disabled:opacity-30 bg-emerald-500 hover:bg-emerald-400 text-gray-900 shadow-lg shadow-emerald-500/25"
             >
-              我不買了 💪
+              {isSaving ? '記錄中...' : '存下來了 💰'}
             </button>
-          </div>
+          )}
 
           {amount <= 0 && (
             <div className="text-center mt-4 text-gray-500 text-sm">
-              👆 輸入金額來看看這個東西值多少生命
+              {recordMode === 'spend'
+                ? '👆 輸入金額來看看這個東西值多少生命'
+                : '👆 輸入金額來記錄這筆儲蓄'
+              }
             </div>
           )}
         </div>
       </div>
 
-      {/* Bottom Nav */}
+      {/* Phase 1: 分類選擇 Modal */}
+      <CategorySelectModal
+        open={showCategoryModal}
+        onClose={() => setShowCategoryModal(false)}
+        onSelect={handleCategorySelect}
+      />
+
+      {/* Phase 1: 功能解鎖通知 */}
+      {unlockMessage && (
+        <UnlockNotification
+          isOpen={showUnlockNotification}
+          onClose={() => setShowUnlockNotification(false)}
+          title={unlockMessage.title}
+          description={unlockMessage.description}
+          icon={unlockMessage.icon}
+        />
+      )}
+
+      {/* Phase 2: 快速記帳設定 Modal */}
+      <Modal
+        open={showQuickActionsModal}
+        onClose={() => setShowQuickActionsModal(false)}
+        title="快速記帳設定"
+        size="xl"
+      >
+        <QuickActionsSettingsPage onBack={() => setShowQuickActionsModal(false)} />
+      </Modal>
+
+      {/* Bottom Nav - Phase 1: 簡化為 2 個按鈕 (首頁、歷史) */}
       <div className="fixed bottom-0 left-0 right-0 bg-gray-900/95 backdrop-blur border-t border-gray-800">
         <div className="max-w-lg mx-auto flex justify-around py-3">
           <button className="flex flex-col items-center text-emerald-400">
@@ -511,24 +687,11 @@ export function DashboardScreen({
             </svg>
             <span className="text-xs mt-1 font-medium">首頁</span>
           </button>
-          <button onClick={onOpenTracker} className="flex flex-col items-center text-gray-500 hover:text-gray-300">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span className="text-xs mt-1">記錄</span>
-          </button>
           <button onClick={onOpenHistory} className="flex flex-col items-center text-gray-500 hover:text-gray-300">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
             <span className="text-xs mt-1">歷史</span>
-          </button>
-          <button onClick={onOpenSettings} className="flex flex-col items-center text-gray-500 hover:text-gray-300">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            <span className="text-xs mt-1">設定</span>
           </button>
         </div>
       </div>

@@ -1,0 +1,95 @@
+/**
+ * Card 分子組件樣式
+ */
+
+.card {
+  background: #fff;
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+/* 變體 */
+.card--default {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.card--outlined {
+  border: 1px solid #e4e4e7;
+}
+
+.card--elevated {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* 可點擊 */
+.card--clickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.card--clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.card--clickable:active {
+  transform: translateY(0);
+}
+
+/* Header */
+.card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 1rem 1rem 0;
+}
+
+.card__header-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.card__title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #18181b;
+  margin: 0;
+}
+
+.card__subtitle {
+  font-size: 0.875rem;
+  color: #71717a;
+  margin: 0.25rem 0 0;
+}
+
+.card__action {
+  flex-shrink: 0;
+  margin-left: 1rem;
+}
+
+/* Body */
+.card__body {
+  padding: 1rem;
+}
+
+/* Padding 變體 */
+.card--padding-none .card__header,
+.card--padding-none .card__body {
+  padding: 0;
+}
+
+.card--padding-sm .card__header {
+  padding: 0.75rem 0.75rem 0;
+}
+
+.card--padding-sm .card__body {
+  padding: 0.75rem;
+}
+
+.card--padding-lg .card__header {
+  padding: 1.5rem 1.5rem 0;
+}
+
+.card--padding-lg .card__body {
+  padding: 1.5rem;
+}

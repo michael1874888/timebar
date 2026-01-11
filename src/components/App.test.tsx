@@ -60,14 +60,12 @@ vi.mock('./dashboard/DashboardScreen', () => ({
     userData,
     records,
     onAddRecord,
-    onOpenTracker,
     onOpenHistory,
     onOpenSettings,
   }: {
     userData: UserData
     records: RecordType[]
     onAddRecord: (record: RecordType) => void
-    onOpenTracker: () => void
     onOpenHistory: () => void
     onOpenSettings: () => void
   }) => (
@@ -92,50 +90,45 @@ vi.mock('./dashboard/DashboardScreen', () => ({
       >
         Add Record
       </button>
-      <button onClick={onOpenTracker}>Open Tracker</button>
       <button onClick={onOpenHistory}>Open History</button>
       <button onClick={onOpenSettings}>Open Settings</button>
     </div>
   ),
 }))
 
-vi.mock('./tracker/MainTracker', () => ({
-  MainTracker: ({
+// v4.0: Mock HomePage (新版首頁)
+vi.mock('@ui/pages/HomePage', () => ({
+  HomePage: ({
     userData,
     records,
     onAddRecord,
-    onOpenHistory,
-    onOpenSettings,
+    onHistoryClick,
+    onSettingsClick,
   }: {
-    userData: UserData
-    records: RecordType[]
-    onAddRecord: (record: RecordType) => void
-    onOpenHistory: () => void
-    onOpenSettings: () => void
+    userData: { age: number; monthlySalary: number; targetRetireAge: number }
+    records: { type: 'save' | 'spend'; amount: number; timeCost: number; isRecurring: boolean }[]
+    onAddRecord?: (record: { type: 'save' | 'spend'; amount: number; timeCost: number; isRecurring: boolean }) => void
+    onHistoryClick?: () => void
+    onSettingsClick?: () => void
   }) => (
-    <div data-testid="main-tracker">
-      <h1>Main Tracker</h1>
+    <div data-testid="dashboard-screen">
+      <h1>Dashboard Screen</h1>
       <div>Age: {userData.age}</div>
       <div>Records: {records.length}</div>
       <button
         onClick={() =>
-          onAddRecord({
-            id: `record-${Date.now()}`,
+          onAddRecord?.({
             type: 'spend',
             amount: 1000,
-            isRecurring: false,
             timeCost: 2,
-            category: 'food',
-            note: 'Test',
-            timestamp: new Date().toISOString(),
-            date: new Date().toISOString().split('T')[0],
+            isRecurring: false,
           })
         }
       >
         Add Record
       </button>
-      <button onClick={onOpenHistory}>Open History</button>
-      <button onClick={onOpenSettings}>Open Settings</button>
+      <button onClick={onHistoryClick}>Open History</button>
+      <button onClick={onSettingsClick}>Open Settings</button>
     </div>
   ),
 }))
@@ -525,34 +518,36 @@ describe('App Component Integration Tests', () => {
       expect(dashboardScreen).toBeInTheDocument()
     })
 
-    test('應該能從 Dashboard 導航到 Tracker', async () => {
-      render(<App />)
+    // Phase 1: Tracker 已移除，功能已整合到 Dashboard
+    // test('應該能從 Dashboard 導航到 Tracker', async () => {
+    //   render(<App />)
 
-      await screen.findByTestId('dashboard-screen')
+    //   await screen.findByTestId('dashboard-screen')
 
-      fireEvent.click(screen.getByRole('button', { name: 'Open Tracker' }))
+    //   fireEvent.click(screen.getByRole('button', { name: 'Open Tracker' }))
 
-      const tracker = await screen.findByTestId('main-tracker')
-      expect(tracker).toBeInTheDocument()
-    })
+    //   const tracker = await screen.findByTestId('main-tracker')
+    //   expect(tracker).toBeInTheDocument()
+    // })
 
-    test('應該能從 Tracker 返回 Dashboard', async () => {
-      render(<App />)
+    // Phase 1: Tracker 已移除，功能已整合到 Dashboard
+    // test('應該能從 Tracker 返回 Dashboard', async () => {
+    //   render(<App />)
 
-      await screen.findByTestId('dashboard-screen')
+    //   await screen.findByTestId('dashboard-screen')
 
-      fireEvent.click(screen.getByRole('button', { name: 'Open Tracker' }))
-      await screen.findByTestId('main-tracker')
+    //   fireEvent.click(screen.getByRole('button', { name: 'Open Tracker' }))
+    //   await screen.findByTestId('main-tracker')
 
-      // Tracker 沒有返回按鈕，通過導航到其他頁面再返回來測試
-      fireEvent.click(screen.getByRole('button', { name: 'Open History' }))
-      await screen.findByTestId('history-page')
+    //   // Tracker 沒有返回按鈕，通過導航到其他頁面再返回來測試
+    //   fireEvent.click(screen.getByRole('button', { name: 'Open History' }))
+    //   await screen.findByTestId('history-page')
 
-      fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+    //   fireEvent.click(screen.getByRole('button', { name: 'Close' }))
 
-      const dashboardScreen = await screen.findByTestId('dashboard-screen')
-      expect(dashboardScreen).toBeInTheDocument()
-    })
+    //   const dashboardScreen = await screen.findByTestId('dashboard-screen')
+    //   expect(dashboardScreen).toBeInTheDocument()
+    // })
   })
 
   describe('Adding Records', () => {

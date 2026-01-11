@@ -1,0 +1,139 @@
+/**
+ * 時間成本顯示組件樣式
+ * 使用 CSS Variables
+ */
+
+.time-cost-display {
+  text-align: center;
+  padding: var(--spacing-xl);
+}
+
+.time-cost-display--empty {
+  opacity: 0.7;
+}
+
+.time-cost-display--visible {
+  animation: countUp var(--duration-slower) var(--ease-out) forwards;
+}
+
+@keyframes countUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* 標題 */
+.time-cost-display__label {
+  font-size: var(--font-base);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-md);
+}
+
+.time-cost-display__prompt {
+  font-size: var(--font-lg);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+/* 主數值 */
+.time-cost-display__value-container {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  margin: var(--spacing-sm) 0;
+}
+
+.time-cost-display__value {
+  font-size: var(--font-5xl);
+  font-weight: var(--font-extrabold);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  transition: all var(--duration-slow) var(--ease-out);
+  font-variant-numeric: tabular-nums;
+}
+
+.time-cost-display__unit {
+  font-size: var(--font-2xl);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-secondary);
+}
+
+/* 顏色 classes */
+.time-cost-display__value.text-emerald-400 {
+  color: #34d399;
+}
+
+.time-cost-display__value.text-yellow-400 {
+  color: #facc15;
+}
+
+.time-cost-display__value.text-orange-400 {
+  color: #fb923c;
+}
+
+.time-cost-display__value.text-orange-500 {
+  color: #f97316;
+}
+
+.time-cost-display__value.text-red-500 {
+  color: #ef4444;
+}
+
+/* 副標題 */
+.time-cost-display__subtitle {
+  font-size: var(--font-lg);
+  color: var(--color-text-muted);
+  margin-top: var(--spacing-xs);
+}
+
+/* 額外說明 */
+.time-cost-display__details {
+  margin-top: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.time-cost-display__comparison,
+.time-cost-display__impact {
+  font-size: var(--font-base);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+  display: inline-block;
+  margin: 0 auto;
+  font-weight: var(--font-medium);
+  transition: transform var(--duration-normal) var(--ease-out);
+}
+
+.time-cost-display__comparison:hover,
+.time-cost-display__impact:hover {
+  transform: scale(1.02);
+}
+
+.time-cost-display__comparison {
+  background: var(--color-warning);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.1));
+  color: #92400e;
+}
+
+.time-cost-display__impact {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.1));
+  color: #991b1b;
+}
+
+/* 響應式 */
+@media (min-width: 768px) {
+  .time-cost-display__value {
+    font-size: 4rem;
+  }
+
+  .time-cost-display__unit {
+    font-size: 2rem;
+  }
+}

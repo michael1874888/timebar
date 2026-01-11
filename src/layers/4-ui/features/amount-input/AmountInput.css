@@ -1,0 +1,186 @@
+/**
+ * 金額輸入組件樣式
+ * 使用 CSS Variables
+ */
+
+.amount-input {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-md);
+}
+
+.amount-input--disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* 主輸入區 */
+.amount-input__field {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--color-bg-elevated);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  transition: all var(--duration-normal) var(--ease-out);
+}
+
+.amount-input__field--focused {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px var(--color-primary-glow);
+}
+
+.amount-input__currency {
+  font-size: var(--font-2xl);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-muted);
+}
+
+.amount-input__input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: var(--font-4xl);
+  font-weight: var(--font-bold);
+  color: var(--color-text-primary);
+  text-align: center;
+  outline: none;
+  min-width: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.amount-input__input::placeholder {
+  color: var(--color-text-muted);
+  font-weight: var(--font-normal);
+}
+
+.amount-input__input::-webkit-outer-spin-button,
+.amount-input__input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.amount-input__input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+.amount-input__clear {
+  background: #e4e4e7;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: #71717a;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.amount-input__clear:hover {
+  background: #d4d4d8;
+  color: #18181b;
+}
+
+.amount-input__unit {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: #71717a;
+}
+
+/* 快速金額按鈕 */
+.amount-input__quick-amounts {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding: 0.25rem;
+  margin: -0.25rem;
+  scrollbar-width: none;
+}
+
+.amount-input__quick-amounts::-webkit-scrollbar {
+  display: none;
+}
+
+.amount-input__quick-btn {
+  flex-shrink: 0;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  font-size: var(--font-sm);
+  font-weight: var(--font-medium);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--ease-out);
+}
+
+.amount-input__quick-btn:hover {
+  background: var(--color-border);
+  border-color: var(--color-border-hover);
+  transform: translateY(-1px);
+}
+
+.amount-input__quick-btn--active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-text-inverse);
+}
+
+.amount-input__quick-btn--active:hover {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+/* 訂閱切換 */
+.amount-input__recurring {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  padding: 0.5rem 0;
+}
+
+.amount-input__recurring-checkbox {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.amount-input__recurring-toggle {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background: #e4e4e7;
+  border-radius: 12px;
+  transition: background 0.2s ease;
+}
+
+.amount-input__recurring-checkbox:checked + .amount-input__recurring-toggle {
+  background: #10b981;
+}
+
+.amount-input__recurring-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease;
+}
+
+.amount-input__recurring-checkbox:checked + .amount-input__recurring-toggle .amount-input__recurring-toggle-thumb {
+  transform: translateX(20px);
+}
+
+.amount-input__recurring-label {
+  font-size: 0.9375rem;
+  color: #52525b;
+}

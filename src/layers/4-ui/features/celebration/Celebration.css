@@ -1,0 +1,165 @@
+/**
+ * 慶祝效果樣式
+ */
+
+.celebration-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  animation: celebration-fade-in 0.3s ease;
+}
+
+/* 彩帶容器 */
+.celebration-confetti {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* 彩帶片段 */
+.celebration-confetti-piece {
+  position: absolute;
+  top: -20px;
+  border-radius: 2px;
+  animation: celebration-fall linear forwards;
+}
+
+/* 內容區 */
+.celebration-content {
+  background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+  border-radius: 1.5rem;
+  padding: 2.5rem 2rem;
+  text-align: center;
+  max-width: 320px;
+  width: 90%;
+  animation: celebration-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+/* Emoji */
+.celebration-emoji {
+  font-size: 4rem;
+  animation: celebration-bounce 1s ease infinite;
+  margin-bottom: 1rem;
+}
+
+/* 標題 */
+.celebration-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #10b981;
+  margin: 0 0 1.5rem;
+}
+
+/* 統計 */
+.celebration-stats {
+  margin-bottom: 1.5rem;
+}
+
+.celebration-amount {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #10b981;
+  margin-bottom: 0.5rem;
+}
+
+.celebration-time {
+  font-size: 1.125rem;
+  color: #059669;
+}
+
+/* 訊息 */
+.celebration-message {
+  font-size: 0.9375rem;
+  color: #52525b;
+  margin: 0 0 2rem;
+}
+
+/* 按鈕組 */
+.celebration-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.celebration-btn {
+  flex: 1;
+  padding: 0.875rem 1rem;
+  border: none;
+  border-radius: 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.celebration-btn--skip {
+  background: #f4f4f5;
+  color: #52525b;
+}
+
+.celebration-btn--skip:hover {
+  background: #e4e4e7;
+}
+
+.celebration-btn--save {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.celebration-btn--save:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.5);
+}
+
+/* 動畫 */
+@keyframes celebration-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes celebration-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes celebration-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes celebration-fall {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
