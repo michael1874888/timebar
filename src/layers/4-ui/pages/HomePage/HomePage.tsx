@@ -28,7 +28,7 @@ import { QuickActionsSettingsPage } from '@/components/settings/QuickActionsSett
 import { PointsSystem } from '@/utils/pointsSystem';
 import { FinanceCalc } from '@/utils/financeCalc';
 import { getUnlockStatus, checkNewUnlock, getFeatureUnlockMessage } from '@/utils/progressiveDisclosure';
-import type { RecordType, UserData, ChallengeDefinition } from '@/types';
+import type { Record as RecordType, UserData, ChallengeDefinition } from '@/types';
 import './HomePage.css';
 
 export interface HomePageProps {
@@ -51,8 +51,7 @@ export interface HomePageProps {
     category?: string;
     note?: string;
   } | RecordType) => void;
-  /** 積分 */
-  points?: number;
+  // 積分參數已整合到 fullUserData.pointsBalance
   /** 設定點擊回調 */
   onSettingsClick?: () => void;
   /** 歷史點擊回調 */
@@ -67,7 +66,7 @@ export function HomePage({
   fullUserData,
   records,
   onAddRecord,
-  points = 0,
+
   onSettingsClick,
   onHistoryClick,
 }: HomePageProps) {

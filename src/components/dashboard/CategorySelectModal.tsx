@@ -6,7 +6,7 @@
  */
 
 import { CategorySystem } from '@/utils/categorySystem';
-import { ColorTokens } from '@tokens';
+
 
 interface CategorySelectModalProps {
   /** 是否顯示彈窗 */
