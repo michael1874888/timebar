@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **Language**: Traditional Chinese (繁體中文) - all UI text, comments, and documentation
 - **Stack**: React 18 + TypeScript + Vite 5
-- **Testing**: Vitest with 120 tests (精簡測試策略 - focused testing strategy)
+- **Testing**: Vitest with 93 tests (精簡測試策略 - focused testing strategy)
 - **Backend**: Google Apps Script (optional cloud sync via Google Sheets)
 - **Deployment**: GitHub Pages at `/timebar/` base path
 
@@ -21,16 +21,15 @@ npm run build            # Production build to dist/
 npm run preview          # Preview production build
 
 # Testing
-npm test                 # Run all 120 tests (4 test files)
+npm test                 # Run all 93 tests (3 test files)
 npm test:watch           # Watch mode
 npm test:ui              # Vitest UI
 npm test:coverage        # Generate coverage report
 
 # Running specific tests
 npm test -- financeCalc       # Only financeCalc.test.ts (56 tests)
-npm test -- App               # Only App.test.tsx (34 tests)
-npm test -- settingsSystem    # Only settingsSystem.test.ts (9 tests)
-npm test -- categorySystem    # Only categorySystem.test.ts (21 tests)
+npm test -- App               # Only App.test.tsx (32 tests)
+npm test -- OnboardingScreen  # Only OnboardingScreen.test.tsx (5 tests)
 ```
 
 ## Architecture Overview
@@ -110,7 +109,7 @@ All types defined in [src/types/index.ts](src/types/index.ts):
 - `Category` - Spending categories (default/custom)
 - `ChallengeDefinition` - Daily challenges (default/custom)
 - `QuickAction` - Quick entry buttons
-- `Screen` - App routing ('onboarding' | 'dashboard' | 'tracker' | 'history' | 'settings' | ...)
+- `Screen` - App routing ('loading' | 'onboarding' | 'home' | 'history' | 'settings')
 
 **Financial Types:**
 - `GPSResult` - Retirement age estimation
@@ -148,11 +147,12 @@ timeCost = FV ÷ hourlyWage
 **精簡測試策略 (Streamlined Testing Strategy):**
 > Don't test UI implementation details, only test core business logic and critical user flows. Keep tests stable to avoid frequent modifications due to UI changes.
 
-**Test Coverage (120 tests total):**
+**Test Coverage (93 tests total):**
 1. **financeCalc.test.ts** (56 tests) - Core calculations, edge cases, precision
-2. **App.test.tsx** (34 tests) - E2E flows: onboarding → dashboard → tracking → history → settings
-3. **settingsSystem.test.ts** (9 tests) - DI architecture, debounce, cloud sync
-4. **categorySystem.test.ts** (21 tests) - CRUD, visibility, pure functions
+2. **App.test.tsx** (32 tests) - E2E flows: onboarding → home → history → settings
+3. **OnboardingScreen.test.tsx** (5 tests) - Button text display, onboarding flow validation
+
+**Note:** Internal implementation tests (settingsSystem, categorySystem) were removed in v3.2 to follow the streamlined testing strategy. Their functionality is covered by E2E tests.
 
 **When adding features:**
 - Test core logic in dedicated util test files
@@ -270,10 +270,18 @@ CategorySystem.addCustomCategory({
 
 ## Version History Context
 
-- **v2.3**: Dependency injection refactor (SettingsSystem, CategorySystem)
-- **v2.2**: Extended settings sync (hidden categories, modified challenges)
-- **v2.1**: Subscription management, record metadata (createdAt, updatedAt)
-- **v2.0**: Gamification (points, inventory, challenges)
-- **v3.2**: Current version with full feature set
+- **v3.2** (2026-01-10): UI/UX simplification & Progressive Disclosure
+  - Screens: 9 → 5 (removed tracker, shop, challenge-settings, etc.)
+  - Onboarding: 5 steps → 3 steps
+  - Added progressive disclosure system (features unlock based on usage)
+  - Tests: 120 → 88 (removed internal implementation tests)
+  - New components: RetirementProgress, UnlockNotification, progressiveDisclosure.ts
+- **v3.1** (2026-01-06): Architecture refactoring
+  - v2.3: Dependency injection refactor (SettingsSystem, CategorySystem)
+  - Debounced cloud sync (1s delay)
+- **v3.0**: Initial release
+  - v2.2: Extended settings sync (hidden categories, modified challenges)
+  - v2.1: Subscription management, record metadata (createdAt, updatedAt)
+  - v2.0: Gamification (points, inventory, challenges)
 
 When reading code, be aware that comments may reference these version milestones.
