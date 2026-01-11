@@ -177,6 +177,8 @@ export function HomePage({
   const handleBought = useCallback(() => {
     if (amount <= 0 || loading) return;
 
+    // 立即設置 loading 防止重複點擊 (fix: 歷史回歸 commit fcea505)
+    setLoading(true);
     // 保存當前的購買信息
     setPendingPurchase({ amount, isRecurring, timeCost });
     // 打開分類選擇 Modal
@@ -618,6 +620,7 @@ export function HomePage({
         onClose={() => {
           setShowCategoryModal(false);
           setPendingPurchase(null);
+          setLoading(false); // 重置 loading 狀態
         }}
         onSelect={handleCategorySelect}
       />

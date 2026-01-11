@@ -185,6 +185,7 @@ Optional cloud sync via Google Apps Script:
 
 ### Code Style
 - **Language**: All UI strings, comments, and docs in Traditional Chinese
+  - **Exception**: Test files (*.test.ts, *.test.tsx) may use English for test descriptions, mock component labels, and assertions for better compatibility with testing tools and international collaboration
 - **File naming**: camelCase for TS/JS files, PascalCase for React components
 - **Imports**: Use `@/` alias for src/ (configured in vite.config.js)
 
@@ -270,6 +271,14 @@ CategorySystem.addCustomCategory({
 
 ## Version History Context
 
+- **v4.0** (2026-01-11): HomePage Migration & Layer 4 Architecture
+  - Migrated from DashboardScreen to new HomePage (`src/layers/4-ui/pages/HomePage/`)
+  - Adopted Layer 4 UI architecture with `@ui/` and `@business/` aliases
+  - Integrated all features: Toast, CategorySelect, Challenges, QuickActions, Points, Confetti
+  - Consumption/Savings mode toggle for recording both transaction types
+  - Catch-up hints when retirement progress falls behind
+  - Tests: 88 → 122 (added HomePage integration tests)
+  - DashboardScreen kept as commented backup for rollback capability
 - **v3.2** (2026-01-10): UI/UX simplification & Progressive Disclosure
   - Screens: 9 → 5 (removed tracker, shop, challenge-settings, etc.)
   - Onboarding: 5 steps → 3 steps

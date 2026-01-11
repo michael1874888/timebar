@@ -24,7 +24,12 @@
       "Bash(git commit:*)",
       "Bash(if exist node_modules.vitest rmdir /s /q node_modules.vitest)",
       "Bash(findstr:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Skill(code-review:code-review)",
+      "Bash(git blame:*)",
+      "Bash(cd:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(git remote:*)"
     ]
   }
 }
