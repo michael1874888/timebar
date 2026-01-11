@@ -195,23 +195,23 @@ export function DailyChallenge({ onCompleteChallenge, totalPoints = 0 }: DailyCh
   const allCompleted = completedCount === totalChallenges;
 
   return (
-    <div className="bg-gray-800/40 rounded-2xl p-4">
+    <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 border border-slate-200 shadow-sm">
       {/* 標題與進度 */}
       <div className="flex justify-between items-center mb-3">
         <div className="flex items-center gap-2">
-          <span className="text-gray-400 text-sm">🎯 今日挑戰</span>
+          <span className="text-slate-600 text-sm">🎯 今日挑戰</span>
           {totalPoints > 0 && (
-            <span className="text-amber-400 text-xs bg-amber-500/20 px-2 py-0.5 rounded-full">
+            <span className="text-amber-500 text-xs bg-amber-500/10 px-2 py-0.5 rounded-full">
               ⏳ {totalPoints}
             </span>
           )}
         </div>
         <div className="text-sm flex items-center gap-2">
-          <span className={completedCount > 0 ? 'text-emerald-400 font-medium' : 'text-gray-500'}>
+          <span className={completedCount > 0 ? 'text-emerald-500 font-medium' : 'text-slate-500'}>
             {completedCount}/{totalChallenges}
           </span>
           {todayEarned > 0 && (
-            <span className="text-amber-400">+{todayEarned} ⏳</span>
+            <span className="text-amber-500">+{todayEarned} ⏳</span>
           )}
         </div>
       </div>
@@ -220,9 +220,9 @@ export function DailyChallenge({ onCompleteChallenge, totalPoints = 0 }: DailyCh
       {allCompleted ? (
         <div className="text-center py-4">
           <div className="text-3xl mb-2">🏆</div>
-          <div className="text-emerald-400 font-bold">今日挑戰全部完成！</div>
-          <div className="text-amber-400 text-sm">獲得 {todayEarned} ⏳ 時間沙</div>
-          <div className="text-gray-500 text-xs mt-1">今天省下了 ${todaySaved}</div>
+          <div className="text-emerald-500 font-bold">今日挑戰全部完成！</div>
+          <div className="text-amber-500 text-sm">獲得 {todayEarned} ⏳ 時間沙</div>
+          <div className="text-slate-500 text-xs mt-1">今天省下了 ${todaySaved}</div>
         </div>
       ) : (
         <div className="space-y-2">
@@ -234,17 +234,17 @@ export function DailyChallenge({ onCompleteChallenge, totalPoints = 0 }: DailyCh
                 key={challenge.id}
                 className={`flex items-center justify-between p-3 rounded-xl transition-all ${
                   isCompleted
-                    ? 'bg-emerald-500/10 border border-emerald-500/30'
-                    : 'bg-gray-700/50 hover:bg-gray-700'
+                    ? 'bg-emerald-50 border border-emerald-200'
+                    : 'bg-slate-50 hover:bg-slate-100'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <div className="text-xl">{challenge.icon}</div>
                   <div>
-                    <div className={`text-sm font-medium ${isCompleted ? 'text-emerald-400 line-through' : 'text-white'}`}>
+                    <div className={`text-sm font-medium ${isCompleted ? 'text-emerald-500 line-through' : 'text-slate-900'}`}>
                       {challenge.name}
                     </div>
-                    <div className="text-gray-500 text-xs">{challenge.description}</div>
+                    <div className="text-slate-500 text-xs">{challenge.description}</div>
                   </div>
                 </div>
                 
@@ -256,10 +256,10 @@ export function DailyChallenge({ onCompleteChallenge, totalPoints = 0 }: DailyCh
                 ) : (
                   <button
                     onClick={() => handleComplete(challenge)}
-                    className="px-3 py-1.5 bg-emerald-500/20 text-emerald-400 text-sm rounded-lg hover:bg-emerald-500/30 transition-all flex items-center gap-1"
+                    className="px-3 py-1.5 bg-emerald-500/20 text-emerald-600 text-sm rounded-lg hover:bg-emerald-500/30 transition-all flex items-center gap-1"
                   >
                     完成
-                    <span className="text-amber-400 text-xs">+{challenge.energyReward}⏳</span>
+                    <span className="text-amber-500 text-xs">+{challenge.energyReward}⏳</span>
                   </button>
                 )}
               </div>

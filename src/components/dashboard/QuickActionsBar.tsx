@@ -69,7 +69,7 @@ export function QuickActionsBar({ onQuickAdd, onOpenSettings }: QuickActionsBarP
   return (
     <div className="relative">
       {/* 主按鈕列 */}
-      <div className="bg-gradient-to-br from-gray-800/60 to-gray-900/60 rounded-2xl p-4 border border-gray-700/50">
+      <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 border border-slate-200 shadow-sm">
         {/* 標題列 */}
         <div 
           className="flex items-center justify-between mb-3 cursor-pointer"
@@ -77,7 +77,7 @@ export function QuickActionsBar({ onQuickAdd, onOpenSettings }: QuickActionsBarP
         >
           <div className="flex items-center gap-2">
             <span className="text-lg">⚡</span>
-            <span className="text-gray-300 font-medium text-sm">快速記帳</span>
+            <span className="text-slate-700 font-medium text-sm">快速記帳</span>
           </div>
           <div className="flex items-center gap-2">
             {onOpenSettings && (
@@ -86,12 +86,12 @@ export function QuickActionsBar({ onQuickAdd, onOpenSettings }: QuickActionsBarP
                   e.stopPropagation();
                   onOpenSettings();
                 }}
-                className="text-gray-500 hover:text-gray-400 p-1"
+                className="text-slate-400 hover:text-slate-600 p-1"
               >
                 ⚙️
               </button>
             )}
-            <span className={`text-gray-500 text-sm transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
+            <span className={`text-slate-400 text-sm transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
               ▼
             </span>
           </div>
@@ -106,15 +106,15 @@ export function QuickActionsBar({ onQuickAdd, onOpenSettings }: QuickActionsBarP
               <button
                 key={action.id}
                 onClick={() => handleQuickAction(action)}
-                className="flex flex-col items-center p-2 rounded-xl bg-gray-700/30 hover:bg-gray-600/50 transition-all group"
+                className="flex flex-col items-center p-2 rounded-xl bg-slate-100 hover:bg-slate-200 transition-all group"
               >
                 <span className="text-2xl group-hover:scale-110 transition-transform">
                   {action.icon}
                 </span>
-                <span className="text-xs text-gray-400 mt-1 truncate max-w-full">
+                <span className="text-xs text-slate-600 mt-1 truncate max-w-full">
                   {action.name}
                 </span>
-                <span className="text-xs text-orange-400 font-medium">
+                <span className="text-xs text-orange-500 font-medium">
                   ${action.amount}
                 </span>
               </button>
@@ -124,7 +124,7 @@ export function QuickActionsBar({ onQuickAdd, onOpenSettings }: QuickActionsBarP
 
         {/* 展開提示 */}
         {quickActions.length > 4 && !isExpanded && (
-          <div className="text-center text-gray-600 text-xs mt-2">
+          <div className="text-center text-slate-400 text-xs mt-2">
             點擊展開更多
           </div>
         )}

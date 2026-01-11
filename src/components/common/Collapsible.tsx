@@ -47,18 +47,18 @@ export function Collapsible({
   }, [isOpen, storageKey]);
 
   return (
-    <div className={`bg-gray-800/50 rounded-3xl overflow-hidden mb-6 ${className}`}>
+    <div className={`bg-white/80 backdrop-blur-sm rounded-3xl overflow-hidden mb-6 border border-slate-200 shadow-sm ${className}`}>
       {/* 標題欄 */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-700/30 transition-colors"
+        className="w-full px-6 py-4 flex items-center justify-between hover:bg-slate-100/50 transition-colors"
       >
         <div className="flex items-center gap-3">
           {icon && <span className="text-2xl">{icon}</span>}
-          <h2 className="text-white font-bold text-left">{title}</h2>
+          <h2 className="text-slate-900 font-bold text-left">{title}</h2>
         </div>
         <svg
-          className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
+          className={`w-5 h-5 text-slate-400 transition-transform duration-200 ${
             isOpen ? 'rotate-180' : ''
           }`}
           fill="none"
