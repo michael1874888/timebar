@@ -187,9 +187,9 @@ export function HomePage({
 
   // 處理分類選擇完成
   const handleCategorySelect = useCallback(async (categoryId: string) => {
-    if (!pendingPurchase || loading || !onAddRecord) return;
+    // 注意：不檢查 loading，因為 handleBought 已經設置 loading=true
+    if (!pendingPurchase || !onAddRecord) return;
 
-    setLoading(true);
     try {
       const record: RecordType = {
         id: Date.now().toString(),
@@ -217,7 +217,7 @@ export function HomePage({
     } finally {
       setLoading(false);
     }
-  }, [pendingPurchase, onAddRecord, loading, showToast]);
+  }, [pendingPurchase, onAddRecord, showToast]);
 
   // 處理「我忍住了」
   const handleSkipped = useCallback(() => {

@@ -164,6 +164,7 @@ export function DashboardScreen({
       showToast('已記錄消費 📝', 'success');
       setAmount(0);
       setPendingPurchase(null); // 清除待處理的購買信息
+      setShowCategoryModal(false); // 關閉分類選擇 Modal
     } finally {
       setIsSaving(false);
     }

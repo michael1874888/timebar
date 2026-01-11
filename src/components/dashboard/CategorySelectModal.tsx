@@ -27,8 +27,10 @@ export function CategorySelectModal({
   const categories = CategorySystem.getCategories();
 
   const handleCategoryClick = (categoryId: string) => {
+    // 只呼叫 onSelect，不呼叫 onClose
+    // 因為 HomePage 的 handleCategorySelect 會在記錄完成後自己處理關閉邏輯
+    // 避免 race condition：onClose 會清除 pendingPurchase 導致記錄失敗
     onSelect(categoryId);
-    onClose();
   };
 
   const handleOverlayClick = (e: React.MouseEvent) => {
