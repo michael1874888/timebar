@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { OnboardingScreen } from './onboarding/OnboardingScreen';
-import { DashboardScreen } from './dashboard/DashboardScreen';
+// v4.0: 使用新版 HomePage 替代 DashboardScreen
+import { HomePage } from '@ui/pages/HomePage';
+// 保留舊版以便回退（暫時註釋）
+// import { DashboardScreen } from './dashboard/DashboardScreen';
 import { HistoryPage } from './history/HistoryPage';
 import { SettingsPage } from './settings/SettingsPage';
 // Phase 2: 以下組件改用 Modal 顯示，不再需要 import
@@ -233,13 +236,41 @@ export default function App() {
     <div>
       {screen === 'onboarding' && <OnboardingScreen onComplete={handleOnboardingComplete} />}
       {screen === 'home' && userData && (
-        <DashboardScreen
-          userData={userData}
-          records={records}
-          onAddRecord={handleAddRecord}
-          onOpenHistory={() => setScreen('history')}
-          onOpenSettings={() => setScreen('settings')}
-          // Phase 2: onOpenQuickActionsSettings 已移除，改用 Modal 顯示
+        <HomePage
+          userData={{
+            age: userData.age,
+            monthlySalary: userData.salary,
+            targetRetireAge: userData.retireAge,
+          }}
+          records={records.map(r => ({
+            type: r.type === 'spend' ? 'spend' : 'save',
+            amount: r.amount,
+            timeCost: r.timeCost || 0,
+            isRecurring: r.isRecurring || false,
+          }))}
+          onAddRecord={(record) => {
+            // 轉換為完整 RecordType
+            // 根據類型設定預設分類
+            const category = record.type === 'save' ? '主動儲蓄' : '一般消費';
+            const note = record.type === 'save'
+              ? (record.isRecurring ? '每月固定儲蓄' : '一次性儲蓄')
+              : '';
+
+            handleAddRecord({
+              id: Date.now().toString(),
+              timestamp: new Date().toISOString(),
+              date: new Date().toISOString().split('T')[0],
+              type: record.type,
+              amount: record.amount,
+              timeCost: record.timeCost,
+              category,
+              note,
+              isRecurring: record.isRecurring,
+            } as RecordType);
+          }}
+          points={userData.pointsBalance || 0}
+          onSettingsClick={() => setScreen('settings')}
+          onHistoryClick={() => setScreen('history')}
         />
       )}
       {/* Phase 1: tracker 路由已移除，功能已整合到 DashboardScreen */}

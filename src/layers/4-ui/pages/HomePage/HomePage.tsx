@@ -37,6 +37,8 @@ export interface HomePageProps {
   points?: number;
   /** 設定點擊回調 */
   onSettingsClick?: () => void;
+  /** 歷史點擊回調 */
+  onHistoryClick?: () => void;
 }
 
 /**
@@ -48,10 +50,12 @@ export function HomePage({
   onAddRecord,
   points = 0,
   onSettingsClick,
+  onHistoryClick,
 }: HomePageProps) {
   // 狀態
   const [amount, setAmount] = useState(0);
   const [isRecurring, setIsRecurring] = useState(false);
+  const [recordMode, setRecordMode] = useState<'spend' | 'save'>('spend'); // 記錄模式：消費或儲蓄
   const [showGPSDetail, setShowGPSDetail] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
@@ -64,16 +68,16 @@ export function HomePage({
   const timeCost = finance.calculateTimeCost(amount, isRecurring);
 
   // 預覽記錄 (用於即時更新進度條)
-  // 假設用戶會「花費」，展示負面影響，讓用戶更有感
+  // 根據記錄模式預覽：消費模式展示負面影響，儲蓄模式展示正面影響
   const previewRecords = useMemo(() => {
     if (amount <= 0) return records;
     return [...records, {
-      type: 'spend' as const,
+      type: recordMode,
       amount,
       timeCost,
       isRecurring,
     }];
-  }, [records, amount, timeCost, isRecurring]);
+  }, [records, amount, timeCost, isRecurring, recordMode]);
 
   // Hook - 使用預覽記錄來計算 GPS
   const gps = useGPS({
@@ -107,6 +111,26 @@ export function HomePage({
     setCelebrationData({ amount, timeCost });
     setShowCelebration(true);
   }, [amount, timeCost]);
+
+  // 處理「存下來了」- 儲蓄模式專用
+  const handleSaved = useCallback(async () => {
+    if (amount <= 0 || !onAddRecord) return;
+
+    setLoading(true);
+    try {
+      onAddRecord({
+        type: 'save',
+        amount,
+        timeCost,
+        isRecurring,
+      });
+      // 重置
+      setAmount(0);
+      setIsRecurring(false);
+    } finally {
+      setLoading(false);
+    }
+  }, [amount, timeCost, isRecurring, onAddRecord]);
 
   // 確認儲蓄 (從慶祝畫面)
   const handleConfirmSave = useCallback(() => {
@@ -148,6 +172,13 @@ export function HomePage({
           )}
           <button
             className="home-page__settings-btn"
+            onClick={onHistoryClick}
+            aria-label="歷史"
+          >
+            📊
+          </button>
+          <button
+            className="home-page__settings-btn"
             onClick={onSettingsClick}
             aria-label="設定"
           >
@@ -172,9 +203,51 @@ export function HomePage({
           />
         </section>
 
+        {/* 模式切換 Toggle */}
+        <section className="home-page__section">
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+            <button
+              onClick={() => setRecordMode('spend')}
+              style={{
+                flex: 1,
+                padding: '0.75rem',
+                borderRadius: '0.75rem',
+                fontWeight: 500,
+                fontSize: '0.875rem',
+                transition: 'all 200ms',
+                backgroundColor: recordMode === 'spend' ? '#f97316' : 'rgba(55, 65, 81, 0.5)',
+                color: recordMode === 'spend' ? '#111827' : '#d1d5db',
+                border: 'none',
+                cursor: 'pointer',
+                boxShadow: recordMode === 'spend' ? '0 10px 15px -3px rgba(249, 115, 22, 0.25)' : 'none',
+              }}
+            >
+              💸 記錄消費
+            </button>
+            <button
+              onClick={() => setRecordMode('save')}
+              style={{
+                flex: 1,
+                padding: '0.75rem',
+                borderRadius: '0.75rem',
+                fontWeight: 500,
+                fontSize: '0.875rem',
+                transition: 'all 200ms',
+                backgroundColor: recordMode === 'save' ? '#10b981' : 'rgba(55, 65, 81, 0.5)',
+                color: recordMode === 'save' ? '#111827' : '#d1d5db',
+                border: 'none',
+                cursor: 'pointer',
+                boxShadow: recordMode === 'save' ? '0 10px 15px -3px rgba(16, 185, 129, 0.25)' : 'none',
+              }}
+            >
+              💰 記錄儲蓄
+            </button>
+          </div>
+        </section>
+
         {/* 核心問句 */}
         <section className="home-page__section home-page__question">
-          <h2>這筆花費會影響你的自由多久？</h2>
+          <h2>{recordMode === 'spend' ? '這筆花費會影響你的自由多久？' : '這筆儲蓄讓你贏回多少自由？'}</h2>
         </section>
 
         {/* 金額輸入 */}
@@ -193,7 +266,7 @@ export function HomePage({
           <TimeCostDisplay
             hours={timeCost}
             visible={amount > 0}
-            isSpend={true}
+            isSpend={recordMode === 'spend'}
             monthlySalary={userData.monthlySalary}
             showComparison={true}
             showRetirementImpact={true}
@@ -203,12 +276,34 @@ export function HomePage({
 
       {/* 決策按鈕 - 固定在底部 */}
       <footer className="home-page__footer">
-        <DecisionButtons
-          onBought={handleBought}
-          onSkipped={handleSkipped}
-          disabled={amount <= 0}
-          loading={loading}
-        />
+        {recordMode === 'spend' ? (
+          <DecisionButtons
+            onBought={handleBought}
+            onSkipped={handleSkipped}
+            disabled={amount <= 0}
+            loading={loading}
+          />
+        ) : (
+          <button
+            onClick={handleSaved}
+            disabled={amount <= 0 || loading}
+            style={{
+              width: '100%',
+              padding: '1rem',
+              borderRadius: '1rem',
+              fontWeight: 'bold',
+              fontSize: '1.125rem',
+              transition: 'all 300ms',
+              backgroundColor: amount <= 0 || loading ? 'rgba(16, 185, 129, 0.3)' : '#10b981',
+              color: amount <= 0 || loading ? 'rgba(31, 41, 55, 0.3)' : '#1f2937',
+              border: 'none',
+              cursor: amount <= 0 || loading ? 'not-allowed' : 'pointer',
+              boxShadow: amount > 0 && !loading ? '0 10px 15px -3px rgba(16, 185, 129, 0.25)' : 'none',
+            }}
+          >
+            {loading ? '記錄中...' : '存下來了 💰'}
+          </button>
+        )}
       </footer>
 
       {/* 慶祝動畫 */}
