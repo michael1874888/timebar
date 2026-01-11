@@ -25,9 +25,10 @@ Thumbs.db
 nul
 
 # AI tools
-.shared/
-.claude/skills/
-.agent/
+# .shared/
+# .claude/skills/
+# .agent/
+# .agent/workflows/
 
 # Logs
 *.log
