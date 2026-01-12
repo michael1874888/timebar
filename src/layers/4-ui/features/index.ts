@@ -7,6 +7,10 @@
 export { RetirementProgress } from './retirement-progress';
 export type { RetirementProgressProps } from './retirement-progress';
 
+// 軌跡進度（新的目標軌跡偏差視覺化）
+export { TrajectoryProgress, MonthlyBudgetCard } from './trajectory-progress';
+export type { TrajectoryProgressProps, MonthlyBudgetCardProps } from './trajectory-progress';
+
 // 金額輸入
 export { AmountInput } from './amount-input';
 export type { AmountInputProps } from './amount-input';
@@ -22,4 +26,5 @@ export type { DecisionButtonsProps } from './decision-buttons';
 // 慶祝效果
 export { Celebration } from './celebration';
 export type { CelebrationProps } from './celebration';
+
 

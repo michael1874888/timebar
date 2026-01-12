@@ -14,3 +14,7 @@ export type { UseRecordsResult } from './useRecords';
 
 export { useSync } from './useSync';
 export type { UseSyncResult } from './useSync';
+
+export { useTrajectory } from './useTrajectory';
+export type { TrajectoryUserData, UseTrajectoryResult } from './useTrajectory';
+

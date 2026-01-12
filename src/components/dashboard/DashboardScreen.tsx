@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { FinanceCalc, GPSCalc, Formatters } from '@/utils/financeCalc';
+import { FinanceCalc, Formatters } from '@/utils/financeCalc';
 import { getVividComparison, formatRetirementImpact } from '@/utils/lifeCostCalc';
 import { Confetti } from '../Confetti';
 import { AwarenessParticles } from '../AwarenessParticles';
@@ -7,7 +7,8 @@ import { CelebrationModal } from '../common/CelebrationModal';
 import { UnlockNotification } from '../common/UnlockNotification';
 import { useToast } from '../common/Toast';
 import { PointsParticles } from '../common/PointsParticles';
-import { RetirementProgress } from '@ui/features/retirement-progress';
+import { TrajectoryProgress } from '@ui/features/trajectory-progress';
+import { useTrajectory } from '@business/hooks';
 import { DailyChallenge, ChallengeCompleteResult } from './DailyChallenge';
 import { QuickActionsBar, QuickAction } from './QuickActionsBar';
 import { CategorySelectModal } from './CategorySelectModal';
@@ -103,9 +104,9 @@ export function DashboardScreen({
     previousRecordCount.current = currentCount;
   }, [records.length, userData]);
 
-  // GPS 計算
-  const gpsResult = useMemo(() => GPSCalc.calculateEstimatedAge(retireAge, records), [retireAge, records]);
-  const { estimatedAge, totalSavedHours, totalSpentHours } = gpsResult;
+
+  // 新的軌跡偏差計算
+  const trajectory = useTrajectory(userData, records);
 
   // 計算當前金額的時間成本
   const timeCost = useMemo(() => {
@@ -362,13 +363,15 @@ export function DashboardScreen({
             </div>
           </div>
 
-          {/* 退休進度條 */}
-          <RetirementProgress
-            targetAge={retireAge}
-            estimatedAge={estimatedAge}
-            currentAge={age}
-            totalSavedHours={totalSavedHours}
-            totalSpentHours={totalSpentHours}
+          {/* 軌跡進度條（新的目標軌跡偏差視覺化） */}
+          <TrajectoryProgress
+            status={trajectory.status}
+            monthlySavings={trajectory.monthlySavings}
+            targetRetireAge={trajectory.targetRetireAge}
+            estimatedRetireAge={trajectory.estimatedRetireAge}
+            daysDiff={trajectory.daysDiff}
+            dailyBudget={trajectory.dailyBudget}
+            remainingDays={trajectory.remainingDays}
           />
         </div>
       </div>
@@ -386,7 +389,7 @@ export function DashboardScreen({
       )}
 
       {/* Phase 3: 追趕提示（簡化版） - 落後時顯示 */}
-      {gpsResult.isBehind && (
+      {trajectory.status === 'behind' && (
         <div className="px-4 py-2">
           <div className="max-w-lg mx-auto">
             <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-4">
@@ -394,14 +397,14 @@ export function DashboardScreen({
                 <span className="text-lg">⏰</span>
                 <div className="flex-1">
                   <p className="text-orange-400 text-sm mb-2">
-                    目前會延後 {Math.abs((estimatedAge - retireAge)).toFixed(1)} 年退休，建議每月多存 ${Math.round(salary * 0.1).toLocaleString()}
+                    本月儲蓄缺口 ${Math.round(trajectory.monthlySavings.savingsGap).toLocaleString()}，建議增加儲蓄
                   </p>
                   <button
                     onClick={() => {
-                      const suggestedAmount = Math.round(salary * 0.1);
+                      const suggestedAmount = Math.round(trajectory.monthlySavings.savingsGap);
                       setAmount(suggestedAmount);
                       setRecordMode('save');
-                      setIsRecurring(true);
+                      setIsRecurring(false);
                       // 滾動到金額輸入區
                       window.scrollTo({ top: 300, behavior: 'smooth' });
                     }}

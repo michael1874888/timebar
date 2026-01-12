@@ -6,9 +6,9 @@
  */
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { useFinance, useGPS } from '@business/hooks';
+import { useFinance, useGPS, useTrajectory } from '@business/hooks';
 import {
-  RetirementProgress,
+  TrajectoryProgress,
   AmountInput,
   TimeCostDisplay,
   DecisionButtons,
@@ -140,11 +140,35 @@ export function HomePage({
     }];
   }, [records, amount, timeCost, isRecurring, recordMode]);
 
-  // Hook - 使用預覽記錄來計算 GPS
+  // Hook - 使用預覽記錄來計算 GPS (舊邏輯保留用於前往提示)
   const gps = useGPS({
     targetRetireAge: userData.targetRetireAge,
     records: previewRecords,
   });
+
+  // 新的軌跡偏差計算
+  const trajectoryUserData = useMemo(() => ({
+    age: userData.age,
+    salary: userData.monthlySalary,
+    retireAge: userData.targetRetireAge,
+    currentSavings: fullUserData?.currentSavings ?? 0,
+    targetRetirementFund: fullUserData?.targetRetirementFund,
+    inflationRate: fullUserData?.inflationRate ?? 2.5,
+    roiRate: fullUserData?.roiRate ?? 6,
+  }), [userData, fullUserData]);
+
+  const trajectoryRecords = useMemo(() => {
+    return records.map(r => ({
+      ...r,
+      id: String(r.timeCost || Date.now()),
+      timestamp: new Date().toISOString(),
+      date: new Date().toISOString().split('T')[0],
+      category: r.type === 'save' ? '主動儲蓄' : '一般消費',
+      note: '',
+    })) as any[];
+  }, [records]);
+
+  const trajectory = useTrajectory(trajectoryUserData, trajectoryRecords);
 
   // 載入積分
   useEffect(() => {
@@ -395,17 +419,17 @@ export function HomePage({
 
       {/* 主內容 */}
       <main className="home-page__main">
-        {/* 退休進度條 */}
+        {/* 軌跡進度條（新的目標軌跡偏差視覺化） */}
         <section className="home-page__section">
-          <RetirementProgress
-            targetAge={userData.targetRetireAge}
-            estimatedAge={gps.estimatedAge}
-            currentAge={userData.age}
-            totalSavedHours={gps.totalSavedHours}
-            totalSpentHours={gps.totalSpentHours}
-            showDetail={showGPSDetail}
-            onDetailClick={() => setShowGPSDetail(true)}
-            onCloseDetail={() => setShowGPSDetail(false)}
+          <TrajectoryProgress
+            status={trajectory.status}
+            monthlySavings={trajectory.monthlySavings}
+            targetRetireAge={trajectory.targetRetireAge}
+            estimatedRetireAge={trajectory.estimatedRetireAge}
+            daysDiff={trajectory.daysDiff}
+            dailyBudget={trajectory.dailyBudget}
+            remainingDays={trajectory.remainingDays}
+            onClick={() => setShowGPSDetail(!showGPSDetail)}
           />
         </section>
 
@@ -454,7 +478,7 @@ export function HomePage({
         )}
 
         {/* 追趕提示（簡化版）- 落後時顯示 */}
-        {gps.isBehind && (
+        {trajectory.status === 'behind' && (
           <section className="home-page__section">
             <div style={{
               backgroundColor: 'rgba(249, 115, 22, 0.1)',
@@ -466,16 +490,14 @@ export function HomePage({
                 <span style={{ fontSize: '1.125rem' }}>⏰</span>
                 <div style={{ flex: 1 }}>
                   <p style={{ color: '#fb923c', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
-                    目前會延後 {Math.abs((gps.estimatedAge - userData.targetRetireAge)).toFixed(1)} 年退休，
-                    建議每月多存 ${Math.round(userData.monthlySalary * 0.1).toLocaleString()}
+                    本月儲蓄缺口 ${Math.round(trajectory.monthlySavings.savingsGap).toLocaleString()}，建議增加儲蓄
                   </p>
                   <button
                     onClick={() => {
-                      const suggestedAmount = Math.round(userData.monthlySalary * 0.1);
+                      const suggestedAmount = Math.round(trajectory.monthlySavings.savingsGap);
                       setAmount(suggestedAmount);
                       setRecordMode('save');
-                      setIsRecurring(true);
-                      // 滾動到金額輸入區
+                      setIsRecurring(false);
                       window.scrollTo({ top: 300, behavior: 'smooth' });
                     }}
                     style={{

@@ -6,9 +6,19 @@
 export { FinanceCalculator } from './FinanceCalculator';
 export { GPSCalculator } from './GPSCalculator';
 export { TimeCalculator } from './TimeCalculator';
+export { TrajectoryCalculator } from './TrajectoryCalculator';
 export { CONSTANTS } from './constants';
 
 // 向後兼容的別名
 export { FinanceCalculator as FinanceCalc } from './FinanceCalculator';
 export { GPSCalculator as GPSCalc } from './GPSCalculator';
 export { TimeCalculator as Formatters } from './TimeCalculator';
+
+// 類型匯出
+export type {
+  TrajectoryParams,
+  TrajectoryResult,
+  TrajectoryStatus,
+  MonthlySavingsStatus,
+} from './TrajectoryCalculator';
+
