@@ -133,23 +133,19 @@ export class TrajectoryCalculator {
 
   /**
    * 計算本月實際儲蓄
-   * 實際儲蓄 = 月薪 - 本月總消費
+   * 實際儲蓄 = 本月記錄的儲蓄金額總和（type='save' 的記錄）
+   * 
+   * 注意：這裡只計算「主動記錄」的儲蓄，而非假設「沒花的錢=存起來」
    */
   static calculateActualMonthlySavings(
-    salary: number,
     monthlyRecords: RecordItem[]
   ): number {
-    const totalSpent = monthlyRecords
-      .filter(r => r.type === 'spend')
-      .reduce((sum, r) => sum + r.amount, 0);
-
-    // 主動儲蓄記錄
+    // 只計算主動儲蓄記錄
     const totalSaved = monthlyRecords
       .filter(r => r.type === 'save')
       .reduce((sum, r) => sum + r.amount, 0);
 
-    // 實際儲蓄 = 月薪 - 消費 + 額外儲蓄
-    return salary - totalSpent + totalSaved;
+    return totalSaved;
   }
 
   /**
@@ -161,31 +157,47 @@ export class TrajectoryCalculator {
   ): MonthlySavingsStatus {
     const { salary } = params;
     const requiredMonthlySavings = this.calculateRequiredMonthlySavings(params);
-    const actualMonthlySavings = this.calculateActualMonthlySavings(salary, monthlyRecords);
-    const savingsGap = requiredMonthlySavings - actualMonthlySavings;
 
-    // 本月可消費額度 = 月薪 - 目標儲蓄
-    const monthlyBudget = Math.max(0, salary - requiredMonthlySavings);
+    // 1. 計算帳面儲蓄 (Raw Savings)
+    const rawSavings = this.calculateActualMonthlySavings(monthlyRecords);
 
-    // 本月已消費
+    // 2. 計算本月已消費
     const totalSpent = monthlyRecords
       .filter(r => r.type === 'spend')
       .reduce((sum, r) => sum + r.amount, 0);
 
-    // 剩餘可消費
-    const remainingBudget = monthlyBudget - totalSpent;
+    // 3. 計算現金流 (Cash Flow)
+    // 邏輯：月薪 - 消費 - 存入的錢
+    const cashFlow = salary - totalSpent - rawSavings;
+
+    // 4. 計算有效儲蓄 (Effective Savings) - 淨值邏輯
+    // 如果現金流為負（超支），表示動用了存款或舉債，必須從儲蓄績效中扣除
+    // 如果現金流為正，則維持帳面儲蓄（多餘的現金流視為緩衝，暫不計入儲蓄，除非用戶明確轉存）
+    const actualMonthlySavings = cashFlow < 0 ? rawSavings + cashFlow : rawSavings;
+
+    // 5. 計算儲蓄缺口
+    const savingsGap = requiredMonthlySavings - actualMonthlySavings;
+
+    // 6. 計算剩餘可消費
+    // 邏輯：月薪 - 已消費 - (Max(實際儲蓄, 目標儲蓄))
+    // 注意：這裡使用 rawSavings（帳面儲蓄），因為那是實際已經被「鎖定」不能花的錢
+    const lockedSavings = Math.max(requiredMonthlySavings, rawSavings);
+    
+    // 如果已經超支 (cashFlow < 0)，剩餘預算直接顯示超支金額 (即 cashFlow)
+    // 如果沒超支，則計算還有多少額度可花
+    const remainingBudget = cashFlow < 0 ? cashFlow : (salary - totalSpent - lockedSavings);
 
     // 達成率
     const progressPercent = requiredMonthlySavings > 0
       ? (actualMonthlySavings / requiredMonthlySavings) * 100
-      : 100;
+      : (actualMonthlySavings > 0 ? 100 : 0);
 
     return {
       requiredMonthlySavings,
-      actualMonthlySavings,
+      actualMonthlySavings, // 回傳修正後的有效儲蓄
       savingsGap,
       progressPercent,
-      monthlyBudget,
+      monthlyBudget: Math.max(0, salary - requiredMonthlySavings),
       totalSpent,
       remainingBudget,
     };
