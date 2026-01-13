@@ -5,9 +5,7 @@
  * 計算用戶相對於退休目標的財務軌跡偏差
  */
 
-import type { UserData, Record, DeviationResult } from '@/types';
-import { FinanceCalculator } from './FinanceCalculator';
-import { CONSTANTS } from './constants';
+import type { UserData, Record } from '@/types';
 
 /**
  * 軌跡偏差計算引擎

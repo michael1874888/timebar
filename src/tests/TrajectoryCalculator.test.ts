@@ -2,12 +2,23 @@ import { describe, it, expect } from 'vitest';
 import { TrajectoryCalculator } from '@/layers/2-domain/calculators/TrajectoryCalculator';
 import type { UserData, Record } from '@/types';
 
+const createMockUserData = (overrides: Partial<UserData> = {}): UserData => ({
+  age: 25,
+  salary: 80000,
+  retireAge: 60,
+  currentSavings: 100000,
+  monthlySavings: 30000,
+  inflationRate: 2.5,
+  roiRate: 6,
+  ...overrides,
+});
+
 describe('TrajectoryCalculator', () => {
   describe('calculateStartDate', () => {
     it('使用 createdAt 當第一筆記錄在 7 天內', () => {
-      const userData: Partial<UserData> = {
+      const userData = createMockUserData({
         createdAt: '2026-01-01T00:00:00.000Z',
-      };
+      });
       const records: Record[] = [
         {
           id: '1',
@@ -23,7 +34,7 @@ describe('TrajectoryCalculator', () => {
       ];
 
       const result = TrajectoryCalculator.calculateStartDate(
-        userData as UserData,
+        userData,
         records
       );
 
@@ -31,9 +42,9 @@ describe('TrajectoryCalculator', () => {
     });
 
     it('使用 firstRecord - 7天 當超過 7 天才記帳', () => {
-      const userData: Partial<UserData> = {
+      const userData = createMockUserData({
         createdAt: '2026-01-01T00:00:00.000Z',
-      };
+      });
       const records: Record[] = [
         {
           id: '1',
@@ -49,7 +60,7 @@ describe('TrajectoryCalculator', () => {
       ];
 
       const result = TrajectoryCalculator.calculateStartDate(
-        userData as UserData,
+        userData,
         records
       );
 
@@ -59,13 +70,13 @@ describe('TrajectoryCalculator', () => {
     });
 
     it('沒有記錄時返回 createdAt', () => {
-      const userData: Partial<UserData> = {
+      const userData = createMockUserData({
         createdAt: '2026-01-01T00:00:00.000Z',
-      };
+      });
       const records: Record[] = [];
 
       const result = TrajectoryCalculator.calculateStartDate(
-        userData as UserData,
+        userData,
         records
       );
 
@@ -73,11 +84,11 @@ describe('TrajectoryCalculator', () => {
     });
 
     it('沒有 createdAt 時使用當前時間', () => {
-      const userData: Partial<UserData> = {};
+      const userData = createMockUserData({});
       const records: Record[] = [];
 
       const result = TrajectoryCalculator.calculateStartDate(
-        userData as UserData,
+        userData,
         records
       );
 
