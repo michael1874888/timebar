@@ -78,6 +78,11 @@ export interface UserData {
 
   // Phase 1: 漸進式揭露功能
   createdAt?: string;                  // 用戶完成 onboarding 的時間戳（ISO 8601格式）
+
+  // v4.1: 目標軌跡偏差模型
+  trajectoryStartDate?: string;        // 起點日期 (ISO 8601)
+  lastGoalChangeDate?: string;         // 最後一次修改退休目標的日期
+  historicalDeviationHours?: number;   // 歷史累積偏差（工作小時）
 }
 
 // ==================== 記帳系統 ====================
@@ -186,6 +191,21 @@ export interface SkippedPurchase {
   amount: number;
   workingHours: number;
   timestamp: string;
+}
+
+// v4.1: 目標軌跡偏差模型
+export interface DeviationResult {
+  targetAccumulatedSavings: number;   // 目標累積儲蓄
+  actualAccumulatedSavings: number;   // 實際累積儲蓄
+  deviation: number;                  // 偏差金額（正=超前）
+  deviationHours: number;             // 偏差工作小時
+  deviationDays: number;              // 偏差天數
+  deviationYears: number;             // 偏差年數
+  isOnTrack: boolean;                 // 是否在軌道上
+  isAhead: boolean;                   // 是否超前
+  isBehind: boolean;                  // 是否落後
+  monthsElapsed: number;              // 已經過月數
+  requiredMonthlySavings: number;     // 每月必須儲蓄額
 }
 
 
