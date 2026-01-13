@@ -29,7 +29,11 @@
       "Bash(git blame:*)",
       "Bash(cd:*)",
       "Bash(git rev-parse:*)",
-      "Bash(git remote:*)"
+      "Bash(git remote:*)",
+      "Skill(superpowers:brainstorming)",
+      "Skill(ui-ux-pro-max)",
+      "Bash(python3:*)",
+      "Skill(superpowers:writing-plans)"
     ]
   }
 }
