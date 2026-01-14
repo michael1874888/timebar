@@ -47,4 +47,18 @@ export class TrajectoryCalculator {
       ? createdAt
       : sevenDaysBefore.toISOString();
   }
+
+  /**
+   * 計算經過的月數（精確到小數）
+   *
+   * @param startDate - ISO 8601 格式的起點日期
+   * @returns 經過的月數（小數）
+   */
+  static calculateMonthsElapsed(startDate: string): number {
+    const start = new Date(startDate);
+    const now = Date.now();
+    const diffMs = now - start.getTime();
+    const diffDays = diffMs / (1000 * 60 * 60 * 24);
+    return diffDays / 30.44; // 平均每月天數
+  }
 }

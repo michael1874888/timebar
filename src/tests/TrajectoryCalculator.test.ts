@@ -100,4 +100,49 @@ describe('TrajectoryCalculator', () => {
       expect(diffMs).toBeLessThan(1000);
     });
   });
+
+  describe('calculateMonthsElapsed', () => {
+    it('正確計算經過的月數（精確到小數）', () => {
+      const startDate = '2026-01-01T00:00:00.000Z';
+      // 假設現在是 2026-01-31（經過 1 個月）
+      const mockNow = new Date('2026-01-31T00:00:00.000Z');
+      const originalNow = Date.now;
+      Date.now = () => mockNow.getTime();
+
+      const result = TrajectoryCalculator.calculateMonthsElapsed(startDate);
+
+      // 30 天 / 30.44 (平均每月天數) ≈ 0.986
+      expect(result).toBeCloseTo(0.986, 2);
+
+      Date.now = originalNow;
+    });
+
+    it('3個月後計算正確', () => {
+      const startDate = '2026-01-01T00:00:00.000Z';
+      const mockNow = new Date('2026-04-01T00:00:00.000Z');
+      const originalNow = Date.now;
+      Date.now = () => mockNow.getTime();
+
+      const result = TrajectoryCalculator.calculateMonthsElapsed(startDate);
+
+      // 90 天 / 30.44 ≈ 2.96
+      expect(result).toBeCloseTo(2.96, 2);
+
+      Date.now = originalNow;
+    });
+
+    it('處理小於 1 個月的情況', () => {
+      const startDate = '2026-01-01T00:00:00.000Z';
+      const mockNow = new Date('2026-01-08T00:00:00.000Z');
+      const originalNow = Date.now;
+      Date.now = () => mockNow.getTime();
+
+      const result = TrajectoryCalculator.calculateMonthsElapsed(startDate);
+
+      // 7 天 / 30.44 ≈ 0.23
+      expect(result).toBeCloseTo(0.23, 2);
+
+      Date.now = originalNow;
+    });
+  });
 });
