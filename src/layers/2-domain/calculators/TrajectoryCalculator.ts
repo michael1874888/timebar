@@ -5,7 +5,9 @@
  * 計算用戶相對於退休目標的財務軌跡偏差
  */
 
-import type { UserData, Record } from '@/types';
+import type { UserData, Record, DeviationResult } from '@/types';
+import { FinanceCalculator } from './FinanceCalculator';
+import { CONSTANTS } from './constants';
 
 /**
  * 軌跡偏差計算引擎
@@ -88,5 +90,84 @@ export class TrajectoryCalculator {
       .reduce((sum, r) => sum + r.amount, 0);
 
     return estimatedIncome - totalSpent;
+  }
+
+  /**
+   * 計算用戶相對於目標軌跡的偏差
+   *
+   * @param params.userData - 用戶資料
+   * @param params.records - 所有記錄
+   * @returns 偏差計算結果
+   */
+  static calculateDeviation(params: {
+    userData: UserData;
+    records: Record[];
+  }): DeviationResult {
+    const { userData, records } = params;
+
+    // 1. 確定起點
+    let startDate = userData.trajectoryStartDate;
+    if (!startDate) {
+      startDate = this.calculateStartDate(userData, records);
+    }
+
+    // 2. 計算經過月數
+    const monthsElapsed = this.calculateMonthsElapsed(startDate);
+
+    // 3. 計算目標累積儲蓄（使用用戶設定的月儲蓄目標）
+    const targetAccumulatedSavings = userData.monthlySavings * monthsElapsed;
+
+    // 計算實質報酬率和距離退休年數（用於時間成本轉換）
+    const realRate = FinanceCalculator.realRate(
+      userData.inflationRate,
+      userData.roiRate
+    );
+    const yearsToRetire = userData.retireAge - userData.age;
+
+    // 4. 計算理想的每月儲蓄額（用於參考，基於退休金目標）
+    const targetRetirementFund =
+      userData.targetRetirementFund ||
+      FinanceCalculator.monthlyToFund(userData.salary - userData.monthlySavings);
+
+    const requiredMonthlySavings = FinanceCalculator.requiredMonthlySavings({
+      currentSavings: userData.currentSavings,
+      targetAmount: targetRetirementFund,
+      years: yearsToRetire,
+      rate: realRate,
+    });
+
+    // 5. 計算實際累積儲蓄
+    const actualAccumulatedSavings = this.calculateActualSavings(
+      userData,
+      records,
+      monthsElapsed
+    );
+
+    // 6. 計算偏差金額
+    const deviation = actualAccumulatedSavings - targetAccumulatedSavings;
+
+    // 7. 轉換當前偏差為時間成本（工作小時）
+    const hourlyRate = FinanceCalculator.hourlyRate(userData.salary);
+    const futureValueOfDeviation =
+      deviation * Math.pow(1 + realRate, yearsToRetire);
+    const currentDeviationHours = futureValueOfDeviation / hourlyRate;
+
+    // 8. 加上歷史偏差（歷史偏差已經是工作小時數）
+    const deviationHours =
+      currentDeviationHours + (userData.historicalDeviationHours || 0);
+
+    return {
+      targetAccumulatedSavings,
+      actualAccumulatedSavings,
+      deviation,
+      deviationHours,
+      deviationDays: FinanceCalculator.hoursToDays(deviationHours),
+      deviationYears: FinanceCalculator.hoursToYears(deviationHours),
+      isOnTrack: Math.abs(deviationHours) < CONSTANTS.WORKING_HOURS_PER_DAY,
+      isAhead: deviationHours > CONSTANTS.WORKING_HOURS_PER_DAY,
+      isBehind: deviationHours < -CONSTANTS.WORKING_HOURS_PER_DAY,
+      monthsElapsed,
+      requiredMonthlySavings,
+    };
   }
 }

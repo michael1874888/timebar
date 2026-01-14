@@ -279,4 +279,172 @@ describe('TrajectoryCalculator', () => {
       expect(result).toBe(142000);
     });
   });
+
+  describe('calculateDeviation', () => {
+    const createMockUserDataForDeviation = (): UserData => ({
+      age: 25,
+      salary: 80000,
+      retireAge: 60,
+      currentSavings: 100000,
+      monthlySavings: 30000,
+      inflationRate: 2.5,
+      roiRate: 6,
+      targetRetirementFund: 10000000,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      trajectoryStartDate: '2026-01-01T00:00:00.000Z',
+    });
+
+    it('返回超前狀態當實際儲蓄 > 目標儲蓄', () => {
+      const userData = createMockUserDataForDeviation();
+      // 模擬經過 1 個月，應該存 30,000，實際存了 50,000（只花 30,000）
+      const records: Record[] = [
+        {
+          id: '1',
+          type: 'spend',
+          amount: 30000,
+          isRecurring: false,
+          timeCost: 30,
+          category: 'food',
+          note: '',
+          timestamp: '2026-01-15T00:00:00.000Z',
+          date: '2026-01-15',
+        },
+      ];
+
+      // Mock Date.now() 為 1 個月後
+      const mockNow = new Date('2026-02-01T00:00:00.000Z');
+      const originalNow = Date.now;
+      Date.now = () => mockNow.getTime();
+
+      const result = TrajectoryCalculator.calculateDeviation({
+        userData,
+        records,
+      });
+
+      expect(result.isAhead).toBe(true);
+      expect(result.isBehind).toBe(false);
+      expect(result.deviation).toBeGreaterThan(0);
+      expect(result.deviationHours).toBeGreaterThan(0);
+
+      Date.now = originalNow;
+    });
+
+    it('返回落後狀態當實際儲蓄 < 目標儲蓄', () => {
+      const userData = createMockUserDataForDeviation();
+      // 模擬經過 1 個月，應該存 30,000，但花了 60,000（實際儲蓄 20,000）
+      const records: Record[] = [
+        {
+          id: '1',
+          type: 'spend',
+          amount: 60000,
+          isRecurring: false,
+          timeCost: 60,
+          category: 'food',
+          note: '',
+          timestamp: '2026-01-15T00:00:00.000Z',
+          date: '2026-01-15',
+        },
+      ];
+
+      const mockNow = new Date('2026-02-01T00:00:00.000Z');
+      const originalNow = Date.now;
+      Date.now = () => mockNow.getTime();
+
+      const result = TrajectoryCalculator.calculateDeviation({
+        userData,
+        records,
+      });
+
+      expect(result.isAhead).toBe(false);
+      expect(result.isBehind).toBe(true);
+      expect(result.deviation).toBeLessThan(0);
+      expect(result.deviationHours).toBeLessThan(0);
+
+      Date.now = originalNow;
+    });
+
+    it('處理歷史偏差疊加', () => {
+      const userData = createMockUserDataForDeviation();
+      userData.historicalDeviationHours = -100; // 歷史落後 100 小時（負數表示落後）
+
+      // 模擬花費剛好符合預算（50,000），所以當前持平
+      const records: Record[] = [
+        {
+          id: '1',
+          type: 'spend',
+          amount: 50000, // 剛好花費預算金額（80,000 - 30,000）
+          isRecurring: false,
+          timeCost: 50,
+          category: 'food',
+          note: '',
+          timestamp: '2026-01-15T00:00:00.000Z',
+          date: '2026-01-15',
+        },
+      ];
+
+      const mockNow = new Date('2026-02-01T00:00:00.000Z');
+      const originalNow = Date.now;
+      Date.now = () => mockNow.getTime();
+
+      const result = TrajectoryCalculator.calculateDeviation({
+        userData,
+        records,
+      });
+
+      // 即使當前持平，也應該因為歷史偏差而顯示落後
+      expect(result.deviationHours).toBeLessThan(0);
+
+      Date.now = originalNow;
+    });
+
+    it('處理剛開始（沒有記錄）的情況', () => {
+      const userData = createMockUserDataForDeviation();
+      const records: Record[] = [];
+
+      // 剛完成 onboarding（經過 1 小時）
+      const mockNow = new Date('2026-01-01T01:00:00.000Z');
+      const originalNow = Date.now;
+      Date.now = () => mockNow.getTime();
+
+      const result = TrajectoryCalculator.calculateDeviation({
+        userData,
+        records,
+      });
+
+      expect(result.monthsElapsed).toBeLessThan(0.01); // 接近 0
+      expect(result.isOnTrack).toBe(true); // 應該顯示「在軌道上」
+      expect(Math.abs(result.deviation)).toBeLessThan(1000); // 偏差很小
+
+      Date.now = originalNow;
+    });
+
+    it('計算包含所有必要字段', () => {
+      const userData = createMockUserDataForDeviation();
+      const records: Record[] = [];
+
+      const mockNow = new Date('2026-02-01T00:00:00.000Z');
+      const originalNow = Date.now;
+      Date.now = () => mockNow.getTime();
+
+      const result = TrajectoryCalculator.calculateDeviation({
+        userData,
+        records,
+      });
+
+      // 驗證返回值包含所有必要字段
+      expect(result).toHaveProperty('targetAccumulatedSavings');
+      expect(result).toHaveProperty('actualAccumulatedSavings');
+      expect(result).toHaveProperty('deviation');
+      expect(result).toHaveProperty('deviationHours');
+      expect(result).toHaveProperty('deviationDays');
+      expect(result).toHaveProperty('deviationYears');
+      expect(result).toHaveProperty('isOnTrack');
+      expect(result).toHaveProperty('isAhead');
+      expect(result).toHaveProperty('isBehind');
+      expect(result).toHaveProperty('monthsElapsed');
+      expect(result).toHaveProperty('requiredMonthlySavings');
+
+      Date.now = originalNow;
+    });
+  });
 });

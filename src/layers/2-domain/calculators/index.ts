@@ -6,6 +6,7 @@
 export { FinanceCalculator } from './FinanceCalculator';
 export { GPSCalculator } from './GPSCalculator';
 export { TimeCalculator } from './TimeCalculator';
+export { TrajectoryCalculator } from './TrajectoryCalculator';
 export { CONSTANTS } from './constants';
 
 // 向後兼容的別名
