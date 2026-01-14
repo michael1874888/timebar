@@ -61,4 +61,32 @@ export class TrajectoryCalculator {
     const diffDays = diffMs / (1000 * 60 * 60 * 24);
     return diffDays / 30.44; // 平均每月天數
   }
+
+  /**
+   * 計算實際累積儲蓄（推算收入 - 記錄支出）
+   *
+   * @param userData - 用戶資料
+   * @param records - 所有記錄
+   * @param monthsElapsed - 經過的月數
+   * @returns 實際累積儲蓄金額
+   */
+  static calculateActualSavings(
+    userData: UserData,
+    records: Record[],
+    monthsElapsed: number
+  ): number {
+    const { salary } = userData;
+
+    // 推算總收入（假設月薪穩定）
+    const estimatedIncome = salary * monthsElapsed;
+
+    // 實際支出（排除已豁免和已終止的訂閱）
+    const totalSpent = records
+      .filter((r) => r.type === 'spend')
+      .filter((r) => !r.guiltFree)
+      .filter((r) => r.recurringStatus !== 'ended')
+      .reduce((sum, r) => sum + r.amount, 0);
+
+    return estimatedIncome - totalSpent;
+  }
 }

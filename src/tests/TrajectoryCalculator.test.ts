@@ -145,4 +145,138 @@ describe('TrajectoryCalculator', () => {
       Date.now = originalNow;
     });
   });
+
+  describe('calculateActualSavings', () => {
+    it('推算收入 = 月薪 × 經過月數', () => {
+      const userData = createMockUserData({
+        salary: 80000,
+      });
+      const records: Record[] = [
+        {
+          id: '1',
+          type: 'spend',
+          amount: 5000,
+          isRecurring: false,
+          timeCost: 5,
+          category: 'food',
+          note: '',
+          timestamp: '2026-01-15T00:00:00.000Z',
+          date: '2026-01-15',
+        },
+      ];
+      const monthsElapsed = 1;
+
+      const result = TrajectoryCalculator.calculateActualSavings(
+        userData,
+        records,
+        monthsElapsed
+      );
+
+      // 80,000 × 1 - 5,000 = 75,000
+      expect(result).toBe(75000);
+    });
+
+    it('排除 guiltFree 記錄', () => {
+      const userData = createMockUserData({
+        salary: 80000,
+      });
+      const records: Record[] = [
+        {
+          id: '1',
+          type: 'spend',
+          amount: 5000,
+          isRecurring: false,
+          timeCost: 5,
+          category: 'food',
+          note: '',
+          timestamp: '2026-01-15T00:00:00.000Z',
+          date: '2026-01-15',
+        },
+        {
+          id: '2',
+          type: 'spend',
+          amount: 3000,
+          isRecurring: false,
+          timeCost: 3,
+          category: 'food',
+          note: '',
+          timestamp: '2026-01-16T00:00:00.000Z',
+          date: '2026-01-16',
+          guiltFree: true, // 使用免死金牌
+        },
+      ];
+      const monthsElapsed = 1;
+
+      const result = TrajectoryCalculator.calculateActualSavings(
+        userData,
+        records,
+        monthsElapsed
+      );
+
+      // 80,000 × 1 - 5,000 = 75,000 (不計 guiltFree)
+      expect(result).toBe(75000);
+    });
+
+    it('排除 ended 訂閱', () => {
+      const userData = createMockUserData({
+        salary: 80000,
+      });
+      const records: Record[] = [
+        {
+          id: '1',
+          type: 'spend',
+          amount: 5000,
+          isRecurring: false,
+          timeCost: 5,
+          category: 'food',
+          note: '',
+          timestamp: '2026-01-15T00:00:00.000Z',
+          date: '2026-01-15',
+        },
+        {
+          id: '2',
+          type: 'spend',
+          amount: 200,
+          isRecurring: true,
+          timeCost: 2,
+          category: 'entertainment',
+          note: '',
+          timestamp: '2026-01-16T00:00:00.000Z',
+          date: '2026-01-16',
+          recurringStatus: 'ended',
+        },
+      ];
+      const monthsElapsed = 1;
+
+      const result = TrajectoryCalculator.calculateActualSavings(
+        userData,
+        records,
+        monthsElapsed
+      );
+
+      // 80,000 × 1 - 5,000 = 75,000 (不計 ended 訂閱)
+      expect(result).toBe(75000);
+    });
+
+    it('處理多筆記錄', () => {
+      const userData = createMockUserData({
+        salary: 80000,
+      });
+      const records: Record[] = [
+        { id: '1', type: 'spend', amount: 5000, isRecurring: false, timeCost: 5, category: 'food', note: '', timestamp: '2026-01-15T00:00:00.000Z', date: '2026-01-15' },
+        { id: '2', type: 'spend', amount: 3000, isRecurring: false, timeCost: 3, category: 'transport', note: '', timestamp: '2026-01-16T00:00:00.000Z', date: '2026-01-16' },
+        { id: '3', type: 'spend', amount: 10000, isRecurring: false, timeCost: 10, category: 'housing', note: '', timestamp: '2026-01-17T00:00:00.000Z', date: '2026-01-17' },
+      ];
+      const monthsElapsed = 2;
+
+      const result = TrajectoryCalculator.calculateActualSavings(
+        userData,
+        records,
+        monthsElapsed
+      );
+
+      // 80,000 × 2 - (5,000 + 3,000 + 10,000) = 142,000
+      expect(result).toBe(142000);
+    });
+  });
 });
