@@ -142,7 +142,19 @@ export function HomePage({
 
   // Hook - 使用預覽記錄來計算 GPS
   const gps = useGPS({
-    targetRetireAge: userData.targetRetireAge,
+    userData: {
+      age: userData.age,
+      salary: userData.monthlySalary,
+      retireAge: userData.targetRetireAge,
+      currentSavings: fullUserData?.currentSavings || 0,
+      monthlySavings: fullUserData?.monthlySavings || 0,
+      inflationRate: fullUserData?.inflationRate || 2.5,
+      roiRate: fullUserData?.roiRate || 6,
+      targetRetirementFund: fullUserData?.targetRetirementFund,
+      createdAt: fullUserData?.createdAt,
+      trajectoryStartDate: fullUserData?.trajectoryStartDate,
+      historicalDeviationHours: fullUserData?.historicalDeviationHours,
+    },
     records: previewRecords,
   });
 

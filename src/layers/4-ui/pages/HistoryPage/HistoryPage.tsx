@@ -103,7 +103,15 @@ export function HistoryPage({
 
   // Hook - GPS
   const gps = useGPS({
-    targetRetireAge: userData.targetRetireAge,
+    userData: {
+      age: userData.age,
+      salary: userData.monthlySalary,
+      retireAge: userData.targetRetireAge,
+      currentSavings: 0,
+      monthlySavings: 0,
+      inflationRate: 2.5,
+      roiRate: 6,
+    },
     records: recordItems,
   });
 

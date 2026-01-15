@@ -4,8 +4,9 @@
  */
 
 import { useMemo } from 'react';
-import { GPSCalculator, TimeCalculator } from '@domain/calculators';
+import { TrajectoryCalculator, TimeCalculator } from '@domain/calculators';
 import type { RecordItem, GPSStatus } from '@domain/types';
+import type { Record, UserData } from '@/types';
 
 export interface UseGPSResult {
   /** 預估退休年齡 */
@@ -41,47 +42,103 @@ export interface UseGPSResult {
  *
  * @example
  * const { estimatedAge, status, isAhead } = useGPS({
- *   targetRetireAge: 65,
+ *   userData: { age: 30, salary: 50000, retireAge: 65, ... },
  *   records: myRecords,
  * });
  */
 export function useGPS(params: {
-  targetRetireAge: number;
+  userData: Partial<UserData>;
   records: RecordItem[];
 }): UseGPSResult {
-  const { targetRetireAge, records } = params;
+  const { userData: userDataInput, records } = params;
 
-  // 計算 GPS 狀態
-  const gpsResult = useMemo(() => {
-    return GPSCalculator.calculateEstimatedAge(targetRetireAge, records);
-  }, [targetRetireAge, records]);
+  // Provide defaults for missing fields
+  const userData: UserData = {
+    age: userDataInput.age || 25,
+    salary: userDataInput.salary || 50000,
+    retireAge: userDataInput.retireAge || 65,
+    currentSavings: userDataInput.currentSavings || 0,
+    monthlySavings: userDataInput.monthlySavings || 0,
+    inflationRate: userDataInput.inflationRate || 2.5,
+    roiRate: userDataInput.roiRate || 6,
+    targetRetirementFund: userDataInput.targetRetirementFund,
+    createdAt: userDataInput.createdAt,
+    trajectoryStartDate: userDataInput.trajectoryStartDate,
+    historicalDeviationHours: userDataInput.historicalDeviationHours,
+  };
+
+  // Convert RecordItem[] to Record[]
+  const fullRecords: Record[] = useMemo(() => {
+    return records.map((r, index) => ({
+      id: `record-${index}-${Date.now()}`,
+      type: r.type,
+      amount: r.amount,
+      isRecurring: r.isRecurring || false,
+      timeCost: r.timeCost || 0,
+      category: r.type === 'save' ? '主動儲蓄' : '一般消費',
+      note: '',
+      timestamp: new Date().toISOString(),
+      date: new Date().toISOString().split('T')[0],
+      guiltFree: r.guiltFree,
+      recurringStatus: r.recurringStatus,
+    }));
+  }, [records]);
+
+  // 計算軌跡偏差
+  const deviationResult = useMemo(() => {
+    return TrajectoryCalculator.calculateDeviation({
+      userData,
+      records: fullRecords,
+    });
+  }, [userData, fullRecords]);
+
+  // Calculate totalSavedHours and totalSpentHours directly from records
+  const hourStats = useMemo(() => {
+    const savedHours = records
+      .filter(r => r.type === 'save')
+      .reduce((sum, r) => sum + (r.timeCost || 0), 0);
+
+    const spentHours = records
+      .filter(r => r.type === 'spend' && !r.guiltFree && r.recurringStatus !== 'ended')
+      .reduce((sum, r) => sum + (r.timeCost || 0), 0);
+
+    return { savedHours, spentHours };
+  }, [records]);
+
+  // Map DeviationResult to UseGPSResult
+  const estimatedAge = userData.retireAge + deviationResult.deviationYears;
+  const ageDiff = -deviationResult.deviationYears;
+  const status: GPSStatus =
+    deviationResult.isAhead ? 'ahead' :
+    deviationResult.isBehind ? 'behind' :
+    'onTrack';
 
   // 計算天數
   const dayStats = useMemo(() => {
-    const savedDays = Math.round(gpsResult.totalSavedHours / 8);
-    const spentDays = Math.round(gpsResult.totalSpentHours / 8);
+    const savedDays = Math.round(hourStats.savedHours / 8);
+    const spentDays = Math.round(hourStats.spentHours / 8);
     return {
       savedDays,
       spentDays,
       netDays: savedDays - spentDays,
     };
-  }, [gpsResult.totalSavedHours, gpsResult.totalSpentHours]);
+  }, [hourStats]);
 
   // 格式化年齡差距
   const formattedAgeDiff = useMemo(() => {
-    return TimeCalculator.formatAgeDiff(gpsResult.ageDiff);
-  }, [gpsResult.ageDiff]);
+    return TimeCalculator.formatAgeDiff(ageDiff);
+  }, [ageDiff]);
 
   return {
-    estimatedAge: gpsResult.estimatedAge,
-    ageDiff: gpsResult.ageDiff,
-    ageDiffDays: gpsResult.ageDiffDays,
-    status: gpsResult.status,
-    isAhead: gpsResult.isAhead,
-    isBehind: gpsResult.isBehind,
-    isOnTrack: gpsResult.isOnTrack,
-    totalSavedHours: gpsResult.totalSavedHours,
-    totalSpentHours: gpsResult.totalSpentHours,
+    estimatedAge,
+    ageDiff,
+    ageDiffDays: Math.round(ageDiff * 365),
+    status,
+    isAhead: deviationResult.isAhead,
+    isBehind: deviationResult.isBehind,
+    isOnTrack: deviationResult.isOnTrack,
+    totalSavedHours: hourStats.savedHours,
+    totalSpentHours: hourStats.spentHours,
     savedDays: dayStats.savedDays,
     spentDays: dayStats.spentDays,
     netDays: dayStats.netDays,
