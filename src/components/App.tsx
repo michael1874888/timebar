@@ -248,7 +248,11 @@ export default function App() {
             amount: r.amount,
             timeCost: r.timeCost || 0,
             isRecurring: r.isRecurring || false,
-          }))}
+            timestamp: r.timestamp,  // 保留原始時間戳
+            date: r.date,  // 保留日期
+            guiltFree: r.guiltFree,
+            recurringStatus: r.recurringStatus,
+          } as any))}
           onAddRecord={(record) => {
             // 如果已經是完整的 RecordType (有 id 和 timestamp)，直接使用
             if ('id' in record && 'timestamp' in record) {

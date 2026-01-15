@@ -69,19 +69,25 @@ export function useGPS(params: {
 
   // Convert RecordItem[] to Record[]
   const fullRecords: Record[] = useMemo(() => {
-    return records.map((r, index) => ({
-      id: `record-${index}-${Date.now()}`,
-      type: r.type,
-      amount: r.amount,
-      isRecurring: r.isRecurring || false,
-      timeCost: r.timeCost || 0,
-      category: r.type === 'save' ? '主動儲蓄' : '一般消費',
-      note: '',
-      timestamp: new Date().toISOString(),
-      date: new Date().toISOString().split('T')[0],
-      guiltFree: r.guiltFree,
-      recurringStatus: r.recurringStatus,
-    }));
+    return records.map((r, index) => {
+      // 使用記錄中的時間戳，如果沒有則使用當前時間（預覽記錄用）
+      const timestamp = (r as any).timestamp || new Date().toISOString();
+      const date = (r as any).date || new Date().toISOString().split('T')[0];
+
+      return {
+        id: (r as any).id || `record-${index}-${Date.now()}`,
+        type: r.type,
+        amount: r.amount,
+        isRecurring: r.isRecurring || false,
+        timeCost: r.timeCost || 0,
+        category: (r as any).category || (r.type === 'save' ? '主動儲蓄' : '一般消費'),
+        note: (r as any).note || '',
+        timestamp,
+        date,
+        guiltFree: r.guiltFree,
+        recurringStatus: r.recurringStatus,
+      };
+    });
   }, [records]);
 
   // 計算軌跡偏差

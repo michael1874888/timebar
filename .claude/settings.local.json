@@ -33,7 +33,15 @@
       "Skill(superpowers:brainstorming)",
       "Skill(ui-ux-pro-max)",
       "Bash(python3:*)",
-      "Skill(superpowers:writing-plans)"
+      "Skill(superpowers:writing-plans)",
+      "Skill(superpowers:subagent-driven-development)",
+      "Bash(./node_modules/.bin/vitest:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npx eslint:*)",
+      "Bash(npm run test:coverage:*)",
+      "Bash(tasklist:*)",
+      "Bash(timeout:*)",
+      "Bash(ver)"
     ]
   }
 }
