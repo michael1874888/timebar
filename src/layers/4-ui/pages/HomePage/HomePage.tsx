@@ -415,6 +415,8 @@ export function HomePage({
             currentAge={userData.age}
             totalSavedHours={gps.totalSavedHours}
             totalSpentHours={gps.totalSpentHours}
+            targetAccumulatedSavings={gps.targetAccumulatedSavings}
+            actualAccumulatedSavings={gps.actualAccumulatedSavings}
             showDetail={showGPSDetail}
             onDetailClick={() => setShowGPSDetail(true)}
             onCloseDetail={() => setShowGPSDetail(false)}

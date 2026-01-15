@@ -28,6 +28,10 @@ export interface RetirementProgressProps {
   showDetail?: boolean;
   /** 關閉詳情的回調 */
   onCloseDetail?: () => void;
+  /** 目標累積儲蓄金額 */
+  targetAccumulatedSavings?: number;
+  /** 實際累積儲蓄金額 */
+  actualAccumulatedSavings?: number;
 }
 
 /**
@@ -98,6 +102,8 @@ export function RetirementProgress({
   onDetailClick,
   showDetail = false,
   onCloseDetail,
+  targetAccumulatedSavings,
+  actualAccumulatedSavings,
 }: RetirementProgressProps) {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -115,6 +121,11 @@ export function RetirementProgress({
   const savedDays = Math.round(totalSavedHours / 8);
   const spentDays = Math.round(totalSpentHours / 8);
   const netDays = savedDays - spentDays;
+
+  // 計算進度百分比（用於累積儲蓄進度條）
+  const progressPercentage = targetAccumulatedSavings && actualAccumulatedSavings
+    ? Math.min(100, Math.max(0, (actualAccumulatedSavings / targetAccumulatedSavings) * 100))
+    : 0;
 
   return (
     <div
@@ -206,6 +217,33 @@ export function RetirementProgress({
           {config.icon} {config.label} {formattedDiff.value} {formattedDiff.unit}
         </span>
       </div>
+
+      {/* 累積儲蓄進度條 */}
+      {targetAccumulatedSavings && actualAccumulatedSavings && (
+        <div className="mt-4">
+          <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+            📊 累積儲蓄進度
+          </div>
+          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div
+              className={`h-full flex items-center justify-end pr-3 text-sm font-medium text-white transition-all duration-500 ${
+                status === 'ahead'
+                  ? 'bg-emerald-500'
+                  : status === 'behind'
+                  ? 'bg-orange-500'
+                  : 'bg-blue-500'
+              }`}
+              style={{ width: `${progressPercentage}%` }}
+            >
+              {progressPercentage > 10 && `${Math.round(progressPercentage)}%`}
+            </div>
+          </div>
+          <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <span>目標: {(targetAccumulatedSavings / 10000).toFixed(1)}萬</span>
+            <span>實際: {(actualAccumulatedSavings / 10000).toFixed(1)}萬</span>
+          </div>
+        </div>
+      )}
 
       {/* 詳情彈窗 */}
       {showDetail && (

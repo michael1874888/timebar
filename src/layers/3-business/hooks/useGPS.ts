@@ -35,6 +35,10 @@ export interface UseGPSResult {
   netDays: number;
   /** 格式化後的年齡差距 */
   formattedAgeDiff: { value: string; unit: string };
+  /** 目標累積儲蓄金額 */
+  targetAccumulatedSavings: number;
+  /** 實際累積儲蓄金額 */
+  actualAccumulatedSavings: number;
 }
 
 /**
@@ -149,6 +153,8 @@ export function useGPS(params: {
     spentDays: dayStats.spentDays,
     netDays: dayStats.netDays,
     formattedAgeDiff,
+    targetAccumulatedSavings: deviationResult.targetAccumulatedSavings,
+    actualAccumulatedSavings: deviationResult.actualAccumulatedSavings,
   };
 }
 
