@@ -417,6 +417,9 @@ export function HomePage({
             totalSpentHours={gps.totalSpentHours}
             targetAccumulatedSavings={gps.targetAccumulatedSavings}
             actualAccumulatedSavings={gps.actualAccumulatedSavings}
+            monthsElapsed={gps.monthsElapsed}
+            deviation={gps.deviation}
+            requiredMonthlySavings={gps.requiredMonthlySavings}
             showDetail={showGPSDetail}
             onDetailClick={() => setShowGPSDetail(true)}
             onCloseDetail={() => setShowGPSDetail(false)}

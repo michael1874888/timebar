@@ -39,6 +39,12 @@ export interface UseGPSResult {
   targetAccumulatedSavings: number;
   /** 實際累積儲蓄金額 */
   actualAccumulatedSavings: number;
+  /** 經過的月數 */
+  monthsElapsed: number;
+  /** 偏差金額（正=超前，負=落後） */
+  deviation: number;
+  /** 每月必須儲蓄金額 */
+  requiredMonthlySavings: number;
 }
 
 /**
@@ -155,6 +161,9 @@ export function useGPS(params: {
     formattedAgeDiff,
     targetAccumulatedSavings: deviationResult.targetAccumulatedSavings,
     actualAccumulatedSavings: deviationResult.actualAccumulatedSavings,
+    monthsElapsed: deviationResult.monthsElapsed,
+    deviation: deviationResult.deviation,
+    requiredMonthlySavings: deviationResult.requiredMonthlySavings,
   };
 }
 

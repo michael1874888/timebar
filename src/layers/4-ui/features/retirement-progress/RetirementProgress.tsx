@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { ColorTokens } from '@ui/design-system/tokens';
 import type { GPSStatus } from '@domain/types';
 import { TimeCalculator } from '@domain/calculators';
+import { Formatters } from '@/utils/financeCalc';
 import './RetirementProgress.css';
 
 export interface RetirementProgressProps {
@@ -32,6 +33,12 @@ export interface RetirementProgressProps {
   targetAccumulatedSavings?: number;
   /** 實際累積儲蓄金額 */
   actualAccumulatedSavings?: number;
+  /** 經過的月數 */
+  monthsElapsed?: number;
+  /** 偏差金額（正=超前，負=落後） */
+  deviation?: number;
+  /** 每月必須儲蓄金額 */
+  requiredMonthlySavings?: number;
 }
 
 /**
@@ -104,8 +111,12 @@ export function RetirementProgress({
   onCloseDetail,
   targetAccumulatedSavings,
   actualAccumulatedSavings,
+  monthsElapsed,
+  deviation,
+  requiredMonthlySavings,
 }: RetirementProgressProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const status = getStatus(targetAge, estimatedAge);
   const config = stateConfig[status];
@@ -242,6 +253,86 @@ export function RetirementProgress({
             <span>目標: {(targetAccumulatedSavings / 10000).toFixed(1)}萬</span>
             <span>實際: {(actualAccumulatedSavings / 10000).toFixed(1)}萬</span>
           </div>
+        </div>
+      )}
+
+      {/* 展開/收起詳情 */}
+      {targetAccumulatedSavings && actualAccumulatedSavings && monthsElapsed !== undefined && (
+        <div className="mt-4">
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 flex items-center gap-1 cursor-pointer transition-colors"
+          >
+            {isExpanded ? '收起 ▲' : '查看詳情 ▼'}
+          </button>
+
+          {isExpanded && (
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
+              <div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                  📊 累積進度（使用 {Math.round(monthsElapsed * 10) / 10} 個月）
+                </p>
+                <ul className="space-y-1 text-sm">
+                  <li className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">• 目標儲蓄：</span>
+                    <span className="font-medium">
+                      {Formatters.formatCurrency(targetAccumulatedSavings)} 元
+                    </span>
+                  </li>
+                  <li className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">• 實際儲蓄：</span>
+                    <span
+                      className={`font-medium ${
+                        status === 'ahead'
+                          ? 'text-emerald-500'
+                          : status === 'behind'
+                          ? 'text-orange-500'
+                          : ''
+                      }`}
+                    >
+                      {Formatters.formatCurrency(actualAccumulatedSavings)} 元{' '}
+                      {status === 'ahead' && '✓'}
+                    </span>
+                  </li>
+                  {deviation !== undefined && (
+                    <li className="flex justify-between">
+                      <span className="text-gray-600 dark:text-gray-400">• 差距：</span>
+                      <span
+                        className={`font-medium ${
+                          deviation > 0 ? 'text-emerald-500' : 'text-orange-500'
+                        }`}
+                      >
+                        {deviation > 0 ? '+' : ''}
+                        {Formatters.formatCurrency(Math.abs(deviation))} 元
+                      </span>
+                    </li>
+                  )}
+                </ul>
+              </div>
+
+              {requiredMonthlySavings !== undefined && (
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                    💰 每月必須儲蓄：
+                  </p>
+                  <p className="text-base font-semibold">
+                    {Formatters.formatCurrency(requiredMonthlySavings)} 元
+                  </p>
+                </div>
+              )}
+
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                <p className="text-sm text-blue-800 dark:text-blue-200">
+                  💡{' '}
+                  {status === 'ahead'
+                    ? '你已經存夠這階段需要的金額！'
+                    : status === 'behind'
+                    ? '需要加快儲蓄速度以達成目標。'
+                    : '保持當前儲蓄速度即可達標。'}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
