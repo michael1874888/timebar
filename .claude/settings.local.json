@@ -41,7 +41,8 @@
       "Bash(npm run test:coverage:*)",
       "Bash(tasklist:*)",
       "Bash(timeout:*)",
-      "Bash(ver)"
+      "Bash(ver)",
+      "Bash(curl:*)"
     ]
   }
 }
