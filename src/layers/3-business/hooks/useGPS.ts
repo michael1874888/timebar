@@ -45,6 +45,10 @@ export interface UseGPSResult {
   deviation: number;
   /** 每月必須儲蓄金額 */
   requiredMonthlySavings: number;
+  /** 軌跡追蹤起點（ISO 8601 格式） */
+  startDate: string;
+  /** 偏差天數（正=超前，負=落後） */
+  deviationDays: number;
 }
 
 /**
@@ -164,6 +168,8 @@ export function useGPS(params: {
     monthsElapsed: deviationResult.monthsElapsed,
     deviation: deviationResult.deviation,
     requiredMonthlySavings: deviationResult.requiredMonthlySavings,
+    startDate: deviationResult.startDate,
+    deviationDays: deviationResult.deviationDays,
   };
 }
 

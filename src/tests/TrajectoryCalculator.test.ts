@@ -443,6 +443,48 @@ describe('TrajectoryCalculator', () => {
       expect(result).toHaveProperty('isBehind');
       expect(result).toHaveProperty('monthsElapsed');
       expect(result).toHaveProperty('requiredMonthlySavings');
+      expect(result).toHaveProperty('startDate');
+
+      Date.now = originalNow;
+    });
+
+    it('返回正確的 startDate 格式（ISO 8601）', () => {
+      const userData = createMockUserDataForDeviation();
+      const records: Record[] = [];
+
+      const mockNow = new Date('2026-02-01T00:00:00.000Z');
+      const originalNow = Date.now;
+      Date.now = () => mockNow.getTime();
+
+      const result = TrajectoryCalculator.calculateDeviation({
+        userData,
+        records,
+      });
+
+      // 驗證 startDate 是有效的 ISO 8601 字串
+      expect(result.startDate).toBe('2026-01-01T00:00:00.000Z');
+      expect(new Date(result.startDate).toISOString()).toBe(result.startDate);
+
+      Date.now = originalNow;
+    });
+
+    it('使用 userData.trajectoryStartDate 作為優先的起始日期', () => {
+      const userData = createMockUserDataForDeviation();
+      userData.trajectoryStartDate = '2025-12-15T00:00:00.000Z'; // 比 createdAt 更早
+
+      const records: Record[] = [];
+
+      const mockNow = new Date('2026-02-01T00:00:00.000Z');
+      const originalNow = Date.now;
+      Date.now = () => mockNow.getTime();
+
+      const result = TrajectoryCalculator.calculateDeviation({
+        userData,
+        records,
+      });
+
+      // 應該使用 trajectoryStartDate
+      expect(result.startDate).toBe('2025-12-15T00:00:00.000Z');
 
       Date.now = originalNow;
     });

@@ -279,9 +279,11 @@ export default function App() {
               isRecurring: record.isRecurring,
             } as RecordType);
           }}
-          points={userData.pointsBalance || 0}
           onSettingsClick={() => setScreen('settings')}
           onHistoryClick={() => setScreen('history')}
+          onUpdateUserData={(updates) => {
+            setUserData(prev => prev ? { ...prev, ...updates } : null);
+          }}
         />
       )}
       {/* Phase 1: tracker 路由已移除，功能已整合到 DashboardScreen */}

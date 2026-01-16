@@ -10,6 +10,8 @@ import { ShopPage } from '@/components/shop/ShopPage';
 import { ChallengeSettingsPage } from './ChallengeSettingsPage';
 import { CategorySettingsPage } from './CategorySettingsPage';
 import { SubscriptionManagerPage } from '@/components/subscription/SubscriptionManagerPage';
+import { RecalibrationDialog } from '@/layers/4-ui/components/RecalibrationDialog';
+import { TrajectoryCalculator } from '@/layers/2-domain/calculators';
 
 const { formatCurrency, formatCurrencyFull } = Formatters;
 const { DEFAULT_INFLATION_RATE, DEFAULT_ROI_RATE } = CONSTANTS;
@@ -43,6 +45,13 @@ export function SettingsPage({ userData, onUpdateUser, onClose, onReset, records
   const [showSubscriptionModal, setShowSubscriptionModal] = useState<boolean>(false);
   const [showCategoryModal, setShowCategoryModal] = useState<boolean>(false);
 
+  // v4.1: 校準對話框狀態
+  const [showRecalibrationDialog, setShowRecalibrationDialog] = useState<boolean>(false);
+  const [pendingGoalChange, setPendingGoalChange] = useState<{
+    oldGoal: { retireAge: number; monthlySavings: number };
+    newGoal: { retireAge: number; monthlySavings: number };
+  } | null>(null);
+
   // 確保退休年齡不小於當前年齡 + 5
   useEffect(() => {
     const minRetireAge = age + 5;
@@ -52,8 +61,32 @@ export function SettingsPage({ userData, onUpdateUser, onClose, onReset, records
   }, [age, retireAge]);
 
   const handleSave = (): void => {
-    // 只保留用戶修改過的欄位，不強制覆蓋 targetRetirementFund
-    onUpdateUser({
+    // v4.1: 檢查是否有目標變更（退休年齡或每月儲蓄）
+    const hasGoalChange = retireAge !== userData.retireAge || monthlySavings !== userData.monthlySavings;
+
+    if (hasGoalChange) {
+      // 顯示校準對話框
+      setPendingGoalChange({
+        oldGoal: {
+          retireAge: userData.retireAge,
+          monthlySavings: userData.monthlySavings || Math.round(userData.salary * 0.2),
+        },
+        newGoal: {
+          retireAge,
+          monthlySavings,
+        },
+      });
+      setShowRecalibrationDialog(true);
+      return;
+    }
+
+    // 沒有目標變更，直接儲存
+    doSave(false);
+  };
+
+  // v4.1: 執行儲存（可選擇是否重置進度）
+  const doSave = (shouldReset: boolean): void => {
+    const updates: UserData = {
       age,
       salary,
       retireAge,
@@ -62,9 +95,24 @@ export function SettingsPage({ userData, onUpdateUser, onClose, onReset, records
       inflationRate,
       roiRate,
       // 保留原有的 targetRetirementFund，除非在計算機中明確修改
-      targetRetirementFund: userData.targetRetirementFund
-    });
+      targetRetirementFund: userData.targetRetirementFund,
+    };
+
+    // 如果選擇重置，清除歷史偏差並重設起點
+    if (shouldReset) {
+      updates.historicalDeviationHours = 0;
+      updates.trajectoryStartDate = new Date().toISOString();
+    }
+
+    onUpdateUser(updates);
     onClose();
+  };
+
+  // v4.1: 處理校準確認
+  const handleRecalibrationConfirm = (shouldReset: boolean): void => {
+    doSave(shouldReset);
+    setShowRecalibrationDialog(false);
+    setPendingGoalChange(null);
   };
 
   const handleClear = async (): Promise<void> => {
@@ -79,6 +127,24 @@ export function SettingsPage({ userData, onUpdateUser, onClose, onReset, records
   const hourlyRate = useMemo(() => Math.round(FinanceCalc.hourlyRate(salary)), [salary]);
   const realRate = useMemo(() => FinanceCalc.realRate(inflationRate, roiRate), [inflationRate, roiRate]);
   const yearsToRetire = useMemo(() => retireAge - age, [retireAge, age]);
+
+  // v4.1: 計算當前預估退休年齡（用於校準對話框）
+  const currentEstimatedAge = useMemo(() => {
+    // 使用 TrajectoryCalculator 計算當前偏差
+    const deviationResult = TrajectoryCalculator.calculateDeviation({
+      userData: {
+        ...userData,
+        age,
+        salary,
+        retireAge,
+        monthlySavings,
+        inflationRate,
+        roiRate,
+      },
+      records,
+    });
+    return retireAge + deviationResult.deviationYears;
+  }, [userData, records, age, salary, retireAge, monthlySavings, inflationRate, roiRate]);
 
   // Phase 3: 簡化計算機結果 - 只保留年齡導向模式
   const calcResults = useMemo(() => {
@@ -406,6 +472,19 @@ export function SettingsPage({ userData, onUpdateUser, onClose, onReset, records
       >
         <CategorySettingsPage onClose={() => setShowCategoryModal(false)} />
       </Modal>
+
+      {/* v4.1: 校準對話框 */}
+      <RecalibrationDialog
+        isOpen={showRecalibrationDialog}
+        onClose={() => {
+          setShowRecalibrationDialog(false);
+          setPendingGoalChange(null);
+        }}
+        oldGoal={pendingGoalChange?.oldGoal || { retireAge: 0, monthlySavings: 0 }}
+        newGoal={pendingGoalChange?.newGoal || { retireAge: 0, monthlySavings: 0 }}
+        currentEstimatedAge={currentEstimatedAge}
+        onConfirm={handleRecalibrationConfirm}
+      />
     </div>
   );
 }

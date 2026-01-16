@@ -168,6 +168,7 @@ export class TrajectoryCalculator {
       isBehind: deviationHours < -CONSTANTS.WORKING_HOURS_PER_DAY,
       monthsElapsed,
       requiredMonthlySavings,
+      startDate,
     };
   }
 }

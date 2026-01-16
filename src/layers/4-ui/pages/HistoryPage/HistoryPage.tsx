@@ -170,8 +170,14 @@ export function HistoryPage({
           currentAge={userData.age}
           totalSavedHours={gps.totalSavedHours}
           totalSpentHours={gps.totalSpentHours}
-          showDetail={false} // 歷史頁面不顯示詳細彈窗，避免干擾
-          onDetailClick={() => {}} // 可選：跳轉到主頁或顯示詳細
+          targetAccumulatedSavings={gps.targetAccumulatedSavings}
+          actualAccumulatedSavings={gps.actualAccumulatedSavings}
+          monthsElapsed={gps.monthsElapsed}
+          deviation={gps.deviation}
+          deviationDays={gps.deviationDays}
+          requiredMonthlySavings={gps.requiredMonthlySavings}
+          showDetail={false}
+          onDetailClick={() => {}}
         />
       </div>
 

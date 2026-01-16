@@ -4,11 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**TimeBar v3.2** - A financial tracking web app that converts spending into "retirement time cost" with gamification features. Helps users understand their spending in terms of delayed/advanced retirement days using compound interest calculations.
+**TimeBar v4.1** - A financial tracking web app that converts spending into "retirement time cost" with gamification features. Helps users understand their spending in terms of delayed/advanced retirement days using the Goal Trajectory Deviation model.
 
 - **Language**: Traditional Chinese (繁體中文) - all UI text, comments, and documentation
 - **Stack**: React 18 + TypeScript + Vite 5
-- **Testing**: Vitest with 93 tests (精簡測試策略 - focused testing strategy)
+- **Testing**: Vitest with 140 tests (精簡測試策略 - focused testing strategy)
 - **Backend**: Google Apps Script (optional cloud sync via Google Sheets)
 - **Deployment**: GitHub Pages at `/timebar/` base path
 
@@ -21,15 +21,17 @@ npm run build            # Production build to dist/
 npm run preview          # Preview production build
 
 # Testing
-npm test                 # Run all 93 tests (3 test files)
+npm test                 # Run all 140 tests (5 test files)
 npm test:watch           # Watch mode
 npm test:ui              # Vitest UI
 npm test:coverage        # Generate coverage report
 
 # Running specific tests
-npm test -- financeCalc       # Only financeCalc.test.ts (56 tests)
-npm test -- App               # Only App.test.tsx (32 tests)
-npm test -- OnboardingScreen  # Only OnboardingScreen.test.tsx (5 tests)
+npm test -- financeCalc            # Only financeCalc.test.ts (56 tests)
+npm test -- App                    # Only App.test.tsx (32 tests)
+npm test -- OnboardingScreen       # Only OnboardingScreen.test.tsx (5 tests)
+npm test -- TrajectoryCalculator   # Only TrajectoryCalculator.test.ts (18 tests)
+npm test -- progressiveDisclosure  # Only progressiveDisclosure.test.ts (29 tests)
 ```
 
 ## Architecture Overview
@@ -79,6 +81,13 @@ export const SettingsSystem = {
 - **RecordSystem** - Spending/saving records with subscription tracking
 - **financeCalc** - Core financial calculations (compound interest, annuity, GPS)
 
+**Domain Layer** (in [src/layers/2-domain/](src/layers/2-domain/)):
+- **TrajectoryCalculator** - Goal Trajectory Deviation model calculations (v4.1)
+  - `calculateStartDate()` - Determine tracking start date
+  - `calculateMonthsElapsed()` - Calculate months since start
+  - `calculateActualSavings()` - Compute actual savings from records
+  - `calculateDeviation()` - Core deviation calculation (ahead/behind/on-track)
+
 **Storage & Sync Strategy:**
 - **Read**: Local cache first, sync from cloud on app startup
 - **Write**: Immediate local save, debounced cloud sync (1s delay)
@@ -114,6 +123,8 @@ All types defined in [src/types/index.ts](src/types/index.ts):
 **Financial Types:**
 - `GPSResult` - Retirement age estimation
 - `TimeFormatted` - Time cost formatting
+- `DeviationResult` - Goal trajectory deviation calculation result (v4.1)
+  - Contains: targetAccumulatedSavings, actualAccumulatedSavings, deviation, deviationHours, deviationDays, deviationYears, isOnTrack, isAhead, isBehind, monthsElapsed, requiredMonthlySavings, startDate
 
 ## Financial Calculation Logic
 
@@ -147,10 +158,12 @@ timeCost = FV ÷ hourlyWage
 **精簡測試策略 (Streamlined Testing Strategy):**
 > Don't test UI implementation details, only test core business logic and critical user flows. Keep tests stable to avoid frequent modifications due to UI changes.
 
-**Test Coverage (93 tests total):**
+**Test Coverage (140 tests total):**
 1. **financeCalc.test.ts** (56 tests) - Core calculations, edge cases, precision
 2. **App.test.tsx** (32 tests) - E2E flows: onboarding → home → history → settings
 3. **OnboardingScreen.test.tsx** (5 tests) - Button text display, onboarding flow validation
+4. **TrajectoryCalculator.test.ts** (18 tests) - Goal trajectory deviation calculations (v4.1)
+5. **progressiveDisclosure.test.ts** (29 tests) - Feature unlock logic
 
 **Note:** Internal implementation tests (settingsSystem, categorySystem) were removed in v3.2 to follow the streamlined testing strategy. Their functionality is covered by E2E tests.
 
@@ -271,6 +284,15 @@ CategorySystem.addCustomCategory({
 
 ## Version History Context
 
+- **v4.1** (2026-01-16): Goal Trajectory Deviation Model
+  - Replaced absolute opportunity cost model with trajectory-based deviation tracking
+  - New TrajectoryCalculator (`src/layers/2-domain/calculators/TrajectoryCalculator.ts`)
+  - New DeviationResult type for tracking savings vs target
+  - RetirementProgress component shows accumulated savings progress bar
+  - Opportunity cost shown as reference value (💭 機會成本僅供參考)
+  - RecalibrationDialog for goal changes with reset/keep history options
+  - Added trajectoryStartDate persistence for consistent tracking
+  - Tests: 138 → 140 (added TrajectoryCalculator tests)
 - **v4.0** (2026-01-11): HomePage Migration & Layer 4 Architecture
   - Migrated from DashboardScreen to new HomePage (`src/layers/4-ui/pages/HomePage/`)
   - Adopted Layer 4 UI architecture with `@ui/` and `@business/` aliases

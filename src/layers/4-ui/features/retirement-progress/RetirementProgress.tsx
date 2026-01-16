@@ -6,6 +6,7 @@
  */
 
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ColorTokens } from '@ui/design-system/tokens';
 import type { GPSStatus } from '@domain/types';
 import { TimeCalculator } from '@domain/calculators';
@@ -37,6 +38,8 @@ export interface RetirementProgressProps {
   monthsElapsed?: number;
   /** 偏差金額（正=超前，負=落後） */
   deviation?: number;
+  /** 偏差天數（正=超前，負=落後）*/
+  deviationDays?: number;
   /** 每月必須儲蓄金額 */
   requiredMonthlySavings?: number;
 }
@@ -113,6 +116,7 @@ export function RetirementProgress({
   actualAccumulatedSavings,
   monthsElapsed,
   deviation,
+  deviationDays,
   requiredMonthlySavings,
 }: RetirementProgressProps) {
   const [isHovered, setIsHovered] = useState(false);
@@ -128,10 +132,8 @@ export function RetirementProgress({
   const diffYears = estimatedAge - targetAge;
   const estimatedPosition = Math.max(10, Math.min(90, targetPosition - diffYears * 5));
 
-  // 計算天數
-  const savedDays = Math.round(totalSavedHours / 8);
-  const spentDays = Math.round(totalSpentHours / 8);
-  const netDays = savedDays - spentDays;
+  // 軌跡偏差天數（正=超前，負=落後）
+  const netDays = deviationDays ?? 0;
 
   // 計算進度百分比（用於累積儲蓄進度條）
   const progressPercentage = targetAccumulatedSavings && actualAccumulatedSavings
@@ -227,10 +229,22 @@ export function RetirementProgress({
         >
           {config.icon} {config.label} {formattedDiff.value} {formattedDiff.unit}
         </span>
+        <span className="text-sm text-blue-400 cursor-pointer hover:text-blue-300 transition-colors">
+          點擊查看詳情 →
+        </span>
       </div>
 
-      {/* 累積儲蓄進度條 */}
-      {targetAccumulatedSavings && actualAccumulatedSavings && (
+      {/* 累積儲蓄進度條 - 追蹤期過短時顯示提示 */}
+      {monthsElapsed !== undefined && monthsElapsed < 0.5 ? (
+        <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+          <div className="text-sm text-blue-800 dark:text-blue-200">
+            📊 開始追蹤退休目標...
+          </div>
+          <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
+            持續記錄 2 週後，這裡會顯示累積儲蓄進度
+          </p>
+        </div>
+      ) : targetAccumulatedSavings && actualAccumulatedSavings && (
         <div className="mt-4">
           <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
             📊 累積儲蓄進度
@@ -256,8 +270,8 @@ export function RetirementProgress({
         </div>
       )}
 
-      {/* 展開/收起詳情 */}
-      {targetAccumulatedSavings && actualAccumulatedSavings && monthsElapsed !== undefined && (
+      {/* 展開/收起詳情 - 只在追蹤期足夠時顯示 */}
+      {monthsElapsed !== undefined && monthsElapsed >= 0.5 && targetAccumulatedSavings && actualAccumulatedSavings && (
         <div className="mt-4">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
@@ -336,10 +350,16 @@ export function RetirementProgress({
         </div>
       )}
 
-      {/* 詳情彈窗 */}
-      {showDetail && (
-        <div className="retirement-progress__detail-overlay" onClick={(e) => e.stopPropagation()}>
-          <div className="retirement-progress__detail">
+      {/* 詳情彈窗 - 使用 Portal 渲染到 body 層級 */}
+      {showDetail && createPortal( // 3. 使用 Portal 渲染彈窗
+        <div
+          className="retirement-progress__detail-overlay"
+          onClick={onCloseDetail} // 2. 修正彈窗點擊事件邏輯
+        >
+          <div
+            className="retirement-progress__detail"
+            onClick={(e) => e.stopPropagation()} // 2. 修正彈窗點擊事件邏輯
+          >
             <div className="retirement-progress__detail-header">
               <h3>退休 GPS 分析</h3>
               <button
@@ -364,41 +384,46 @@ export function RetirementProgress({
               <div className="retirement-progress__detail-divider" />
 
               <div className="retirement-progress__detail-section">
-                <h4>累積影響</h4>
-                <div className="retirement-progress__detail-row">
-                  <span>• 總共省下</span>
-                  <span className="retirement-progress__detail-value text-emerald-500">
-                    {savedDays} 天 ✅
-                  </span>
-                </div>
-                <div className="retirement-progress__detail-row">
-                  <span>• 總共花掉</span>
-                  <span className="retirement-progress__detail-value text-orange-500">
-                    {spentDays} 天 ⚠️
-                  </span>
-                </div>
+                <h4>軌跡偏差</h4>
+                {targetAccumulatedSavings !== undefined && actualAccumulatedSavings !== undefined && (
+                  <>
+                    <div className="retirement-progress__detail-row">
+                      <span>• 目標儲蓄</span>
+                      <span className="retirement-progress__detail-value">
+                        {Formatters.formatCurrency(targetAccumulatedSavings)} 元
+                      </span>
+                    </div>
+                    <div className="retirement-progress__detail-row">
+                      <span>• 實際儲蓄</span>
+                      <span className={`retirement-progress__detail-value ${netDays >= 0 ? 'text-emerald-500' : 'text-orange-500'}`}>
+                        {Formatters.formatCurrency(actualAccumulatedSavings)} 元 {netDays >= 0 ? '✅' : '⚠️'}
+                      </span>
+                    </div>
+                  </>
+                )}
                 <div className="retirement-progress__detail-row retirement-progress__detail-row--highlight">
-                  <span>• 淨值</span>
+                  <span>• 等效時間</span>
                   <span className={`retirement-progress__detail-value ${netDays >= 0 ? 'text-emerald-500' : 'text-orange-500'}`}>
-                    {netDays >= 0 ? '+' : ''}{netDays} 天 {netDays >= 0 ? '🎉' : '⏰'}
+                    {netDays >= 0 ? '+' : ''}{Math.round(netDays)} 天 {netDays >= 0 ? '🎉' : '⏰'}
                   </span>
                 </div>
               </div>
 
               <div className="retirement-progress__detail-summary">
-                {status === 'ahead' && (
-                  <p>🎉 這表示你可以提早 {formattedDiff.value} {formattedDiff.unit}退休！</p>
+                {netDays > 8 && (
+                  <p>🎉 你已超前 {Math.abs(Math.round(netDays))} 天，可以提早退休！</p>
                 )}
-                {status === 'behind' && (
-                  <p>⏰ 目前落後 {formattedDiff.value} {formattedDiff.unit}，繼續努力！</p>
+                {netDays < -8 && (
+                  <p>⏰ 目前落後 {Math.abs(Math.round(netDays))} 天，繼續努力！</p>
                 )}
-                {status === 'onTrack' && (
+                {netDays >= -8 && netDays <= 8 && (
                   <p>✅ 進度正常，繼續保持！</p>
                 )}
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

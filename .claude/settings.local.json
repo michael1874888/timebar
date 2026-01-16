@@ -42,7 +42,8 @@
       "Bash(tasklist:*)",
       "Bash(timeout:*)",
       "Bash(ver)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(if not exist \"D:\\\\UmiCode\\\\timebar\\\\GoalTrajectoryDeviation_2\\\\src\\\\layers\\\\4-ui\\\\components\" mkdir \"D:\\\\UmiCode\\\\timebar\\\\GoalTrajectoryDeviation_2\\\\src\\\\layers\\\\4-ui\\\\components\")"
     ]
   }
 }

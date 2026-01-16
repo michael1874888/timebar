@@ -56,6 +56,8 @@ export interface HomePageProps {
   onSettingsClick?: () => void;
   /** 歷史點擊回調 */
   onHistoryClick?: () => void;
+  /** 更新用戶數據回調（用於保存 trajectoryStartDate 等） */
+  onUpdateUserData?: (updates: Partial<UserData>) => void;
 }
 
 /**
@@ -69,6 +71,7 @@ export function HomePage({
 
   onSettingsClick,
   onHistoryClick,
+  onUpdateUserData,
 }: HomePageProps) {
   // 狀態
   const [amount, setAmount] = useState(0);
@@ -157,6 +160,14 @@ export function HomePage({
     },
     records: previewRecords,
   });
+
+  // 持久化 trajectoryStartDate（首次計算時保存）
+  useEffect(() => {
+    // 如果 startDate 已計算且 userData 中沒有保存過，則保存
+    if (gps.startDate && !fullUserData?.trajectoryStartDate && onUpdateUserData) {
+      onUpdateUserData({ trajectoryStartDate: gps.startDate });
+    }
+  }, [gps.startDate, fullUserData?.trajectoryStartDate, onUpdateUserData]);
 
   // 載入積分
   useEffect(() => {
@@ -419,6 +430,7 @@ export function HomePage({
             actualAccumulatedSavings={gps.actualAccumulatedSavings}
             monthsElapsed={gps.monthsElapsed}
             deviation={gps.deviation}
+            deviationDays={gps.deviationDays}
             requiredMonthlySavings={gps.requiredMonthlySavings}
             showDetail={showGPSDetail}
             onDetailClick={() => setShowGPSDetail(true)}

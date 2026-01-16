@@ -127,6 +127,17 @@
   color: #991b1b;
 }
 
+/* v4.1: 機會成本參考說明 */
+.time-cost-display__reference-note {
+  margin-top: var(--spacing-lg);
+  font-size: var(--font-sm);
+  color: var(--color-text-muted);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: linear-gradient(135deg, rgba(100, 116, 139, 0.1), rgba(100, 116, 139, 0.05));
+  border-radius: var(--radius-md);
+  display: inline-block;
+}
+
 /* 響應式 */
 @media (min-width: 768px) {
   .time-cost-display__value {

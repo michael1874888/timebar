@@ -214,14 +214,25 @@ export function HistoryPage({ records, userData, onClose, onUpdateRecord, onDele
                               }`}>
                                 {record.type === 'save' ? '+' : '-'}{formatCurrency(record.amount)}
                               </div>
+                              {/* v4.1: 機會成本標註為參考值 */}
                               <div className={`text-xs ${
                                 isExempted ? 'text-slate-400' :
                                 record.type === 'save' ? 'text-emerald-500/70' : 'text-orange-400/70'
                               }`}>
-                                {isExempted ? '不計入統計' : `${record.type === 'save' ? '+' : '-'}${time.value}${time.unit}`}
+                                {isExempted ? '不計入統計' : (
+                                  <span title="僅供參考，不計入退休進度">
+                                    💭 {time.value}{time.unit}
+                                  </span>
+                                )}
                               </div>
                             </div>
                           </div>
+                          {/* v4.1: 機會成本參考說明（展開可見） */}
+                          {!isExempted && record.type === 'spend' && (
+                            <div className="mt-1 text-xs text-slate-400">
+                              └ 機會成本僅供參考
+                            </div>
+                          )}
                         </div>
 
                         {/* v2.1: 編輯/刪除按鈕 */}
