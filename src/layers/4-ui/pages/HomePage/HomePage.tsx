@@ -13,6 +13,7 @@ import {
   TimeCostDisplay,
   DecisionButtons,
   Celebration,
+  UnallocatedFundsCard,
 } from '@ui/features';
 import type { RecordItem } from '@domain/types';
 import { useToast } from '@/components/common/Toast';
@@ -437,6 +438,39 @@ export function HomePage({
             onCloseDetail={() => setShowGPSDetail(false)}
           />
         </section>
+
+        {/* 未分配資金卡片 */}
+        {gps.unallocatedFunds > 0 && (
+          <section className="home-page__section">
+            <UnallocatedFundsCard
+              unallocatedFunds={gps.unallocatedFunds}
+              onConvertToSavings={(amount) => {
+                if (!onAddRecord || !fullUserData) return;
+                const timeCost = FinanceCalc.calculateTimeCost(
+                  amount,
+                  false,
+                  FinanceCalc.hourlyRate(userData.monthlySalary),
+                  FinanceCalc.realRate(fullUserData.inflationRate, fullUserData.roiRate),
+                  userData.targetRetireAge - userData.age
+                );
+                const record: RecordType = {
+                  id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                  type: 'save',
+                  amount,
+                  isRecurring: false,
+                  timeCost,
+                  category: '一鍵轉存',
+                  note: '從未分配資金轉存',
+                  timestamp: new Date().toISOString(),
+                  date: new Date().toISOString().split('T')[0],
+                };
+                onAddRecord(record);
+                showToast('🎉 已轉存到退休基金！');
+                setShowConfetti(true);
+              }}
+            />
+          </section>
+        )}
 
         {/* 每日挑戰 - 根據解鎖狀態顯示 */}
         {unlockStatus.challenges && (

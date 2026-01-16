@@ -65,21 +65,44 @@ export class TrajectoryCalculator {
   }
 
   /**
-   * 計算實際累積儲蓄（推算收入 - 記錄支出）
+   * 計算實際累積儲蓄 (Explicit Logic)
+   * 只計算明確記錄的 type='save' 記錄總和
+   *
+   * @param userData - 用戶資料
+   * @param records - 所有記錄
+   * @param monthsElapsed - 經過的月數（未使用，保留參數兼容性）
+   * @returns 實際累積儲蓄金額
+   */
+  static calculateActualSavings(
+    _userData: UserData,
+    records: Record[],
+    _monthsElapsed: number
+  ): number {
+    // Explicit Logic: 只計算明確記錄的儲蓄
+    const totalSaved = records
+      .filter((r) => r.type === 'save')
+      .reduce((sum, r) => sum + r.amount, 0);
+
+    return totalSaved;
+  }
+
+  /**
+   * 計算未分配資金
+   * 公式：估算收入 - 支出 - 已記錄儲蓄
    *
    * @param userData - 用戶資料
    * @param records - 所有記錄
    * @param monthsElapsed - 經過的月數
-   * @returns 實際累積儲蓄金額
+   * @returns 未分配資金（正=有餘額，負=透支）
    */
-  static calculateActualSavings(
+  static calculateUnallocatedFunds(
     userData: UserData,
     records: Record[],
     monthsElapsed: number
   ): number {
     const { salary } = userData;
 
-    // 推算總收入（假設月薪穩定）
+    // 推算總收入
     const estimatedIncome = salary * monthsElapsed;
 
     // 實際支出（排除已豁免和已終止的訂閱）
@@ -89,7 +112,12 @@ export class TrajectoryCalculator {
       .filter((r) => r.recurringStatus !== 'ended')
       .reduce((sum, r) => sum + r.amount, 0);
 
-    return estimatedIncome - totalSpent;
+    // 已記錄儲蓄
+    const totalSaved = records
+      .filter((r) => r.type === 'save')
+      .reduce((sum, r) => sum + r.amount, 0);
+
+    return estimatedIncome - totalSpent - totalSaved;
   }
 
   /**

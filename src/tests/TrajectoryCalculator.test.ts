@@ -147,36 +147,7 @@ describe('TrajectoryCalculator', () => {
   });
 
   describe('calculateActualSavings', () => {
-    it('推算收入 = 月薪 × 經過月數', () => {
-      const userData = createMockUserData({
-        salary: 80000,
-      });
-      const records: Record[] = [
-        {
-          id: '1',
-          type: 'spend',
-          amount: 5000,
-          isRecurring: false,
-          timeCost: 5,
-          category: 'food',
-          note: '',
-          timestamp: '2026-01-15T00:00:00.000Z',
-          date: '2026-01-15',
-        },
-      ];
-      const monthsElapsed = 1;
-
-      const result = TrajectoryCalculator.calculateActualSavings(
-        userData,
-        records,
-        monthsElapsed
-      );
-
-      // 80,000 × 1 - 5,000 = 75,000
-      expect(result).toBe(75000);
-    });
-
-    it('排除 guiltFree 記錄', () => {
+    it('Explicit Logic: 只計算 type=save 記錄', () => {
       const userData = createMockUserData({
         salary: 80000,
       });
@@ -194,15 +165,14 @@ describe('TrajectoryCalculator', () => {
         },
         {
           id: '2',
-          type: 'spend',
-          amount: 3000,
+          type: 'save',
+          amount: 20000,
           isRecurring: false,
-          timeCost: 3,
-          category: 'food',
+          timeCost: 0,
+          category: '主動儲蓄',
           note: '',
-          timestamp: '2026-01-16T00:00:00.000Z',
-          date: '2026-01-16',
-          guiltFree: true, // 使用免死金牌
+          timestamp: '2026-01-10T00:00:00.000Z',
+          date: '2026-01-10',
         },
       ];
       const monthsElapsed = 1;
@@ -213,11 +183,11 @@ describe('TrajectoryCalculator', () => {
         monthsElapsed
       );
 
-      // 80,000 × 1 - 5,000 = 75,000 (不計 guiltFree)
-      expect(result).toBe(75000);
+      // Explicit Logic: 只計算 type='save' = 20,000
+      expect(result).toBe(20000);
     });
 
-    it('排除 ended 訂閱', () => {
+    it('沒有 save 記錄時返回 0', () => {
       const userData = createMockUserData({
         salary: 80000,
       });
@@ -233,18 +203,6 @@ describe('TrajectoryCalculator', () => {
           timestamp: '2026-01-15T00:00:00.000Z',
           date: '2026-01-15',
         },
-        {
-          id: '2',
-          type: 'spend',
-          amount: 200,
-          isRecurring: true,
-          timeCost: 2,
-          category: 'entertainment',
-          note: '',
-          timestamp: '2026-01-16T00:00:00.000Z',
-          date: '2026-01-16',
-          recurringStatus: 'ended',
-        },
       ];
       const monthsElapsed = 1;
 
@@ -254,18 +212,18 @@ describe('TrajectoryCalculator', () => {
         monthsElapsed
       );
 
-      // 80,000 × 1 - 5,000 = 75,000 (不計 ended 訂閱)
-      expect(result).toBe(75000);
+      // 沒有 type='save' 記錄 => 0
+      expect(result).toBe(0);
     });
 
-    it('處理多筆記錄', () => {
+    it('累加多筆 save 記錄', () => {
       const userData = createMockUserData({
         salary: 80000,
       });
       const records: Record[] = [
-        { id: '1', type: 'spend', amount: 5000, isRecurring: false, timeCost: 5, category: 'food', note: '', timestamp: '2026-01-15T00:00:00.000Z', date: '2026-01-15' },
-        { id: '2', type: 'spend', amount: 3000, isRecurring: false, timeCost: 3, category: 'transport', note: '', timestamp: '2026-01-16T00:00:00.000Z', date: '2026-01-16' },
-        { id: '3', type: 'spend', amount: 10000, isRecurring: false, timeCost: 10, category: 'housing', note: '', timestamp: '2026-01-17T00:00:00.000Z', date: '2026-01-17' },
+        { id: '1', type: 'save', amount: 10000, isRecurring: false, timeCost: 0, category: '儲蓄', note: '', timestamp: '2026-01-05T00:00:00.000Z', date: '2026-01-05' },
+        { id: '2', type: 'spend', amount: 5000, isRecurring: false, timeCost: 5, category: 'food', note: '', timestamp: '2026-01-15T00:00:00.000Z', date: '2026-01-15' },
+        { id: '3', type: 'save', amount: 8000, isRecurring: false, timeCost: 0, category: '獎金', note: '', timestamp: '2026-01-20T00:00:00.000Z', date: '2026-01-20' },
       ];
       const monthsElapsed = 2;
 
@@ -275,8 +233,8 @@ describe('TrajectoryCalculator', () => {
         monthsElapsed
       );
 
-      // 80,000 × 2 - (5,000 + 3,000 + 10,000) = 142,000
-      expect(result).toBe(142000);
+      // 10,000 + 8,000 = 18,000
+      expect(result).toBe(18000);
     });
   });
 
@@ -296,7 +254,8 @@ describe('TrajectoryCalculator', () => {
 
     it('返回超前狀態當實際儲蓄 > 目標儲蓄', () => {
       const userData = createMockUserDataForDeviation();
-      // 模擬經過 1 個月，應該存 30,000，實際存了 50,000（只花 30,000）
+      // Explicit Logic: 必須有 type='save' 記錄
+      // 模擬經過 1 個月，目標存 30,000，實際存了 50,000
       const records: Record[] = [
         {
           id: '1',
@@ -308,6 +267,17 @@ describe('TrajectoryCalculator', () => {
           note: '',
           timestamp: '2026-01-15T00:00:00.000Z',
           date: '2026-01-15',
+        },
+        {
+          id: '2',
+          type: 'save',
+          amount: 50000,
+          isRecurring: false,
+          timeCost: 0,
+          category: '主動儲蓄',
+          note: '',
+          timestamp: '2026-01-05T00:00:00.000Z',
+          date: '2026-01-05',
         },
       ];
 
@@ -487,6 +457,201 @@ describe('TrajectoryCalculator', () => {
       expect(result.startDate).toBe('2025-12-15T00:00:00.000Z');
 
       Date.now = originalNow;
+    });
+  });
+
+  describe('calculateUnallocatedFunds (Explicit Logic)', () => {
+    it('計算未分配資金：收入50k - 支出20k - 儲蓄10k = 未分配20k', () => {
+      const userData = createMockUserData({
+        salary: 50000,
+        createdAt: '2026-01-01T00:00:00.000Z',
+      });
+      const records: Record[] = [
+        {
+          id: '1',
+          type: 'spend',
+          amount: 20000,
+          isRecurring: false,
+          timeCost: 10,
+          category: 'shopping',
+          note: '',
+          timestamp: '2026-01-15T12:00:00.000Z',
+          date: '2026-01-15',
+        },
+        {
+          id: '2',
+          type: 'save',
+          amount: 10000,
+          isRecurring: false,
+          timeCost: 0,
+          category: '主動儲蓄',
+          note: '',
+          timestamp: '2026-01-10T12:00:00.000Z',
+          date: '2026-01-10',
+        },
+      ];
+
+      const monthsElapsed = 1;
+      const result = TrajectoryCalculator.calculateUnallocatedFunds(
+        userData,
+        records,
+        monthsElapsed
+      );
+
+      expect(result).toBe(20000); // 50000 - 20000 - 10000
+    });
+
+    it('透支時返回負值：收入50k - 支出60k - 儲蓄0k = -10k', () => {
+      const userData = createMockUserData({
+        salary: 50000,
+        createdAt: '2026-01-01T00:00:00.000Z',
+      });
+      const records: Record[] = [
+        {
+          id: '1',
+          type: 'spend',
+          amount: 60000,
+          isRecurring: false,
+          timeCost: 30,
+          category: 'shopping',
+          note: '',
+          timestamp: '2026-01-15T12:00:00.000Z',
+          date: '2026-01-15',
+        },
+      ];
+
+      const monthsElapsed = 1;
+      const result = TrajectoryCalculator.calculateUnallocatedFunds(
+        userData,
+        records,
+        monthsElapsed
+      );
+
+      expect(result).toBe(-10000); // 50000 - 60000 - 0
+    });
+
+    it('完全分配時返回0：收入50k - 支出30k - 儲蓄20k = 0', () => {
+      const userData = createMockUserData({
+        salary: 50000,
+        createdAt: '2026-01-01T00:00:00.000Z',
+      });
+      const records: Record[] = [
+        {
+          id: '1',
+          type: 'spend',
+          amount: 30000,
+          isRecurring: false,
+          timeCost: 15,
+          category: 'shopping',
+          note: '',
+          timestamp: '2026-01-15T12:00:00.000Z',
+          date: '2026-01-15',
+        },
+        {
+          id: '2',
+          type: 'save',
+          amount: 20000,
+          isRecurring: false,
+          timeCost: 0,
+          category: '主動儲蓄',
+          note: '',
+          timestamp: '2026-01-10T12:00:00.000Z',
+          date: '2026-01-10',
+        },
+      ];
+
+      const monthsElapsed = 1;
+      const result = TrajectoryCalculator.calculateUnallocatedFunds(
+        userData,
+        records,
+        monthsElapsed
+      );
+
+      expect(result).toBe(0); // 50000 - 30000 - 20000
+    });
+  });
+
+  describe('calculateActualSavings (Explicit Logic)', () => {
+    it('只計算 type=save 記錄的總和', () => {
+      const userData = createMockUserData({
+        salary: 50000,
+        createdAt: '2026-01-01T00:00:00.000Z',
+      });
+      const records: Record[] = [
+        {
+          id: '1',
+          type: 'spend',
+          amount: 20000,
+          isRecurring: false,
+          timeCost: 10,
+          category: 'shopping',
+          note: '',
+          timestamp: '2026-01-15T12:00:00.000Z',
+          date: '2026-01-15',
+        },
+        {
+          id: '2',
+          type: 'save',
+          amount: 15000,
+          isRecurring: false,
+          timeCost: 0,
+          category: '主動儲蓄',
+          note: '',
+          timestamp: '2026-01-10T12:00:00.000Z',
+          date: '2026-01-10',
+        },
+        {
+          id: '3',
+          type: 'save',
+          amount: 5000,
+          isRecurring: false,
+          timeCost: 0,
+          category: '獎金',
+          note: '',
+          timestamp: '2026-01-20T12:00:00.000Z',
+          date: '2026-01-20',
+        },
+      ];
+
+      const monthsElapsed = 1;
+      const result = TrajectoryCalculator.calculateActualSavings(
+        userData,
+        records,
+        monthsElapsed
+      );
+
+      // Explicit Logic: 只計算 type='save' 的記錄
+      expect(result).toBe(20000); // 15000 + 5000
+    });
+
+    it('沒有儲蓄記錄時返回0', () => {
+      const userData = createMockUserData({
+        salary: 50000,
+        createdAt: '2026-01-01T00:00:00.000Z',
+      });
+      const records: Record[] = [
+        {
+          id: '1',
+          type: 'spend',
+          amount: 20000,
+          isRecurring: false,
+          timeCost: 10,
+          category: 'shopping',
+          note: '',
+          timestamp: '2026-01-15T12:00:00.000Z',
+          date: '2026-01-15',
+        },
+      ];
+
+      const monthsElapsed = 1;
+      const result = TrajectoryCalculator.calculateActualSavings(
+        userData,
+        records,
+        monthsElapsed
+      );
+
+      // Explicit Logic: 沒有 type='save' 記錄 -> 0
+      expect(result).toBe(0);
     });
   });
 });

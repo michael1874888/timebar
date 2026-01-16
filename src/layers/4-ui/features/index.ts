@@ -23,3 +23,7 @@ export type { DecisionButtonsProps } from './decision-buttons';
 export { Celebration } from './celebration';
 export type { CelebrationProps } from './celebration';
 
+// 未分配資金卡片
+export { UnallocatedFundsCard } from './unallocated-funds';
+export type { UnallocatedFundsCardProps } from './unallocated-funds';
+

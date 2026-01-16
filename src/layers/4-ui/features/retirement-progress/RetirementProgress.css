@@ -177,7 +177,16 @@
 .retirement-progress__badge-container {
   display: flex;
   justify-content: center;
+  align-items: center;
+  position: relative;
   margin-top: 0.75rem;
+}
+
+.retirement-progress__badge-container .retirement-progress__hint-link {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .retirement-progress__badge {

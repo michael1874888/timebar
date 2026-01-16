@@ -229,9 +229,6 @@ export function RetirementProgress({
         >
           {config.icon} {config.label} {formattedDiff.value} {formattedDiff.unit}
         </span>
-        <span className="text-sm text-blue-400 cursor-pointer hover:text-blue-300 transition-colors">
-          點擊查看詳情 →
-        </span>
       </div>
 
       {/* 累積儲蓄進度條 - 追蹤期過短時顯示提示 */}

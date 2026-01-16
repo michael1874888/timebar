@@ -49,6 +49,8 @@ export interface UseGPSResult {
   startDate: string;
   /** 偏差天數（正=超前，負=落後） */
   deviationDays: number;
+  /** 未分配資金（正=有餘額，負=透支） */
+  unallocatedFunds: number;
 }
 
 /**
@@ -170,6 +172,11 @@ export function useGPS(params: {
     requiredMonthlySavings: deviationResult.requiredMonthlySavings,
     startDate: deviationResult.startDate,
     deviationDays: deviationResult.deviationDays,
+    unallocatedFunds: TrajectoryCalculator.calculateUnallocatedFunds(
+      userData,
+      fullRecords,
+      deviationResult.monthsElapsed
+    ),
   };
 }
 
