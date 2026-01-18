@@ -181,17 +181,15 @@ export function HistoryPage({ records, userData, onClose, onUpdateRecord, onDele
                   {monthRecords.map((record, i) => {
                     const time = formatTime(record.timeCost);
                     const date = new Date(record.timestamp);
-                    const isExempted = record.guiltFree === true;
                     const categoryDisplay = getCategoryDisplay(record.category);
-                    
+
                     return (
-                      <div key={record.id} className={`flex items-center gap-3 p-4 ${i > 0 ? 'border-t border-slate-200' : ''} ${isExempted ? 'opacity-60' : ''}`}>
+                      <div key={record.id} className={`flex items-center gap-3 p-4 ${i > 0 ? 'border-t border-slate-200' : ''}`}>
                         {/* 分類圖示 */}
                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${
-                          isExempted ? 'bg-slate-200' :
                           record.type === 'save' ? 'bg-emerald-100' : 'bg-orange-100'
                         }`}>
-                          {isExempted ? '🎫' : categoryDisplay.icon}
+                          {categoryDisplay.icon}
                         </div>
                         
                         {/* 記錄內容 */}

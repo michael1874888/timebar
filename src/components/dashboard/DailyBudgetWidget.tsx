@@ -37,7 +37,7 @@ export function DailyBudgetWidget({ records, userData, onOpenSettings }: DailyBu
   const todayString = getTodayString();
   const todaySpent = useMemo(() => {
     return records
-      .filter(r => r.type === 'spend' && r.date === todayString && r.guiltFree !== true)
+      .filter(r => r.type === 'spend' && r.date === todayString)
       .reduce((sum, r) => sum + r.amount, 0);
   }, [records, todayString]);
 

@@ -112,7 +112,7 @@ export function useRecords(initialRecords: RecordDTO[] = []): UseRecordsResult {
   // 計算總消費
   const totalSpent = useMemo(() => {
     return records
-      .filter((r) => r.type === 'spend' && !r.guiltFree)
+      .filter((r) => r.type === 'spend')
       .reduce((sum, r) => sum + r.amount, 0);
   }, [records]);
 

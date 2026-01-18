@@ -168,8 +168,6 @@ export interface RecordItem {
   amount: number;
   /** 時間成本 (小時) */
   timeCost?: number;
-  /** 是否免罪 (已棄用) */
-  guiltFree?: boolean;
   /** 是否為循環支出 */
   isRecurring?: boolean;
   /** 訂閱狀態 */

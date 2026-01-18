@@ -105,10 +105,9 @@ export class TrajectoryCalculator {
     // 推算總收入
     const estimatedIncome = salary * monthsElapsed;
 
-    // 實際支出（排除已豁免和已終止的訂閱）
+    // 實際支出（排除已終止的訂閱）
     const totalSpent = records
       .filter((r) => r.type === 'spend')
-      .filter((r) => !r.guiltFree)
       .filter((r) => r.recurringStatus !== 'ended')
       .reduce((sum, r) => sum + r.amount, 0);
 

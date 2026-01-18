@@ -60,8 +60,6 @@ export interface UserDataDTO {
   inflationRate: number;
   roiRate: number;
   targetRetirementFund?: number;
-  pointsBalance?: number;
-  inventory?: { guiltFreePass: number };
 }
 
 /**
@@ -77,7 +75,6 @@ export interface RecordDTO {
   note: string;
   timestamp: string;
   date: string;
-  guiltFree?: boolean;
   recurringStatus?: 'active' | 'ended';
   recurringEndDate?: string;
   createdAt?: number;

@@ -100,7 +100,6 @@ export function useGPS(params: {
         note: (r as any).note || '',
         timestamp,
         date,
-        guiltFree: r.guiltFree,
         recurringStatus: r.recurringStatus,
       };
     });
@@ -121,7 +120,7 @@ export function useGPS(params: {
       .reduce((sum, r) => sum + (r.timeCost || 0), 0);
 
     const spentHours = records
-      .filter(r => r.type === 'spend' && !r.guiltFree && r.recurringStatus !== 'ended')
+      .filter(r => r.type === 'spend' && r.recurringStatus !== 'ended')
       .reduce((sum, r) => sum + (r.timeCost || 0), 0);
 
     return { savedHours, spentHours };

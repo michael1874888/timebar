@@ -2,12 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { FinanceCalc, Formatters, CONSTANTS } from '@/utils/financeCalc';
 import { GAS_WEB_APP_URL } from '@/constants';
 import { UserData, Record as RecordType } from '@/types';
-import { PointsSystem } from '@/utils/pointsSystem';
-import { InventorySystem } from '@/utils/inventorySystem';
 import { Modal } from '@/components/common/Modal';
 import { Collapsible } from '@/components/common/Collapsible';
-import { ShopPage } from '@/components/shop/ShopPage';
-import { ChallengeSettingsPage } from './ChallengeSettingsPage';
 import { CategorySettingsPage } from './CategorySettingsPage';
 import { SubscriptionManagerPage } from '@/components/subscription/SubscriptionManagerPage';
 import { RecalibrationDialog } from '@/layers/4-ui/components/RecalibrationDialog';
@@ -40,8 +36,6 @@ export function SettingsPage({ userData, onUpdateUser, onClose, onReset, records
   // Phase 3: 簡化計算機，移除多模式選擇，只保留年齡導向
 
   // Phase 2: Modal 狀態管理
-  const [showShopModal, setShowShopModal] = useState<boolean>(false);
-  const [showChallengeModal, setShowChallengeModal] = useState<boolean>(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState<boolean>(false);
   const [showCategoryModal, setShowCategoryModal] = useState<boolean>(false);
 
@@ -315,68 +309,6 @@ export function SettingsPage({ userData, onUpdateUser, onClose, onReset, records
           </div>
         </Collapsible>
 
-        {/* Phase 3: 遊戲化設定 - Collapsible（預設收合） */}
-        <Collapsible
-          title="遊戲化設定"
-          icon="🎮"
-          defaultOpen={false}
-          storageKey="timebar_settings_gamification_open"
-        >
-          <div className="space-y-4">
-            {/* 積分與道具顯示 */}
-            <div className="bg-slate-50 rounded-xl p-4 mb-4 border border-slate-200">
-              <div className="flex items-center justify-between">
-                <span className="text-slate-500 text-sm">積分餘額</span>
-                <span className="text-amber-600 font-bold">⏳ {PointsSystem.getBalance()}</span>
-              </div>
-              {InventorySystem.getItemCount('guilt_free_pass') > 0 && (
-                <div className="flex items-center justify-between mt-2">
-                  <span className="text-slate-500 text-sm">道具</span>
-                  <span className="text-emerald-600 font-bold">🎫 ×{InventorySystem.getItemCount('guilt_free_pass')}</span>
-                </div>
-              )}
-            </div>
-
-            {/* 每日挑戰設定 */}
-            <button
-              onClick={() => setShowChallengeModal(true)}
-              className="w-full bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-4 border border-emerald-200 hover:border-emerald-300 transition-colors"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="text-2xl">🎯</div>
-                  <div className="text-left">
-                    <div className="text-slate-900 font-bold">每日挑戰設定</div>
-                    <div className="text-slate-500 text-sm">新增或編輯自定義挑戰</div>
-                  </div>
-                </div>
-                <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-            </button>
-
-            {/* 時間沙商店 */}
-            <button
-              onClick={() => setShowShopModal(true)}
-              className="w-full bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-200 hover:border-amber-300 transition-colors"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="text-2xl">🛒</div>
-                  <div className="text-left">
-                    <div className="text-slate-900 font-bold">時間沙商店</div>
-                    <div className="text-slate-500 text-sm">用積分兑換道具</div>
-                  </div>
-                </div>
-                <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-            </button>
-          </div>
-        </Collapsible>
-
         {/* Cloud Status */}
         <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 mb-6 border border-slate-200 shadow-sm">
           <h2 className="text-slate-900 font-bold mb-4">資料同步</h2>
@@ -427,28 +359,10 @@ export function SettingsPage({ userData, onUpdateUser, onClose, onReset, records
           )}
         </div>
 
-        <div className="text-center text-slate-400 text-sm mt-8">TimeBar v2.5</div>
+        <div className="text-center text-slate-400 text-sm mt-8">TimeBar v4.2</div>
       </div>
 
-      {/* Phase 2: Modal 渲染 */}
-      <Modal
-        open={showShopModal}
-        onClose={() => setShowShopModal(false)}
-        title="時間沙商店"
-        size="lg"
-      >
-        <ShopPage onClose={() => setShowShopModal(false)} />
-      </Modal>
-
-      <Modal
-        open={showChallengeModal}
-        onClose={() => setShowChallengeModal(false)}
-        title="管理每日挑戰"
-        size="xl"
-      >
-        <ChallengeSettingsPage onClose={() => setShowChallengeModal(false)} />
-      </Modal>
-
+      {/* Modal 渲染 */}
       {onUpdateRecords && (
         <Modal
           open={showSubscriptionModal}

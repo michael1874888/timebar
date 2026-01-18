@@ -1,11 +1,10 @@
 /**
  * TimeBar - 新版首頁
  * Layer 4 (UI Layer) - 頁面組件
- *
- * 根據 UI-UX-ANALYSIS-AND-REDESIGN.md 重新設計的主畫面
+ * v4.2 精簡版 - 移除遊戲化功能
  */
 
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useFinance, useGPS } from '@business/hooks';
 import {
   RetirementProgress,
@@ -20,16 +19,8 @@ import { useToast } from '@/components/common/Toast';
 import { CategorySelectModal } from '@/components/dashboard/CategorySelectModal';
 import { AwarenessParticles } from '@/components/AwarenessParticles';
 import { Confetti } from '@/components/Confetti';
-import { UnlockNotification } from '@/components/common/UnlockNotification';
-import { PointsParticles } from '@/components/common/PointsParticles';
-import { DailyChallenge, ChallengeCompleteResult } from '@/components/dashboard/DailyChallenge';
-import { QuickActionsBar, QuickAction } from '@/components/dashboard/QuickActionsBar';
-import { Modal } from '@/components/common/Modal';
-import { QuickActionsSettingsPage } from '@/components/settings/QuickActionsSettingsPage';
-import { PointsSystem } from '@/utils/pointsSystem';
 import { FinanceCalc } from '@/utils/financeCalc';
-import { getUnlockStatus, checkNewUnlock, getFeatureUnlockMessage } from '@/utils/progressiveDisclosure';
-import type { Record as RecordType, UserData, ChallengeDefinition } from '@/types';
+import type { Record as RecordType, UserData } from '@/types';
 import './HomePage.css';
 
 export interface HomePageProps {
@@ -39,11 +30,11 @@ export interface HomePageProps {
     monthlySalary: number;
     targetRetireAge: number;
   };
-  /** 完整用戶數據 (包含 createdAt 等，用於漸進式揭露) */
+  /** 完整用戶數據 */
   fullUserData?: UserData;
   /** 記錄列表 */
   records: RecordItem[];
-  /** 添加記錄回調 - 支持完整 RecordType 或簡化格式 */
+  /** 添加記錄回調 */
   onAddRecord?: (record: {
     type: 'save' | 'spend';
     amount: number;
@@ -52,12 +43,11 @@ export interface HomePageProps {
     category?: string;
     note?: string;
   } | RecordType) => void;
-  // 積分參數已整合到 fullUserData.pointsBalance
   /** 設定點擊回調 */
   onSettingsClick?: () => void;
   /** 歷史點擊回調 */
   onHistoryClick?: () => void;
-  /** 更新用戶數據回調（用於保存 trajectoryStartDate 等） */
+  /** 更新用戶數據回調 */
   onUpdateUserData?: (updates: Partial<UserData>) => void;
 }
 
@@ -69,7 +59,6 @@ export function HomePage({
   fullUserData,
   records,
   onAddRecord,
-
   onSettingsClick,
   onHistoryClick,
   onUpdateUserData,
@@ -77,7 +66,7 @@ export function HomePage({
   // 狀態
   const [amount, setAmount] = useState(0);
   const [isRecurring, setIsRecurring] = useState(false);
-  const [recordMode, setRecordMode] = useState<'spend' | 'save'>('spend'); // 記錄模式：消費或儲蓄
+  const [recordMode, setRecordMode] = useState<'spend' | 'save'>('spend');
   const [showGPSDetail, setShowGPSDetail] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
@@ -96,44 +85,13 @@ export function HomePage({
   // Confetti 動畫
   const [showConfetti, setShowConfetti] = useState(false);
 
-  // 漸進式揭露
-  const [showUnlockNotification, setShowUnlockNotification] = useState(false);
-  const [unlockMessage, setUnlockMessage] = useState<{ title: string; description: string; icon: string } | null>(null);
-  const previousRecordCount = useRef<number>(records.length);
-
-  // 積分系統
-  const [pointsBalance, setPointsBalance] = useState<number>(0);
-
-  // 積分粒子效果
-  const [showPointsParticles, setShowPointsParticles] = useState(false);
-  const [earnedPoints, setEarnedPoints] = useState(0);
-
-  // 快速記帳設定 Modal
-  const [showQuickActionsModal, setShowQuickActionsModal] = useState(false);
-
   // Hooks
   const finance = useFinance(userData);
 
-  // 計算時間成本 (必須在 previewRecords 之前)
+  // 計算時間成本
   const timeCost = finance.calculateTimeCost(amount, isRecurring);
 
-  // 計算功能解鎖狀態 (如果有 fullUserData)
-  const unlockStatus = useMemo(() => {
-    if (!fullUserData) return { quickActions: false, challenges: false, gamification: false };
-    // Convert RecordItem[] to RecordType[] for unlock status calculation
-    const recordsForUnlock = records.map(r => ({
-      ...r,
-      id: String(r.timeCost), // Use timeCost as fallback id
-      timestamp: new Date().toISOString(),
-      date: new Date().toISOString().split('T')[0],
-      category: r.type === 'save' ? '主動儲蓄' : '一般消費',
-      note: '',
-    })) as RecordType[];
-    return getUnlockStatus(fullUserData, recordsForUnlock);
-  }, [fullUserData, records]);
-
-  // 預覽記錄 (用於即時更新進度條)
-  // 根據記錄模式預覽：消費模式展示負面影響，儲蓄模式展示正面影響
+  // 預覽記錄
   const previewRecords = useMemo(() => {
     if (amount <= 0) return records;
     return [...records, {
@@ -162,55 +120,23 @@ export function HomePage({
     records: previewRecords,
   });
 
-  // 持久化 trajectoryStartDate（首次計算時保存）
+  // 持久化 trajectoryStartDate
   useEffect(() => {
-    // 如果 startDate 已計算且 userData 中沒有保存過，則保存
     if (gps.startDate && !fullUserData?.trajectoryStartDate && onUpdateUserData) {
       onUpdateUserData({ trajectoryStartDate: gps.startDate });
     }
   }, [gps.startDate, fullUserData?.trajectoryStartDate, onUpdateUserData]);
 
-  // 載入積分
-  useEffect(() => {
-    const balance = PointsSystem.load();
-    setPointsBalance(balance);
-  }, []);
-
-  // 檢測功能解鎖
-  useEffect(() => {
-    if (!fullUserData) return;
-
-    const currentCount = records.length;
-    const previousCount = previousRecordCount.current;
-
-    // 檢查是否有新功能解鎖
-    const newUnlock = checkNewUnlock(previousCount, currentCount, fullUserData);
-
-    if (newUnlock) {
-      const message = getFeatureUnlockMessage(newUnlock);
-      setUnlockMessage(message);
-      setShowUnlockNotification(true);
-    }
-
-    // 更新記錄數量
-    previousRecordCount.current = currentCount;
-  }, [records.length, fullUserData]);
-
-  // 處理「我買了」- 打開分類選擇 Modal
+  // 處理「我買了」
   const handleBought = useCallback(() => {
     if (amount <= 0 || loading) return;
-
-    // 立即設置 loading 防止重複點擊 (fix: 歷史回歸 commit fcea505)
     setLoading(true);
-    // 保存當前的購買信息
     setPendingPurchase({ amount, isRecurring, timeCost });
-    // 打開分類選擇 Modal
     setShowCategoryModal(true);
   }, [amount, isRecurring, timeCost, loading]);
 
   // 處理分類選擇完成
   const handleCategorySelect = useCallback(async (categoryId: string) => {
-    // 注意：不檢查 loading，因為 handleBought 已經設置 loading=true
     if (!pendingPurchase || !onAddRecord) return;
 
     try {
@@ -228,7 +154,6 @@ export function HomePage({
 
       await onAddRecord(record);
 
-      // 觸發覺察提醒動畫
       setShowAwareness(true);
       setTimeout(() => setShowAwareness(false), 2500);
 
@@ -247,16 +172,12 @@ export function HomePage({
     if (amount <= 0) return;
     setCelebrationData({ amount, timeCost });
     setShowCelebration(true);
-
-    // 觸發 Confetti
     setShowConfetti(true);
     setTimeout(() => setShowConfetti(false), 3000);
-
-    // 重置金額
     setAmount(0);
   }, [amount, timeCost]);
 
-  // 處理「存下來了」- 儲蓄模式專用
+  // 處理「存下來了」
   const handleSaved = useCallback(async () => {
     if (amount <= 0 || !onAddRecord) return;
 
@@ -269,12 +190,10 @@ export function HomePage({
         isRecurring,
       });
 
-      // 觸發慶祝效果
       setShowConfetti(true);
       setTimeout(() => setShowConfetti(false), 3000);
 
       showToast('已記錄儲蓄 💰', 'success');
-      // 重置
       setAmount(0);
       setIsRecurring(false);
     } finally {
@@ -282,96 +201,29 @@ export function HomePage({
     }
   }, [amount, timeCost, isRecurring, onAddRecord, showToast]);
 
-  // 確認儲蓄 (從慶祝畫面)
+  // 確認儲蓄
   const handleConfirmSave = useCallback(() => {
     if (!onAddRecord) return;
 
     onAddRecord({
       type: 'save',
       amount: celebrationData.amount,
-      timeCost: celebrationData.timeCost, // 這裡的 timeCost 代表「省下的時間」
+      timeCost: celebrationData.timeCost,
       isRecurring: isRecurring,
     });
 
     showToast('已記入儲蓄 💰', 'success');
-
-    // 重置
     setAmount(0);
     setIsRecurring(false);
     setShowCelebration(false);
   }, [celebrationData, isRecurring, onAddRecord, showToast]);
 
-  // 只是不記錄 (從慶祝畫面)
+  // 只是不記錄
   const handleSkipRecord = useCallback(() => {
     setAmount(0);
     setIsRecurring(false);
     setShowCelebration(false);
   }, []);
-
-  // 處理每日挑戰完成
-  const handleChallengeComplete = useCallback((
-    challenge: ChallengeDefinition,
-    result: ChallengeCompleteResult
-  ) => {
-    // 增加積分
-    const newBalance = PointsSystem.addPoints(result.points, 'daily_challenge');
-    setPointsBalance(newBalance);
-
-    // 觸發粒子效果
-    setEarnedPoints(result.points);
-    setShowPointsParticles(true);
-    setTimeout(() => setShowPointsParticles(false), 1600);
-
-    // 計算時間成本 (如果有金額)
-    const challengeTimeCost = result.amount > 0
-      ? FinanceCalc.calculateTimeCost(
-          result.amount,
-          false,
-          FinanceCalc.hourlyRate(userData.monthlySalary),
-          FinanceCalc.realRate(fullUserData?.inflationRate || 0.025, fullUserData?.roiRate || 0.06),
-          userData.targetRetireAge - userData.age
-        )
-      : 0;
-
-    // 顯示積分 Toast 並詢問是否記帳
-    if (result.showRecordPrompt && result.amount > 0) {
-      const promptData = {
-        challenge,
-        amount: result.amount,
-        timeCost: challengeTimeCost
-      };
-
-      showToast(
-        `獲得 ${challenge.energyReward} ⏳ 時間沙！`,
-        'points',
-        {
-          subMessage: `要把省下的 $${result.amount} 記下來嗎？`,
-          action: {
-            label: '💰 記一筆',
-            onClick: async () => {
-              if (!onAddRecord) return;
-              const record: RecordType = {
-                id: Date.now().toString(),
-                type: 'save',
-                amount: promptData.amount,
-                isRecurring: false,
-                timeCost: promptData.timeCost,
-                category: '每日挑戰',
-                note: promptData.challenge.name,
-                timestamp: new Date().toISOString(),
-                date: new Date().toISOString().split('T')[0],
-              };
-              await onAddRecord(record);
-              showToast(`已記錄省下 $${promptData.amount} 💰`, 'success');
-            }
-          }
-        }
-      );
-    } else {
-      // 沒有記帳提示，只顯示積分獲得
-      showToast(`獲得 ${challenge.energyReward} ⏳ 時間沙！`, 'points');
-    }
-  }, [userData, fullUserData, showToast, onAddRecord]);
 
   return (
     <div className="home-page">
@@ -384,9 +236,6 @@ export function HomePage({
       {/* 覺察提醒動畫 */}
       <AwarenessParticles active={showAwareness} />
 
-      {/* 積分粒子效果 */}
-      <PointsParticles active={showPointsParticles} amount={earnedPoints} x={50} y={30} />
-
       {/* Header */}
       <header className="home-page__header">
         <div className="home-page__logo">
@@ -394,12 +243,6 @@ export function HomePage({
           <span className="home-page__logo-text">TimeBar</span>
         </div>
         <div className="home-page__header-actions">
-          {/* 顯示積分餘額 (遊戲化功能解鎖後) */}
-          {unlockStatus.gamification && pointsBalance > 0 && (
-            <span className="home-page__points">
-              ⏳ {pointsBalance}
-            </span>
-          )}
           <button
             className="home-page__settings-btn"
             onClick={onHistoryClick}
@@ -472,51 +315,7 @@ export function HomePage({
           </section>
         )}
 
-        {/* 每日挑戰 - 根據解鎖狀態顯示 */}
-        {unlockStatus.challenges && (
-          <section className="home-page__section">
-            <DailyChallenge
-              totalPoints={pointsBalance}
-              onCompleteChallenge={handleChallengeComplete}
-            />
-          </section>
-        )}
-
-        {/* 快速記帳按鈕列 - 根據解鎖狀態顯示 */}
-        {unlockStatus.quickActions && fullUserData && (
-          <section className="home-page__section">
-            <QuickActionsBar
-              onQuickAdd={(action: QuickAction) => {
-                if (!onAddRecord) return;
-                // 快速記帳
-                const timeCost = FinanceCalc.calculateTimeCost(
-                  action.amount,
-                  action.isRecurring,
-                  FinanceCalc.hourlyRate(userData.monthlySalary),
-                  FinanceCalc.realRate(fullUserData.inflationRate, fullUserData.roiRate),
-                  userData.targetRetireAge - userData.age
-                );
-                const record: RecordType = {
-                  id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                  type: 'spend',
-                  amount: action.amount,
-                  isRecurring: action.isRecurring,
-                  timeCost,
-                  category: action.categoryId,
-                  note: action.name,
-                  timestamp: new Date().toISOString(),
-                  date: new Date().toISOString().split('T')[0],
-                  createdAt: Date.now()
-                };
-                onAddRecord(record);
-                showToast(`✅ 已記錄 ${action.name} $${action.amount}`);
-              }}
-              onOpenSettings={() => setShowQuickActionsModal(true)}
-            />
-          </section>
-        )}
-
-        {/* 追趕提示（簡化版）- 落後時顯示 */}
+        {/* 追趕提示 - 落後時顯示 */}
         {gps.isBehind && (
           <section className="home-page__section">
             <div style={{
@@ -538,7 +337,6 @@ export function HomePage({
                       setAmount(suggestedAmount);
                       setRecordMode('save');
                       setIsRecurring(true);
-                      // 滾動到金額輸入區
                       window.scrollTo({ top: 300, behavior: 'smooth' });
                     }}
                     style={{
@@ -634,7 +432,7 @@ export function HomePage({
         </section>
       </main>
 
-      {/* 決策按鈕 - 固定在底部 */}
+      {/* 決策按鈕 */}
       <footer className="home-page__footer">
         {recordMode === 'spend' ? (
           <DecisionButtons
@@ -671,7 +469,7 @@ export function HomePage({
         show={showCelebration}
         onClose={() => setShowCelebration(false)}
         amount={celebrationData.amount}
-        timeSavedDays={celebrationData.timeCost / 24} // timeCost 是小時
+        timeSavedDays={celebrationData.timeCost / 24}
         onSave={handleConfirmSave}
         onSkip={handleSkipRecord}
       />
@@ -682,31 +480,10 @@ export function HomePage({
         onClose={() => {
           setShowCategoryModal(false);
           setPendingPurchase(null);
-          setLoading(false); // 重置 loading 狀態
+          setLoading(false);
         }}
         onSelect={handleCategorySelect}
       />
-
-      {/* 功能解鎖通知 */}
-      {unlockMessage && (
-        <UnlockNotification
-          isOpen={showUnlockNotification}
-          onClose={() => setShowUnlockNotification(false)}
-          title={unlockMessage.title}
-          description={unlockMessage.description}
-          icon={unlockMessage.icon}
-        />
-      )}
-
-      {/* 快速記帳設定 Modal */}
-      <Modal
-        open={showQuickActionsModal}
-        onClose={() => setShowQuickActionsModal(false)}
-        title="快速記帳設定"
-        size="xl"
-      >
-        <QuickActionsSettingsPage onBack={() => setShowQuickActionsModal(false)} />
-      </Modal>
     </div>
   );
 }
