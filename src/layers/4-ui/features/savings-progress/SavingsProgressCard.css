@@ -247,3 +247,79 @@
     color: #60a5fa;
   }
 }
+
+/* Unallocated Funds Section */
+.savings-card__unallocated {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding: 0.875rem 1rem;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-radius: 0.75rem;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.savings-card__unallocated-info {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.savings-card__unallocated-icon {
+  font-size: 1.25rem;
+}
+
+.savings-card__unallocated-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.savings-card__unallocated-label {
+  font-size: 0.6875rem;
+  color: #92400e;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.savings-card__unallocated-amount {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #b45309;
+}
+
+.savings-card__unallocated-btn {
+  padding: 0.5rem 0.875rem;
+  background: #f59e0b;
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.savings-card__unallocated-btn:hover {
+  background: #d97706;
+  transform: scale(1.02);
+}
+
+/* Dark Mode for Unallocated */
+@media (prefers-color-scheme: dark) {
+  .savings-card__unallocated {
+    background: linear-gradient(135deg, #78350f 0%, #92400e 100%);
+    border-color: rgba(251, 191, 36, 0.2);
+  }
+
+  .savings-card__unallocated-label {
+    color: #fcd34d;
+  }
+
+  .savings-card__unallocated-amount {
+    color: #fef3c7;
+  }
+}

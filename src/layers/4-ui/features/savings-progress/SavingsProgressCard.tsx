@@ -21,6 +21,10 @@ export interface SavingsProgressCardProps {
   monthsElapsed: number;
   /** 每月必須儲蓄金額 */
   requiredMonthlySavings?: number;
+  /** 未分配資金 */
+  unallocatedFunds?: number;
+  /** 轉存儲蓄的回調 */
+  onConvertToSavings?: (amount: number) => void;
 }
 
 /**
@@ -71,6 +75,8 @@ export function SavingsProgressCard({
   deviation,
   monthsElapsed,
   requiredMonthlySavings,
+  unallocatedFunds,
+  onConvertToSavings,
 }: SavingsProgressCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   
@@ -205,6 +211,29 @@ export function SavingsProgressCard({
                 {Formatters.formatCurrency(requiredMonthlySavings)} 元
               </span>
             </div>
+          )}
+        </div>
+      )}
+
+      {/* 未分配資金整合區塊 */}
+      {unallocatedFunds !== undefined && unallocatedFunds > 0 && (
+        <div className="savings-card__unallocated">
+          <div className="savings-card__unallocated-info">
+            <span className="savings-card__unallocated-icon">💰</span>
+            <div className="savings-card__unallocated-text">
+              <span className="savings-card__unallocated-label">未分配資金</span>
+              <span className="savings-card__unallocated-amount">
+                {Formatters.formatCurrency(unallocatedFunds)} 元
+              </span>
+            </div>
+          </div>
+          {onConvertToSavings && (
+            <button
+              className="savings-card__unallocated-btn"
+              onClick={() => onConvertToSavings(unallocatedFunds)}
+            >
+              ⭐ 轉存退休基金
+            </button>
           )}
         </div>
       )}

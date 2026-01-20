@@ -272,7 +272,7 @@ export function HomePage({
       {/* 主內容 */}
       <main className="home-page__main">
 
-        {/* 儲蓄進度卡片 - 顯示累積儲蓄 vs 目標 */}
+        {/* 儲蓄進度卡片 - 整合未分配資金 */}
         <section className="home-page__section">
           <SavingsProgressCard
             targetAccumulatedSavings={gps.targetAccumulatedSavings}
@@ -280,41 +280,34 @@ export function HomePage({
             deviation={gps.deviation}
             monthsElapsed={gps.monthsElapsed}
             requiredMonthlySavings={gps.requiredMonthlySavings}
+            unallocatedFunds={gps.unallocatedFunds}
+            onConvertToSavings={(amount) => {
+              if (!onAddRecord || !fullUserData) return;
+              const timeCost = FinanceCalc.calculateTimeCost(
+                amount,
+                false,
+                FinanceCalc.hourlyRate(userData.monthlySalary),
+                FinanceCalc.realRate(fullUserData.inflationRate, fullUserData.roiRate),
+                userData.targetRetireAge - userData.age
+              );
+              const record: RecordType = {
+                id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                type: 'save',
+                amount,
+                isRecurring: false,
+                timeCost,
+                category: '一鍵轉存',
+                note: '從未分配資金轉存',
+                timestamp: new Date().toISOString(),
+                date: new Date().toISOString().split('T')[0],
+              };
+              onAddRecord(record);
+              showToast('🎉 已轉存到退休基金！');
+              setShowConfetti(true);
+            }}
           />
         </section>
 
-        {/* 未分配資金卡片 */}
-        {gps.unallocatedFunds > 0 && (
-          <section className="home-page__section">
-            <UnallocatedFundsCard
-              unallocatedFunds={gps.unallocatedFunds}
-              onConvertToSavings={(amount) => {
-                if (!onAddRecord || !fullUserData) return;
-                const timeCost = FinanceCalc.calculateTimeCost(
-                  amount,
-                  false,
-                  FinanceCalc.hourlyRate(userData.monthlySalary),
-                  FinanceCalc.realRate(fullUserData.inflationRate, fullUserData.roiRate),
-                  userData.targetRetireAge - userData.age
-                );
-                const record: RecordType = {
-                  id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                  type: 'save',
-                  amount,
-                  isRecurring: false,
-                  timeCost,
-                  category: '一鍵轉存',
-                  note: '從未分配資金轉存',
-                  timestamp: new Date().toISOString(),
-                  date: new Date().toISOString().split('T')[0],
-                };
-                onAddRecord(record);
-                showToast('🎉 已轉存到退休基金！');
-                setShowConfetti(true);
-              }}
-            />
-          </section>
-        )}
 
         {/* 追趕提示 - 落後時顯示 */}
         {gps.isBehind && (
