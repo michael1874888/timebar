@@ -232,7 +232,7 @@ export function RetirementProgress({
       </div>
 
       {/* 累積儲蓄進度條 - 追蹤期過短時顯示提示 */}
-      {monthsElapsed !== undefined && monthsElapsed < 0.5 ? (
+      {monthsElapsed !== undefined && (monthsElapsed < 0.5 && !import.meta.env.DEV) ? (
         <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
           <div className="text-sm text-blue-800 dark:text-blue-200">
             📊 開始追蹤退休目標...
@@ -243,8 +243,15 @@ export function RetirementProgress({
         </div>
       ) : targetAccumulatedSavings && actualAccumulatedSavings && (
         <div className="mt-4">
-          <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-            📊 累積儲蓄進度
+          <div className="flex items-center gap-2 mb-2">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              📊 累積儲蓄進度
+            </div>
+            {monthsElapsed !== undefined && monthsElapsed < 0.5 && import.meta.env.DEV && (
+              <span className="text-[10px] px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded border border-purple-200" title="Developers only - bypassing 2 week check">
+                DEV MOCK
+              </span>
+            )}
           </div>
           <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
             <div
@@ -267,8 +274,8 @@ export function RetirementProgress({
         </div>
       )}
 
-      {/* 展開/收起詳情 - 只在追蹤期足夠時顯示 */}
-      {monthsElapsed !== undefined && monthsElapsed >= 0.5 && targetAccumulatedSavings && actualAccumulatedSavings && (
+      {/* 展開/收起詳情 - 只在追蹤期足夠時顯示 (Dev Mode 無視限制) */}
+      {monthsElapsed !== undefined && (monthsElapsed >= 0.5 || import.meta.env.DEV) && targetAccumulatedSavings && actualAccumulatedSavings && (
         <div className="mt-4">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
@@ -335,9 +342,9 @@ export function RetirementProgress({
               <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
                 <p className="text-sm text-blue-800 dark:text-blue-200">
                   💡{' '}
-                  {status === 'ahead'
+                  {deviation !== undefined && deviation > 0
                     ? '你已經存夠這階段需要的金額！'
-                    : status === 'behind'
+                    : deviation !== undefined && deviation < 0
                     ? '需要加快儲蓄速度以達成目標。'
                     : '保持當前儲蓄速度即可達標。'}
                 </p>

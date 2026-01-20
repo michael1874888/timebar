@@ -182,13 +182,15 @@ export function HistoryPage({ records, userData, onClose, onUpdateRecord, onDele
                     const time = formatTime(record.timeCost);
                     const date = new Date(record.timestamp);
                     const categoryDisplay = getCategoryDisplay(record.category);
+                    // v4.1: 判斷是否為已豁免的記錄（例如已終止的訂閱）
+                    const isExempted = record.recurringStatus === 'ended';
 
                     return (
                       <div key={record.id} className={`flex items-center gap-3 p-4 ${i > 0 ? 'border-t border-slate-200' : ''}`}>
                         {/* 分類圖示 */}
                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${
                           record.type === 'save' ? 'bg-emerald-100' : 'bg-orange-100'
-                        }`}>
+                        } ${isExempted ? 'opacity-50' : ''}`}>
                           {categoryDisplay.icon}
                         </div>
                         
@@ -196,13 +198,12 @@ export function HistoryPage({ records, userData, onClose, onUpdateRecord, onDele
                         <div className="flex-1 min-w-0">
                           <div className="flex justify-between items-start">
                             <div className="min-w-0">
-                              <div className={`font-medium truncate ${isExempted ? 'text-slate-400 line-through' : 'text-slate-900'}`}>
+                              <div className={`font-medium truncate ${isExempted ? 'text-slate-400' : 'text-slate-900'}`}>
                                 {record.note || categoryDisplay.name || (record.type === 'save' ? '儲蓄' : '消費')}
-                                {isExempted && <span className="text-amber-500 text-xs ml-1 no-underline">(已豁免)</span>}
                               </div>
                               <div className="text-slate-400 text-xs">
                                 {record.isRecurring ? '🔄 ' : ''}{date.getMonth() + 1}/{date.getDate()}
-                                {record.recurringStatus === 'ended' && <span className="text-slate-500 ml-1">(已終止)</span>}
+                                {isExempted && <span className="text-amber-500 ml-1">(已終止・不計入統計)</span>}
                               </div>
                             </div>
                             <div className="text-right ml-2">
@@ -213,16 +214,15 @@ export function HistoryPage({ records, userData, onClose, onUpdateRecord, onDele
                                 {record.type === 'save' ? '+' : '-'}{formatCurrency(record.amount)}
                               </div>
                               {/* v4.1: 機會成本標註為參考值 */}
-                              <div className={`text-xs ${
-                                isExempted ? 'text-slate-400' :
-                                record.type === 'save' ? 'text-emerald-500/70' : 'text-orange-400/70'
-                              }`}>
-                                {isExempted ? '不計入統計' : (
+                              {!isExempted && (
+                                <div className={`text-xs ${
+                                  record.type === 'save' ? 'text-emerald-500/70' : 'text-orange-400/70'
+                                }`}>
                                   <span title="僅供參考，不計入退休進度">
                                     💭 {time.value}{time.unit}
                                   </span>
-                                )}
-                              </div>
+                                </div>
+                              )}
                             </div>
                           </div>
                           {/* v4.1: 機會成本參考說明（展開可見） */}

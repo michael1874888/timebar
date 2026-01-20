@@ -1,0 +1,249 @@
+/**
+ * 儲蓄進度卡片樣式
+ * Glassmorphism + Clean Dashboard 風格
+ */
+
+.savings-card {
+  padding: 1.25rem;
+  border-radius: 1rem;
+  border: 1px solid;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.3s ease;
+}
+
+.savings-card--early {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.15);
+}
+
+/* Header */
+.savings-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.savings-card__title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.savings-card__dev-badge {
+  font-size: 0.625rem;
+  padding: 0.125rem 0.375rem;
+  background: #a855f7;
+  color: #fff;
+  border-radius: 0.25rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+/* Early State */
+.savings-card__early-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 0.75rem;
+}
+
+.savings-card__early-icon {
+  font-size: 1.5rem;
+}
+
+.savings-card__early-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #1e40af;
+  margin: 0 0 0.25rem;
+}
+
+.savings-card__early-subtitle {
+  font-size: 0.75rem;
+  color: #3b82f6;
+  margin: 0;
+}
+
+/* Progress */
+.savings-card__progress-wrapper {
+  margin-bottom: 1rem;
+}
+
+.savings-card__progress-track {
+  height: 2rem;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.savings-card__progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 0.75rem;
+  transition: width 0.5s ease;
+  min-width: 2rem;
+}
+
+.savings-card__progress-text {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.savings-card__progress-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.375rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+/* Status */
+.savings-card__status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  border-radius: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.savings-card__status-icon {
+  font-size: 1rem;
+}
+
+.savings-card__status-text {
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+/* Toggle */
+.savings-card__toggle {
+  display: block;
+  width: 100%;
+  padding: 0.5rem;
+  background: none;
+  border: none;
+  font-size: 0.8125rem;
+  color: #3b82f6;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.savings-card__toggle:hover {
+  color: #1d4ed8;
+}
+
+/* Details */
+.savings-card__details {
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.savings-card__detail-header {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #6b7280;
+  margin-bottom: 0.75rem;
+}
+
+.savings-card__detail-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+}
+
+.savings-card__detail-list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.375rem 0;
+  font-size: 0.875rem;
+  color: #4b5563;
+}
+
+.savings-card__detail-value {
+  font-weight: 600;
+}
+
+/* Monthly Target */
+.savings-card__monthly-target {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 0.5rem;
+}
+
+.savings-card__monthly-label {
+  font-size: 0.8125rem;
+  color: #4b5563;
+}
+
+.savings-card__monthly-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .savings-card__title {
+    color: #f9fafb;
+  }
+
+  .savings-card__progress-track {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .savings-card__progress-labels {
+    color: #9ca3af;
+  }
+
+  .savings-card__detail-header {
+    color: #9ca3af;
+  }
+
+  .savings-card__detail-list li {
+    color: #d1d5db;
+  }
+
+  .savings-card__monthly-label {
+    color: #9ca3af;
+  }
+
+  .savings-card__monthly-value {
+    color: #f9fafb;
+  }
+
+  .savings-card__details {
+    border-top-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .savings-card__early-title {
+    color: #93c5fd;
+  }
+
+  .savings-card__early-subtitle {
+    color: #60a5fa;
+  }
+}

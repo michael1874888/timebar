@@ -7,7 +7,8 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useFinance, useGPS } from '@business/hooks';
 import {
-  RetirementProgress,
+  RetirementGPSCard,
+  SavingsProgressCard,
   AmountInput,
   TimeCostDisplay,
   DecisionButtons,
@@ -262,23 +263,24 @@ export function HomePage({
 
       {/* 主內容 */}
       <main className="home-page__main">
-        {/* 退休進度條 */}
+        {/* 退休 GPS 卡片 - 顯示預估 vs 目標退休年齡 */}
         <section className="home-page__section">
-          <RetirementProgress
+          <RetirementGPSCard
             targetAge={userData.targetRetireAge}
             estimatedAge={gps.estimatedAge}
-            currentAge={userData.age}
-            totalSavedHours={gps.totalSavedHours}
-            totalSpentHours={gps.totalSpentHours}
+            status={gps.status}
+            onClick={() => setShowGPSDetail(true)}
+          />
+        </section>
+
+        {/* 儲蓄進度卡片 - 顯示累積儲蓄 vs 目標 */}
+        <section className="home-page__section">
+          <SavingsProgressCard
             targetAccumulatedSavings={gps.targetAccumulatedSavings}
             actualAccumulatedSavings={gps.actualAccumulatedSavings}
-            monthsElapsed={gps.monthsElapsed}
             deviation={gps.deviation}
-            deviationDays={gps.deviationDays}
+            monthsElapsed={gps.monthsElapsed}
             requiredMonthlySavings={gps.requiredMonthlySavings}
-            showDetail={showGPSDetail}
-            onDetailClick={() => setShowGPSDetail(true)}
-            onCloseDetail={() => setShowGPSDetail(false)}
           />
         </section>
 

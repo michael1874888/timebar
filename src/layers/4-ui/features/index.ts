@@ -27,3 +27,10 @@ export type { CelebrationProps } from './celebration';
 export { UnallocatedFundsCard } from './unallocated-funds';
 export type { UnallocatedFundsCardProps } from './unallocated-funds';
 
+// 退休 GPS 卡片（v4.2 新版）
+export { RetirementGPSCard } from './retirement-gps/RetirementGPSCard';
+export type { RetirementGPSCardProps } from './retirement-gps/RetirementGPSCard';
+
+// 儲蓄進度卡片（v4.2 新版）
+export { SavingsProgressCard } from './savings-progress/SavingsProgressCard';
+export type { SavingsProgressCardProps } from './savings-progress/SavingsProgressCard';
