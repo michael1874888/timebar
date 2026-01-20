@@ -13,7 +13,6 @@ import {
   TimeCostDisplay,
   DecisionButtons,
   Celebration,
-  UnallocatedFundsCard,
 } from '@ui/features';
 import type { RecordItem } from '@domain/types';
 import { useToast } from '@/components/common/Toast';
@@ -68,7 +67,6 @@ export function HomePage({
   const [amount, setAmount] = useState(0);
   const [isRecurring, setIsRecurring] = useState(false);
   const [recordMode, setRecordMode] = useState<'spend' | 'save'>('spend');
-  const [showGPSDetail, setShowGPSDetail] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const [celebrationData, setCelebrationData] = useState({ amount: 0, timeCost: 0 });
