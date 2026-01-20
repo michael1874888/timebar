@@ -31,6 +31,13 @@ export type { UnallocatedFundsCardProps } from './unallocated-funds';
 export { RetirementGPSCard } from './retirement-gps/RetirementGPSCard';
 export type { RetirementGPSCardProps } from './retirement-gps/RetirementGPSCard';
 
+// 退休 GPS 狀態列（精簡版）
+export { RetirementGPSBar } from './retirement-gps/RetirementGPSBar';
+export type { RetirementGPSBarProps } from './retirement-gps/RetirementGPSBar';
+
+// GPS Header Badge（Header 內嵌版）
+export { GPSHeaderBadge } from './retirement-gps/GPSHeaderBadge';
+export type { GPSHeaderBadgeProps } from './retirement-gps/GPSHeaderBadge';
 // 儲蓄進度卡片（v4.2 新版）
 export { SavingsProgressCard } from './savings-progress/SavingsProgressCard';
 export type { SavingsProgressCardProps } from './savings-progress/SavingsProgressCard';

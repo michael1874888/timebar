@@ -7,7 +7,7 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useFinance, useGPS } from '@business/hooks';
 import {
-  RetirementGPSCard,
+  GPSHeaderBadge,
   SavingsProgressCard,
   AmountInput,
   TimeCostDisplay,
@@ -237,12 +237,20 @@ export function HomePage({
       {/* 覺察提醒動畫 */}
       <AwarenessParticles active={showAwareness} />
 
-      {/* Header */}
+      {/* Header with integrated GPS */}
       <header className="home-page__header">
         <div className="home-page__logo">
           <span className="home-page__logo-icon">⏳</span>
           <span className="home-page__logo-text">TimeBar</span>
         </div>
+
+        {/* GPS Status Badge - 中央 */}
+        <GPSHeaderBadge
+          targetAge={userData.targetRetireAge}
+          estimatedAge={gps.estimatedAge}
+          status={gps.status}
+        />
+
         <div className="home-page__header-actions">
           <button
             className="home-page__settings-btn"
@@ -263,15 +271,6 @@ export function HomePage({
 
       {/* 主內容 */}
       <main className="home-page__main">
-        {/* 退休 GPS 卡片 - 顯示預估 vs 目標退休年齡 */}
-        <section className="home-page__section">
-          <RetirementGPSCard
-            targetAge={userData.targetRetireAge}
-            estimatedAge={gps.estimatedAge}
-            status={gps.status}
-            onClick={() => setShowGPSDetail(true)}
-          />
-        </section>
 
         {/* 儲蓄進度卡片 - 顯示累積儲蓄 vs 目標 */}
         <section className="home-page__section">
