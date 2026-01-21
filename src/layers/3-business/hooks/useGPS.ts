@@ -171,11 +171,15 @@ export function useGPS(params: {
     requiredMonthlySavings: deviationResult.requiredMonthlySavings,
     startDate: deviationResult.startDate,
     deviationDays: deviationResult.deviationDays,
-    unallocatedFunds: TrajectoryCalculator.calculateUnallocatedFunds(
-      userData,
-      fullRecords,
-      deviationResult.monthsElapsed
-    ),
+    // 只有在有真實記錄時才計算未分配資金
+    // 避免新用戶看到「phantom money」隨時間增長
+    unallocatedFunds: fullRecords.some(r => r.id && !r.id.startsWith('record-'))
+      ? TrajectoryCalculator.calculateUnallocatedFunds(
+          userData,
+          fullRecords,
+          deviationResult.monthsElapsed
+        )
+      : 0,
   };
 }
 
