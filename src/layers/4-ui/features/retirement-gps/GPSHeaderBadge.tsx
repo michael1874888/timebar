@@ -68,9 +68,12 @@ export function GPSHeaderBadge({
   const [showDetail, setShowDetail] = useState(false);
 
   const config = statusConfig[status];
-  const ageDiff = targetAge - estimatedAge;
-  const isAhead = ageDiff > 0.001;
+  const ageDiff = Math.abs(targetAge - estimatedAge);
   const diffText = formatAgeDiff(ageDiff);
+  
+  // 使用傳入的 status 統一決定顯示邏輯，避免不一致
+  const isOnTrack = status === 'onTrack';
+  const isAhead = status === 'ahead';
 
   return (
     <>
@@ -82,7 +85,7 @@ export function GPSHeaderBadge({
       >
         <span className="gps-badge__icon">{config.icon}</span>
         <span className="gps-badge__text">
-          {isAhead ? '+' : status === 'onTrack' ? '' : '-'}
+          {isOnTrack ? '' : isAhead ? '+' : '-'}
           {diffText}
         </span>
       </button>
@@ -115,8 +118,7 @@ export function GPSHeaderBadge({
                     className="gps-badge__modal-value"
                     style={{ color: config.bgColor }}
                   >
-                    {isAhead ? '提早 ' : status === 'onTrack' ? '' : '延後 '}
-                    {diffText}
+                    {isOnTrack ? '準時達標' : isAhead ? `提早 ${diffText}` : `延後 ${diffText}`}
                   </span>
                 </div>
 

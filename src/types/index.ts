@@ -97,6 +97,7 @@ export interface DeviationResult {
   isAhead: boolean;                   // 是否超前
   isBehind: boolean;                  // 是否落後
   monthsElapsed: number;              // 已經過月數
+  weeksElapsed: number;               // 已經過完整週數（用於目標儲蓄計算）
   requiredMonthlySavings: number;     // 每月必須儲蓄額
   startDate: string;                  // 軌跡追蹤起點（ISO 8601 格式）
 }

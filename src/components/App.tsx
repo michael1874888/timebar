@@ -195,6 +195,7 @@ export default function App() {
           }}
           fullUserData={userData}
           records={records.map(r => ({
+            id: r.id,  // 必須傳遞 id 讓 GPS 判斷是否有真實記錄
             type: r.type === 'spend' ? 'spend' : 'save',
             amount: r.amount,
             timeCost: r.timeCost || 0,

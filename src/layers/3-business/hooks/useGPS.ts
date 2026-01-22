@@ -41,6 +41,8 @@ export interface UseGPSResult {
   actualAccumulatedSavings: number;
   /** 經過的月數 */
   monthsElapsed: number;
+  /** 經過的完整週數（用於目標儲蓄計算） */
+  weeksElapsed: number;
   /** 偏差金額（正=超前，負=落後） */
   deviation: number;
   /** 每月必須儲蓄金額 */
@@ -126,13 +128,36 @@ export function useGPS(params: {
     return { savedHours, spentHours };
   }, [records]);
 
-  // Map DeviationResult to UseGPSResult
-  const estimatedAge = userData.retireAge + deviationResult.deviationYears;
-  const ageDiff = -deviationResult.deviationYears;
-  const status: GPSStatus =
-    deviationResult.isAhead ? 'ahead' :
-    deviationResult.isBehind ? 'behind' :
-    'onTrack';
+  // 檢查是否有真實記錄（排除預覽記錄）
+  // 真實記錄會有 timestamp 欄位，預覽記錄沒有
+  // 使用原始 records 來檢查，因為 fullRecords 會給所有記錄生成 ID
+  const hasRealRecords = records.some(r => 
+    (r as any).timestamp || (r as any).id
+  );
+
+  // === GPS 狀態計算（基於 timeCost，與 GPSCalc 一致） ===
+  // 儲蓄的 timeCost = 可提早退休的時數（正面影響）
+  // 消費的 timeCost = 需延後退休的時數（負面影響）
+  // 淨影響 = spentHours - savedHours（正=落後，負=領先）
+  const netHoursImpact = hourStats.spentHours - hourStats.savedHours;
+  const WORKING_HOURS_PER_YEAR = 2112; // 22天 * 8小時 * 12月
+  const WORKING_HOURS_PER_DAY = 8;
+  
+  // 計算預估退休年齡和狀態（基於 timeCost）
+  const timeCostBasedAgeDiff = hasRealRecords 
+    ? -netHoursImpact / WORKING_HOURS_PER_YEAR 
+    : 0;
+  const estimatedAge = hasRealRecords 
+    ? userData.retireAge - timeCostBasedAgeDiff
+    : userData.retireAge;
+  const ageDiff = timeCostBasedAgeDiff;
+  
+  // 使用 timeCost 計算 GPS 狀態（±1天 閾值）
+  const status: GPSStatus = !hasRealRecords
+    ? 'onTrack'  // 沒有記錄時，顯示準時狀態
+    : netHoursImpact < -WORKING_HOURS_PER_DAY ? 'ahead'  // 省了超過1天 = 領先
+    : netHoursImpact > WORKING_HOURS_PER_DAY ? 'behind'   // 花了超過1天 = 落後
+    : 'onTrack';
 
   // 計算天數
   const dayStats = useMemo(() => {
@@ -167,13 +192,14 @@ export function useGPS(params: {
     targetAccumulatedSavings: deviationResult.targetAccumulatedSavings,
     actualAccumulatedSavings: deviationResult.actualAccumulatedSavings,
     monthsElapsed: deviationResult.monthsElapsed,
+    weeksElapsed: deviationResult.weeksElapsed,
     deviation: deviationResult.deviation,
     requiredMonthlySavings: deviationResult.requiredMonthlySavings,
     startDate: deviationResult.startDate,
     deviationDays: deviationResult.deviationDays,
     // 只有在有真實記錄時才計算未分配資金
     // 避免新用戶看到「phantom money」隨時間增長
-    unallocatedFunds: fullRecords.some(r => r.id && !r.id.startsWith('record-'))
+    unallocatedFunds: hasRealRecords
       ? TrajectoryCalculator.calculateUnallocatedFunds(
           userData,
           fullRecords,

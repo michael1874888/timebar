@@ -65,6 +65,21 @@ export class TrajectoryCalculator {
   }
 
   /**
+   * 計算經過的完整週數（用於穩定的目標儲蓄計算）
+   * 避免目標儲蓄數字每秒變動
+   *
+   * @param startDate - ISO 8601 格式的起點日期
+   * @returns 經過的完整週數（整數）
+   */
+  static calculateWeeksElapsed(startDate: string): number {
+    const start = new Date(startDate);
+    const now = Date.now();
+    const diffMs = now - start.getTime();
+    const diffDays = diffMs / (1000 * 60 * 60 * 24);
+    return Math.floor(diffDays / 7);
+  }
+
+  /**
    * 計算實際累積儲蓄 (Explicit Logic)
    * 只計算明確記錄的 type='save' 記錄總和
    *
@@ -138,11 +153,15 @@ export class TrajectoryCalculator {
       startDate = this.calculateStartDate(userData, records);
     }
 
-    // 2. 計算經過月數
+    // 2. 計算經過月數和週數
     const monthsElapsed = this.calculateMonthsElapsed(startDate);
+    const weeksElapsed = this.calculateWeeksElapsed(startDate);
 
-    // 3. 計算目標累積儲蓄（使用用戶設定的月儲蓄目標）
-    const targetAccumulatedSavings = userData.monthlySavings * monthsElapsed;
+    // 3. 計算目標累積儲蓄（以「完整週」為单位，避免數字不斷變動）
+    // 公式: (每月儲蓄目標 / 4) * (週數 + 1)
+    // 第 0 週 = 1 週目標，第 1 週 = 2 週目標，以此類推
+    const weeklyTarget = userData.monthlySavings / 4;
+    const targetAccumulatedSavings = Math.round(weeklyTarget * (weeksElapsed + 1));
 
     // 計算實質報酬率和距離退休年數（用於時間成本轉換）
     const realRate = FinanceCalculator.realRate(
@@ -194,6 +213,7 @@ export class TrajectoryCalculator {
       isAhead: deviationHours > CONSTANTS.WORKING_HOURS_PER_DAY,
       isBehind: deviationHours < -CONSTANTS.WORKING_HOURS_PER_DAY,
       monthsElapsed,
+      weeksElapsed,
       requiredMonthlySavings,
       startDate,
     };

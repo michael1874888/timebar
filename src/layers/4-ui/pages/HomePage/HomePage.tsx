@@ -277,6 +277,8 @@ export function HomePage({
             actualAccumulatedSavings={gps.actualAccumulatedSavings}
             deviation={gps.deviation}
             monthsElapsed={gps.monthsElapsed}
+            weeksElapsed={gps.weeksElapsed}
+            monthlySavings={fullUserData?.monthlySavings || 0}
             requiredMonthlySavings={gps.requiredMonthlySavings}
             unallocatedFunds={gps.unallocatedFunds}
             onConvertToSavings={(amount) => {

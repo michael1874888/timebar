@@ -19,6 +19,10 @@ export interface SavingsProgressCardProps {
   deviation: number;
   /** 經過的月數 */
   monthsElapsed: number;
+  /** 經過的完整週數 */
+  weeksElapsed: number;
+  /** 每月儲蓄目標 */
+  monthlySavings: number;
   /** 每月必須儲蓄金額 */
   requiredMonthlySavings?: number;
   /** 未分配資金 */
@@ -74,11 +78,14 @@ export function SavingsProgressCard({
   actualAccumulatedSavings,
   deviation,
   monthsElapsed,
+  weeksElapsed,
+  monthlySavings,
   requiredMonthlySavings,
   unallocatedFunds,
   onConvertToSavings,
 }: SavingsProgressCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showFormula, setShowFormula] = useState(false);
   
   const status = getStatus(deviation);
   const config = statusConfig[status];
@@ -176,12 +183,36 @@ export function SavingsProgressCard({
           </div>
           
           <ul className="savings-card__detail-list">
-            <li>
-              <span>• 目標儲蓄：</span>
+            <li className="savings-card__detail-row">
+              <span className="savings-card__detail-label">
+                • 目標儲蓄：
+                <button
+                  className="savings-card__info-btn"
+                  onClick={() => setShowFormula(!showFormula)}
+                  aria-label="查看計算公式"
+                >
+                  ℹ️
+                </button>
+              </span>
               <span className="savings-card__detail-value">
                 {Formatters.formatCurrency(targetAccumulatedSavings)} 元
               </span>
             </li>
+            {/* 公式說明 Tooltip */}
+            {showFormula && (
+              <li className="savings-card__formula-tip">
+                <div className="savings-card__formula-content">
+                  <strong>📝 計算方式</strong>
+                  <p>(每月儲蓄目標 ÷ 4) × (第幾週 + 1)</p>
+                  <p className="savings-card__formula-calc">
+                    ({Formatters.formatCurrency(monthlySavings)} ÷ 4) × ({weeksElapsed} + 1) = {Formatters.formatCurrency(targetAccumulatedSavings)} 元
+                  </p>
+                  <p className="savings-card__formula-note">
+                    ※ 第 0 週起即有目標，每週更新一次
+                  </p>
+                </div>
+              </li>
+            )}
             <li>
               <span>• 實際儲蓄：</span>
               <span
