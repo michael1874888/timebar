@@ -382,8 +382,10 @@ describe('TrajectoryCalculator', () => {
       });
 
       expect(result.monthsElapsed).toBeLessThan(0.01); // 接近 0
-      expect(result.isOnTrack).toBe(true); // 應該顯示「在軌道上」
-      expect(Math.abs(result.deviation)).toBeLessThan(1000); // 偏差很小
+      // TrajectoryCalculator 正確計算：沒有儲蓄記錄 = 落後目標
+      // 「沒有記錄 = 顯示準時」的 UX 友善邏輯在 useGPS Hook 中處理
+      expect(result.isBehind).toBe(true);
+      expect(result.deviation).toBeLessThan(0); // 實際儲蓄 0 < 目標儲蓄
 
       Date.now = originalNow;
     });
