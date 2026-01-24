@@ -17,6 +17,8 @@ export interface TimeCostParams {
   realRate: number;
   /** 距離退休年數 */
   yearsToRetire: number;
+  /** 訂閱期數（月），undefined = 持續到退休 */
+  monthsDuration?: number;
 }
 
 /**

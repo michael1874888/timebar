@@ -66,6 +66,7 @@ export function HomePage({
   // 狀態
   const [amount, setAmount] = useState(0);
   const [isRecurring, setIsRecurring] = useState(false);
+  const [monthsDuration, setMonthsDuration] = useState<number | undefined>(undefined);
   const [recordMode, setRecordMode] = useState<'spend' | 'save'>('spend');
   const [loading, setLoading] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
@@ -87,8 +88,8 @@ export function HomePage({
   // Hooks
   const finance = useFinance(userData);
 
-  // 計算時間成本
-  const timeCost = finance.calculateTimeCost(amount, isRecurring);
+  // 計算時間成本 - 現在支持有期數的訂閱
+  const timeCost = finance.calculateTimeCost(amount, isRecurring, monthsDuration);
 
   // 預覽記錄
   const previewRecords = useMemo(() => {
@@ -159,6 +160,7 @@ export function HomePage({
       showToast('已記錄消費 📝', 'success');
       setAmount(0);
       setIsRecurring(false);
+      setMonthsDuration(undefined);
       setPendingPurchase(null);
       setShowCategoryModal(false);
     } finally {
@@ -195,6 +197,7 @@ export function HomePage({
       showToast('已記錄儲蓄 💰', 'success');
       setAmount(0);
       setIsRecurring(false);
+      setMonthsDuration(undefined);
     } finally {
       setLoading(false);
     }
@@ -409,6 +412,8 @@ export function HomePage({
             onChange={setAmount}
             isRecurring={isRecurring}
             onRecurringChange={setIsRecurring}
+            monthsDuration={monthsDuration}
+            onMonthsDurationChange={setMonthsDuration}
             autoFocus
           />
         </section>

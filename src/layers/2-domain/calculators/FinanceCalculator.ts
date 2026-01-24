@@ -165,22 +165,50 @@ export class FinanceCalculator {
    * }) // => 31.2 小時
    */
   static calculateTimeCost(params: TimeCostParams): number {
-    const { amount, isRecurring, hourlyRate, realRate, yearsToRetire } = params;
+    const { amount, isRecurring, hourlyRate, realRate, yearsToRetire, monthsDuration } = params;
 
     let futureValue: number;
     const monthlyRate = realRate / 12;
     const monthsToRetire = yearsToRetire * 12;
 
     if (isRecurring) {
-      // 年金終值：每月持續支出的複利累積
-      if (monthsToRetire <= 0) {
-        futureValue = 0;
-      } else if (monthlyRate === 0) {
-        futureValue = amount * monthsToRetire;
+      if (monthsDuration !== undefined) {
+        // 有限期訂閱
+        if (monthsDuration <= 0) {
+          futureValue = 0;
+        } else {
+          // 先計算 n 期年金終值，再複利到退休
+          const effectiveMonths = Math.min(monthsDuration, monthsToRetire);
+          const remainingMonths = monthsToRetire - effectiveMonths;
+          
+          if (effectiveMonths <= 0) {
+            futureValue = 0;
+          } else if (monthlyRate === 0) {
+            // 無利率：單純累加，再複利到退休
+            const annuityFV = amount * effectiveMonths;
+            futureValue = remainingMonths > 0 
+              ? annuityFV * Math.pow(1 + monthlyRate, remainingMonths)
+              : annuityFV;
+          } else {
+            // 年金終值公式：FV = PMT × ((1+r)^n - 1) / r
+            const annuityFV = amount * ((Math.pow(1 + monthlyRate, effectiveMonths) - 1) / monthlyRate);
+            // 將終值複利成長到退休
+            futureValue = remainingMonths > 0
+              ? annuityFV * Math.pow(1 + monthlyRate, remainingMonths)
+              : annuityFV;
+          }
+        }
       } else {
-        futureValue =
-          amount *
-          ((Math.pow(1 + monthlyRate, monthsToRetire) - 1) / monthlyRate);
+        // 無限期訂閱：年金終值直到退休
+        if (monthsToRetire <= 0) {
+          futureValue = 0;
+        } else if (monthlyRate === 0) {
+          futureValue = amount * monthsToRetire;
+        } else {
+          futureValue =
+            amount *
+            ((Math.pow(1 + monthlyRate, monthsToRetire) - 1) / monthlyRate);
+        }
       }
     } else {
       // 單筆複利終值
