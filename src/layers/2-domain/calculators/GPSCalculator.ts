@@ -37,10 +37,9 @@ export class GPSCalculator {
       .filter((r) => r.type === 'save')
       .reduce((sum, r) => sum + (r.timeCost || 0), 0);
 
-    // 排除已使用免罪卡的消費記錄
     // 排除已終止的訂閱（不再計入未來成本）
     const totalSpentHours = records
-      .filter((r) => r.type === 'spend' && r.guiltFree !== true)
+      .filter((r) => r.type === 'spend')
       .filter((r) => r.recurringStatus !== 'ended')
       .reduce((sum, r) => sum + (r.timeCost || 0), 0);
 
@@ -83,9 +82,8 @@ export class GPSCalculator {
       .filter((r) => r.type === 'save')
       .reduce((sum, r) => sum + r.amount, 0);
 
-    // 排除已使用免罪卡的消費記錄
     const totalSpent = records
-      .filter((r) => r.type === 'spend' && r.guiltFree !== true)
+      .filter((r) => r.type === 'spend')
       .reduce((sum, r) => sum + r.amount, 0);
 
     return {

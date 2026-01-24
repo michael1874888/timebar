@@ -6,9 +6,11 @@
  */
 
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ColorTokens } from '@ui/design-system/tokens';
 import type { GPSStatus } from '@domain/types';
 import { TimeCalculator } from '@domain/calculators';
+import { Formatters } from '@/utils/financeCalc';
 import './RetirementProgress.css';
 
 export interface RetirementProgressProps {
@@ -28,6 +30,18 @@ export interface RetirementProgressProps {
   showDetail?: boolean;
   /** 關閉詳情的回調 */
   onCloseDetail?: () => void;
+  /** 目標累積儲蓄金額 */
+  targetAccumulatedSavings?: number;
+  /** 實際累積儲蓄金額 */
+  actualAccumulatedSavings?: number;
+  /** 經過的月數 */
+  monthsElapsed?: number;
+  /** 偏差金額（正=超前，負=落後） */
+  deviation?: number;
+  /** 偏差天數（正=超前，負=落後）*/
+  deviationDays?: number;
+  /** 每月必須儲蓄金額 */
+  requiredMonthlySavings?: number;
 }
 
 /**
@@ -98,8 +112,15 @@ export function RetirementProgress({
   onDetailClick,
   showDetail = false,
   onCloseDetail,
+  targetAccumulatedSavings,
+  actualAccumulatedSavings,
+  monthsElapsed,
+  deviation,
+  deviationDays,
+  requiredMonthlySavings,
 }: RetirementProgressProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const status = getStatus(targetAge, estimatedAge);
   const config = stateConfig[status];
@@ -111,10 +132,13 @@ export function RetirementProgress({
   const diffYears = estimatedAge - targetAge;
   const estimatedPosition = Math.max(10, Math.min(90, targetPosition - diffYears * 5));
 
-  // 計算天數
-  const savedDays = Math.round(totalSavedHours / 8);
-  const spentDays = Math.round(totalSpentHours / 8);
-  const netDays = savedDays - spentDays;
+  // 軌跡偏差天數（正=超前，負=落後）
+  const netDays = deviationDays ?? 0;
+
+  // 計算進度百分比（用於累積儲蓄進度條）
+  const progressPercentage = targetAccumulatedSavings && actualAccumulatedSavings
+    ? Math.min(100, Math.max(0, (actualAccumulatedSavings / targetAccumulatedSavings) * 100))
+    : 0;
 
   return (
     <div
@@ -207,10 +231,139 @@ export function RetirementProgress({
         </span>
       </div>
 
-      {/* 詳情彈窗 */}
-      {showDetail && (
-        <div className="retirement-progress__detail-overlay" onClick={(e) => e.stopPropagation()}>
-          <div className="retirement-progress__detail">
+      {/* 累積儲蓄進度條 - 追蹤期過短時顯示提示 */}
+      {monthsElapsed !== undefined && (monthsElapsed < 0.5 && !import.meta.env.DEV) ? (
+        <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+          <div className="text-sm text-blue-800 dark:text-blue-200">
+            📊 開始追蹤退休目標...
+          </div>
+          <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
+            持續記錄 2 週後，這裡會顯示累積儲蓄進度
+          </p>
+        </div>
+      ) : targetAccumulatedSavings && actualAccumulatedSavings && (
+        <div className="mt-4">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              📊 累積儲蓄進度
+            </div>
+            {monthsElapsed !== undefined && monthsElapsed < 0.5 && import.meta.env.DEV && (
+              <span className="text-[10px] px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded border border-purple-200" title="Developers only - bypassing 2 week check">
+                DEV MOCK
+              </span>
+            )}
+          </div>
+          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div
+              className={`h-full flex items-center justify-end pr-3 text-sm font-medium text-white transition-all duration-500 ${
+                status === 'ahead'
+                  ? 'bg-emerald-500'
+                  : status === 'behind'
+                  ? 'bg-orange-500'
+                  : 'bg-blue-500'
+              }`}
+              style={{ width: `${progressPercentage}%` }}
+            >
+              {progressPercentage > 10 && `${Math.round(progressPercentage)}%`}
+            </div>
+          </div>
+          <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <span>目標: {(targetAccumulatedSavings / 10000).toFixed(1)}萬</span>
+            <span>實際: {(actualAccumulatedSavings / 10000).toFixed(1)}萬</span>
+          </div>
+        </div>
+      )}
+
+      {/* 展開/收起詳情 - 只在追蹤期足夠時顯示 (Dev Mode 無視限制) */}
+      {monthsElapsed !== undefined && (monthsElapsed >= 0.5 || import.meta.env.DEV) && targetAccumulatedSavings && actualAccumulatedSavings && (
+        <div className="mt-4">
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 flex items-center gap-1 cursor-pointer transition-colors"
+          >
+            {isExpanded ? '收起 ▲' : '查看詳情 ▼'}
+          </button>
+
+          {isExpanded && (
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
+              <div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                  📊 累積進度（使用 {Math.round(monthsElapsed * 10) / 10} 個月）
+                </p>
+                <ul className="space-y-1 text-sm">
+                  <li className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">• 目標儲蓄：</span>
+                    <span className="font-medium">
+                      {Formatters.formatCurrency(targetAccumulatedSavings)} 元
+                    </span>
+                  </li>
+                  <li className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">• 實際儲蓄：</span>
+                    <span
+                      className={`font-medium ${
+                        status === 'ahead'
+                          ? 'text-emerald-500'
+                          : status === 'behind'
+                          ? 'text-orange-500'
+                          : ''
+                      }`}
+                    >
+                      {Formatters.formatCurrency(actualAccumulatedSavings)} 元{' '}
+                      {status === 'ahead' && '✓'}
+                    </span>
+                  </li>
+                  {deviation !== undefined && (
+                    <li className="flex justify-between">
+                      <span className="text-gray-600 dark:text-gray-400">• 差距：</span>
+                      <span
+                        className={`font-medium ${
+                          deviation > 0 ? 'text-emerald-500' : 'text-orange-500'
+                        }`}
+                      >
+                        {deviation > 0 ? '+' : ''}
+                        {Formatters.formatCurrency(Math.abs(deviation))} 元
+                      </span>
+                    </li>
+                  )}
+                </ul>
+              </div>
+
+              {requiredMonthlySavings !== undefined && (
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                    💰 每月必須儲蓄：
+                  </p>
+                  <p className="text-base font-semibold">
+                    {Formatters.formatCurrency(requiredMonthlySavings)} 元
+                  </p>
+                </div>
+              )}
+
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                <p className="text-sm text-blue-800 dark:text-blue-200">
+                  💡{' '}
+                  {deviation !== undefined && deviation > 0
+                    ? '你已經存夠這階段需要的金額！'
+                    : deviation !== undefined && deviation < 0
+                    ? '需要加快儲蓄速度以達成目標。'
+                    : '保持當前儲蓄速度即可達標。'}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 詳情彈窗 - 使用 Portal 渲染到 body 層級 */}
+      {showDetail && createPortal( // 3. 使用 Portal 渲染彈窗
+        <div
+          className="retirement-progress__detail-overlay"
+          onClick={onCloseDetail} // 2. 修正彈窗點擊事件邏輯
+        >
+          <div
+            className="retirement-progress__detail"
+            onClick={(e) => e.stopPropagation()} // 2. 修正彈窗點擊事件邏輯
+          >
             <div className="retirement-progress__detail-header">
               <h3>退休 GPS 分析</h3>
               <button
@@ -235,41 +388,46 @@ export function RetirementProgress({
               <div className="retirement-progress__detail-divider" />
 
               <div className="retirement-progress__detail-section">
-                <h4>累積影響</h4>
-                <div className="retirement-progress__detail-row">
-                  <span>• 總共省下</span>
-                  <span className="retirement-progress__detail-value text-emerald-500">
-                    {savedDays} 天 ✅
-                  </span>
-                </div>
-                <div className="retirement-progress__detail-row">
-                  <span>• 總共花掉</span>
-                  <span className="retirement-progress__detail-value text-orange-500">
-                    {spentDays} 天 ⚠️
-                  </span>
-                </div>
+                <h4>軌跡偏差</h4>
+                {targetAccumulatedSavings !== undefined && actualAccumulatedSavings !== undefined && (
+                  <>
+                    <div className="retirement-progress__detail-row">
+                      <span>• 目標儲蓄</span>
+                      <span className="retirement-progress__detail-value">
+                        {Formatters.formatCurrency(targetAccumulatedSavings)} 元
+                      </span>
+                    </div>
+                    <div className="retirement-progress__detail-row">
+                      <span>• 實際儲蓄</span>
+                      <span className={`retirement-progress__detail-value ${netDays >= 0 ? 'text-emerald-500' : 'text-orange-500'}`}>
+                        {Formatters.formatCurrency(actualAccumulatedSavings)} 元 {netDays >= 0 ? '✅' : '⚠️'}
+                      </span>
+                    </div>
+                  </>
+                )}
                 <div className="retirement-progress__detail-row retirement-progress__detail-row--highlight">
-                  <span>• 淨值</span>
+                  <span>• 等效時間</span>
                   <span className={`retirement-progress__detail-value ${netDays >= 0 ? 'text-emerald-500' : 'text-orange-500'}`}>
-                    {netDays >= 0 ? '+' : ''}{netDays} 天 {netDays >= 0 ? '🎉' : '⏰'}
+                    {netDays >= 0 ? '+' : ''}{Math.round(netDays)} 天 {netDays >= 0 ? '🎉' : '⏰'}
                   </span>
                 </div>
               </div>
 
               <div className="retirement-progress__detail-summary">
-                {status === 'ahead' && (
-                  <p>🎉 這表示你可以提早 {formattedDiff.value} {formattedDiff.unit}退休！</p>
+                {netDays > 8 && (
+                  <p>🎉 你已超前 {Math.abs(Math.round(netDays))} 天，可以提早退休！</p>
                 )}
-                {status === 'behind' && (
-                  <p>⏰ 目前落後 {formattedDiff.value} {formattedDiff.unit}，繼續努力！</p>
+                {netDays < -8 && (
+                  <p>⏰ 目前落後 {Math.abs(Math.round(netDays))} 天，繼續努力！</p>
                 )}
-                {status === 'onTrack' && (
+                {netDays >= -8 && netDays <= 8 && (
                   <p>✅ 進度正常，繼續保持！</p>
                 )}
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

@@ -2,14 +2,12 @@ import { useState, useEffect, useMemo } from 'react';
 import { FinanceCalc, Formatters, CONSTANTS } from '@/utils/financeCalc';
 import { GAS_WEB_APP_URL } from '@/constants';
 import { UserData, Record as RecordType } from '@/types';
-import { PointsSystem } from '@/utils/pointsSystem';
-import { InventorySystem } from '@/utils/inventorySystem';
 import { Modal } from '@/components/common/Modal';
 import { Collapsible } from '@/components/common/Collapsible';
-import { ShopPage } from '@/components/shop/ShopPage';
-import { ChallengeSettingsPage } from './ChallengeSettingsPage';
 import { CategorySettingsPage } from './CategorySettingsPage';
 import { SubscriptionManagerPage } from '@/components/subscription/SubscriptionManagerPage';
+import { RecalibrationDialog } from '@/layers/4-ui/components/RecalibrationDialog';
+import { TrajectoryCalculator } from '@/layers/2-domain/calculators';
 
 const { formatCurrency, formatCurrencyFull } = Formatters;
 const { DEFAULT_INFLATION_RATE, DEFAULT_ROI_RATE } = CONSTANTS;
@@ -38,10 +36,15 @@ export function SettingsPage({ userData, onUpdateUser, onClose, onReset, records
   // Phase 3: 簡化計算機，移除多模式選擇，只保留年齡導向
 
   // Phase 2: Modal 狀態管理
-  const [showShopModal, setShowShopModal] = useState<boolean>(false);
-  const [showChallengeModal, setShowChallengeModal] = useState<boolean>(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState<boolean>(false);
   const [showCategoryModal, setShowCategoryModal] = useState<boolean>(false);
+
+  // v4.1: 校準對話框狀態
+  const [showRecalibrationDialog, setShowRecalibrationDialog] = useState<boolean>(false);
+  const [pendingGoalChange, setPendingGoalChange] = useState<{
+    oldGoal: { retireAge: number; monthlySavings: number };
+    newGoal: { retireAge: number; monthlySavings: number };
+  } | null>(null);
 
   // 確保退休年齡不小於當前年齡 + 5
   useEffect(() => {
@@ -52,8 +55,32 @@ export function SettingsPage({ userData, onUpdateUser, onClose, onReset, records
   }, [age, retireAge]);
 
   const handleSave = (): void => {
-    // 只保留用戶修改過的欄位，不強制覆蓋 targetRetirementFund
-    onUpdateUser({
+    // v4.1: 檢查是否有目標變更（退休年齡或每月儲蓄）
+    const hasGoalChange = retireAge !== userData.retireAge || monthlySavings !== userData.monthlySavings;
+
+    if (hasGoalChange) {
+      // 顯示校準對話框
+      setPendingGoalChange({
+        oldGoal: {
+          retireAge: userData.retireAge,
+          monthlySavings: userData.monthlySavings || Math.round(userData.salary * 0.2),
+        },
+        newGoal: {
+          retireAge,
+          monthlySavings,
+        },
+      });
+      setShowRecalibrationDialog(true);
+      return;
+    }
+
+    // 沒有目標變更，直接儲存
+    doSave(false);
+  };
+
+  // v4.1: 執行儲存（可選擇是否重置進度）
+  const doSave = (shouldReset: boolean): void => {
+    const updates: UserData = {
       age,
       salary,
       retireAge,
@@ -62,9 +89,24 @@ export function SettingsPage({ userData, onUpdateUser, onClose, onReset, records
       inflationRate,
       roiRate,
       // 保留原有的 targetRetirementFund，除非在計算機中明確修改
-      targetRetirementFund: userData.targetRetirementFund
-    });
+      targetRetirementFund: userData.targetRetirementFund,
+    };
+
+    // 如果選擇重置，清除歷史偏差並重設起點
+    if (shouldReset) {
+      updates.historicalDeviationHours = 0;
+      updates.trajectoryStartDate = new Date().toISOString();
+    }
+
+    onUpdateUser(updates);
     onClose();
+  };
+
+  // v4.1: 處理校準確認
+  const handleRecalibrationConfirm = (shouldReset: boolean): void => {
+    doSave(shouldReset);
+    setShowRecalibrationDialog(false);
+    setPendingGoalChange(null);
   };
 
   const handleClear = async (): Promise<void> => {
@@ -79,6 +121,24 @@ export function SettingsPage({ userData, onUpdateUser, onClose, onReset, records
   const hourlyRate = useMemo(() => Math.round(FinanceCalc.hourlyRate(salary)), [salary]);
   const realRate = useMemo(() => FinanceCalc.realRate(inflationRate, roiRate), [inflationRate, roiRate]);
   const yearsToRetire = useMemo(() => retireAge - age, [retireAge, age]);
+
+  // v4.1: 計算當前預估退休年齡（用於校準對話框）
+  const currentEstimatedAge = useMemo(() => {
+    // 使用 TrajectoryCalculator 計算當前偏差
+    const deviationResult = TrajectoryCalculator.calculateDeviation({
+      userData: {
+        ...userData,
+        age,
+        salary,
+        retireAge,
+        monthlySavings,
+        inflationRate,
+        roiRate,
+      },
+      records,
+    });
+    return retireAge + deviationResult.deviationYears;
+  }, [userData, records, age, salary, retireAge, monthlySavings, inflationRate, roiRate]);
 
   // Phase 3: 簡化計算機結果 - 只保留年齡導向模式
   const calcResults = useMemo(() => {
@@ -249,68 +309,6 @@ export function SettingsPage({ userData, onUpdateUser, onClose, onReset, records
           </div>
         </Collapsible>
 
-        {/* Phase 3: 遊戲化設定 - Collapsible（預設收合） */}
-        <Collapsible
-          title="遊戲化設定"
-          icon="🎮"
-          defaultOpen={false}
-          storageKey="timebar_settings_gamification_open"
-        >
-          <div className="space-y-4">
-            {/* 積分與道具顯示 */}
-            <div className="bg-slate-50 rounded-xl p-4 mb-4 border border-slate-200">
-              <div className="flex items-center justify-between">
-                <span className="text-slate-500 text-sm">積分餘額</span>
-                <span className="text-amber-600 font-bold">⏳ {PointsSystem.getBalance()}</span>
-              </div>
-              {InventorySystem.getItemCount('guilt_free_pass') > 0 && (
-                <div className="flex items-center justify-between mt-2">
-                  <span className="text-slate-500 text-sm">道具</span>
-                  <span className="text-emerald-600 font-bold">🎫 ×{InventorySystem.getItemCount('guilt_free_pass')}</span>
-                </div>
-              )}
-            </div>
-
-            {/* 每日挑戰設定 */}
-            <button
-              onClick={() => setShowChallengeModal(true)}
-              className="w-full bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-4 border border-emerald-200 hover:border-emerald-300 transition-colors"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="text-2xl">🎯</div>
-                  <div className="text-left">
-                    <div className="text-slate-900 font-bold">每日挑戰設定</div>
-                    <div className="text-slate-500 text-sm">新增或編輯自定義挑戰</div>
-                  </div>
-                </div>
-                <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-            </button>
-
-            {/* 時間沙商店 */}
-            <button
-              onClick={() => setShowShopModal(true)}
-              className="w-full bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-200 hover:border-amber-300 transition-colors"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="text-2xl">🛒</div>
-                  <div className="text-left">
-                    <div className="text-slate-900 font-bold">時間沙商店</div>
-                    <div className="text-slate-500 text-sm">用積分兑換道具</div>
-                  </div>
-                </div>
-                <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-            </button>
-          </div>
-        </Collapsible>
-
         {/* Cloud Status */}
         <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 mb-6 border border-slate-200 shadow-sm">
           <h2 className="text-slate-900 font-bold mb-4">資料同步</h2>
@@ -361,28 +359,10 @@ export function SettingsPage({ userData, onUpdateUser, onClose, onReset, records
           )}
         </div>
 
-        <div className="text-center text-slate-400 text-sm mt-8">TimeBar v2.5</div>
+        <div className="text-center text-slate-400 text-sm mt-8">TimeBar v4.2</div>
       </div>
 
-      {/* Phase 2: Modal 渲染 */}
-      <Modal
-        open={showShopModal}
-        onClose={() => setShowShopModal(false)}
-        title="時間沙商店"
-        size="lg"
-      >
-        <ShopPage onClose={() => setShowShopModal(false)} />
-      </Modal>
-
-      <Modal
-        open={showChallengeModal}
-        onClose={() => setShowChallengeModal(false)}
-        title="管理每日挑戰"
-        size="xl"
-      >
-        <ChallengeSettingsPage onClose={() => setShowChallengeModal(false)} />
-      </Modal>
-
+      {/* Modal 渲染 */}
       {onUpdateRecords && (
         <Modal
           open={showSubscriptionModal}
@@ -406,6 +386,19 @@ export function SettingsPage({ userData, onUpdateUser, onClose, onReset, records
       >
         <CategorySettingsPage onClose={() => setShowCategoryModal(false)} />
       </Modal>
+
+      {/* v4.1: 校準對話框 */}
+      <RecalibrationDialog
+        isOpen={showRecalibrationDialog}
+        onClose={() => {
+          setShowRecalibrationDialog(false);
+          setPendingGoalChange(null);
+        }}
+        oldGoal={pendingGoalChange?.oldGoal || { retireAge: 0, monthlySavings: 0 }}
+        newGoal={pendingGoalChange?.newGoal || { retireAge: 0, monthlySavings: 0 }}
+        currentEstimatedAge={currentEstimatedAge}
+        onConfirm={handleRecalibrationConfirm}
+      />
     </div>
   );
 }

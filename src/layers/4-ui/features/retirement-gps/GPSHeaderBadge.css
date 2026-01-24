@@ -1,0 +1,187 @@
+/**
+ * GPS Header Badge 樣式
+ * 精簡膠囊設計
+ */
+
+.gps-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 999px;
+  border: none;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.gps-badge:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.gps-badge:focus {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+.gps-badge__icon {
+  font-size: 0.875rem;
+}
+
+.gps-badge__text {
+  letter-spacing: 0.02em;
+}
+
+/* Modal Overlay */
+.gps-badge__modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 1rem;
+  animation: gps-fadeIn 0.2s ease;
+}
+
+@keyframes gps-fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Modal */
+.gps-badge__modal {
+  background: #fff;
+  border-radius: 1rem;
+  width: 100%;
+  max-width: 360px;
+  overflow: hidden;
+  animation: gps-slideUp 0.3s ease;
+}
+
+@keyframes gps-slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.gps-badge__modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.gps-badge__modal-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.gps-badge__modal-close {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 0.25rem;
+  line-height: 1;
+}
+
+.gps-badge__modal-close:hover {
+  color: #4b5563;
+}
+
+.gps-badge__modal-content {
+  padding: 1.5rem 1.25rem;
+}
+
+/* Hero Section in Modal */
+.gps-badge__modal-hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.gps-badge__modal-icon {
+  font-size: 2rem;
+}
+
+.gps-badge__modal-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+/* Details Grid */
+.gps-badge__modal-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.gps-badge__modal-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9375rem;
+  color: #4b5563;
+}
+
+.gps-badge__modal-row-value {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* Note */
+.gps-badge__modal-note {
+  padding: 0.875rem 1rem;
+  border-radius: 0.5rem;
+}
+
+.gps-badge__modal-note p {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: #374151;
+}
+
+/* Dark Mode */
+@media (prefers-color-scheme: dark) {
+  .gps-badge__modal {
+    background: #1f2937;
+  }
+
+  .gps-badge__modal-header {
+    border-bottom-color: #374151;
+  }
+
+  .gps-badge__modal-header h3 {
+    color: #f9fafb;
+  }
+
+  .gps-badge__modal-row {
+    color: #d1d5db;
+  }
+
+  .gps-badge__modal-row-value {
+    color: #f9fafb;
+  }
+
+  .gps-badge__modal-note p {
+    color: #e5e7eb;
+  }
+}

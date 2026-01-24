@@ -170,21 +170,57 @@ let _timeBarFinanceExports: TimeBarFinanceModule;
      * @param {number} hourlyRate - 時薪
      * @param {number} realRate - 實質報酬率 (小數)
      * @param {number} yearsToRetire - 距離退休年數
+     * @param {number} monthsDuration - 訂閱期數（月），undefined = 持續到退休
      * @returns {number} 時間成本（工作小時）
      */
-    calculateTimeCost(amount: number, isRecurring: boolean, hourlyRate: number, realRate: number, yearsToRetire: number): number {
+    calculateTimeCost(
+      amount: number,
+      isRecurring: boolean,
+      hourlyRate: number,
+      realRate: number,
+      yearsToRetire: number,
+      monthsDuration?: number
+    ): number {
       let futureValue: number;
       const monthlyRate = realRate / 12;
       const monthsToRetire = yearsToRetire * 12;
 
       if (isRecurring) {
-        // 年金終值：每月持續支出的複利累積
-        if (monthsToRetire <= 0) {
-          futureValue = 0;
-        } else if (monthlyRate === 0) {
-          futureValue = amount * monthsToRetire;
+        if (monthsDuration !== undefined) {
+          // 有限期訂閱
+          if (monthsDuration <= 0) {
+            futureValue = 0;
+          } else {
+            // 先計算 n 期年金終值，再複利到退休
+            const effectiveMonths = Math.min(monthsDuration, monthsToRetire);
+            const remainingMonths = monthsToRetire - effectiveMonths;
+            
+            if (effectiveMonths <= 0) {
+              futureValue = 0;
+            } else if (monthlyRate === 0) {
+              // 無利率：單純累加，再複利到退休
+              const annuityFV = amount * effectiveMonths;
+              futureValue = remainingMonths > 0 
+                ? annuityFV * Math.pow(1 + monthlyRate, remainingMonths)
+                : annuityFV;
+            } else {
+              // 年金終值公式：FV = PMT × ((1+r)^n - 1) / r
+              const annuityFV = amount * ((Math.pow(1 + monthlyRate, effectiveMonths) - 1) / monthlyRate);
+              // 將終值複利成長到退休
+              futureValue = remainingMonths > 0
+                ? annuityFV * Math.pow(1 + monthlyRate, remainingMonths)
+                : annuityFV;
+            }
+          }
         } else {
-          futureValue = amount * ((Math.pow(1 + monthlyRate, monthsToRetire) - 1) / monthlyRate);
+          // 無限期訂閱：年金終值直到退休
+          if (monthsToRetire <= 0) {
+            futureValue = 0;
+          } else if (monthlyRate === 0) {
+            futureValue = amount * monthsToRetire;
+          } else {
+            futureValue = amount * ((Math.pow(1 + monthlyRate, monthsToRetire) - 1) / monthlyRate);
+          }
         }
       } else {
         // 單筆複利終值
@@ -288,7 +324,6 @@ let _timeBarFinanceExports: TimeBarFinanceModule;
     type: 'save' | 'spend';
     timeCost?: number;
     amount: number;
-    guiltFree?: boolean;  // v2.0: 使用免死金牌豁免的記錄
     isRecurring?: boolean;  // v2.1: 是否為循環支出
     recurringStatus?: 'active' | 'ended';  // v2.1: 訂閱狀態
   }
@@ -312,7 +347,6 @@ let _timeBarFinanceExports: TimeBarFinanceModule;
   const GPSCalc = {
     /**
      * 根據記錄計算預估退休年齡
-     * v2.0: 排除已豁免(guiltFree)的消費記錄
      * v2.1: 排除已終止(recurringStatus='ended')的訂閱
      * @param {number} targetRetireAge - 目標退休年齡
      * @param {Array} records - 消費/儲蓄記錄陣列
@@ -323,11 +357,10 @@ let _timeBarFinanceExports: TimeBarFinanceModule;
         .filter(r => r.type === 'save')
         .reduce((sum, r) => sum + (r.timeCost || 0), 0);
 
-      // v2.0: 排除已使用免死金牌的消費記錄
       // v2.1: 排除已終止的訂閱（不再計入未來成本）
       const totalSpentHours = records
-        .filter(r => r.type === 'spend' && r.guiltFree !== true)
-        .filter(r => r.recurringStatus !== 'ended')  // v2.1: 排除已終止訂閱
+        .filter(r => r.type === 'spend')
+        .filter(r => r.recurringStatus !== 'ended')
         .reduce((sum, r) => sum + (r.timeCost || 0), 0);
 
       const netHoursImpact = totalSpentHours - totalSavedHours;
@@ -352,7 +385,6 @@ let _timeBarFinanceExports: TimeBarFinanceModule;
 
     /**
      * 計算記錄的累積金額
-     * v2.0: 排除已豁免(guiltFree)的消費記錄
      * @param {Array} records - 消費/儲蓄記錄陣列
      * @returns {object} { totalSaved, totalSpent }
      */
@@ -361,9 +393,8 @@ let _timeBarFinanceExports: TimeBarFinanceModule;
         .filter(r => r.type === 'save')
         .reduce((sum, r) => sum + r.amount, 0);
 
-      // v2.0: 排除已使用免死金牌的消費記錄
       const totalSpent = records
-        .filter(r => r.type === 'spend' && r.guiltFree !== true)
+        .filter(r => r.type === 'spend')
         .reduce((sum, r) => sum + r.amount, 0);
 
       return { totalSaved, totalSpent };

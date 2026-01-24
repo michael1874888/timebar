@@ -184,6 +184,44 @@ describe('FinanceCalc.calculateTimeCost', () => {
     expect(Number.isNaN(timeCost)).toBe(false)
     expect(timeCost).toBeCloseTo(expectedFV / hourlyRate, 6)
   })
+
+  // v4.2: 有限期訂閱測試
+  test('12個月訂閱的時間成本應小於無限期訂閱', () => {
+    const unlimited = FinanceCalc.calculateTimeCost(1000, true, hourlyRate, realRate, yearsToRetire)
+    const limited12 = FinanceCalc.calculateTimeCost(1000, true, hourlyRate, realRate, yearsToRetire, 12)
+    expect(limited12).toBeLessThan(unlimited)
+    expect(limited12).toBeGreaterThan(0)
+  })
+
+  test('期數為0時應返回0', () => {
+    const timeCost = FinanceCalc.calculateTimeCost(1000, true, hourlyRate, realRate, yearsToRetire, 0)
+    expect(timeCost).toBe(0)
+  })
+
+  test('無期數限制時等同於原始 isRecurring 計算', () => {
+    const withUndefined = FinanceCalc.calculateTimeCost(1000, true, hourlyRate, realRate, yearsToRetire, undefined)
+    const original = FinanceCalc.calculateTimeCost(1000, true, hourlyRate, realRate, yearsToRetire)
+    expect(withUndefined).toBeCloseTo(original, 6)
+  })
+
+  test('12期每月1000訂閱的時間成本計算正確', () => {
+    // 12 期年金終值，然後複利到退休
+    const monthlyRate = realRate / 12
+    const annuityFV = 1000 * ((Math.pow(1 + monthlyRate, 12) - 1) / monthlyRate)
+    const remainingMonths = (yearsToRetire * 12) - 12
+    const totalFV = annuityFV * Math.pow(1 + monthlyRate, remainingMonths)
+    const expectedTimeCost = totalFV / hourlyRate
+
+    const actual = FinanceCalc.calculateTimeCost(1000, true, hourlyRate, realRate, yearsToRetire, 12)
+    expect(actual).toBeCloseTo(expectedTimeCost, 0)
+  })
+
+  test('期數超過退休年數時應等同無限期', () => {
+    // 500 個月 > 35*12=420 個月
+    const superLong = FinanceCalc.calculateTimeCost(1000, true, hourlyRate, realRate, yearsToRetire, 500)
+    const unlimited = FinanceCalc.calculateTimeCost(1000, true, hourlyRate, realRate, yearsToRetire)
+    expect(superLong).toBeCloseTo(unlimited, 6)
+  })
 })
 
 describe('FinanceCalc.requiredMonthlySavings', () => {

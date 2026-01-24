@@ -27,7 +27,7 @@ export interface UseFinanceResult {
   /** 距離退休年數 */
   yearsToRetire: number;
   /** 計算時間成本 */
-  calculateTimeCost: (amount: number, isRecurring?: boolean) => number;
+  calculateTimeCost: (amount: number, isRecurring?: boolean, monthsDuration?: number) => number;
   /** 格式化時間成本 */
   formatTimeCost: (hours: number) => { value: number; unit: string; color: string };
   /** 獲取生動比喻 */
@@ -67,7 +67,7 @@ export function useFinance(userData: UserFinanceData): UseFinanceResult {
 
   // 計算時間成本
   const calculateTimeCost = useCallback(
-    (amount: number, isRecurring: boolean = false): number => {
+    (amount: number, isRecurring: boolean = false, monthsDuration?: number): number => {
       if (amount <= 0) return 0;
 
       return FinanceCalculator.calculateTimeCost({
@@ -76,6 +76,7 @@ export function useFinance(userData: UserFinanceData): UseFinanceResult {
         hourlyRate,
         realRate,
         yearsToRetire,
+        monthsDuration,
       });
     },
     [hourlyRate, realRate, yearsToRetire]

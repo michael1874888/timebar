@@ -103,6 +103,11 @@ export function TimeCostDisplay({
           </div>
         )}
       </div>
+
+      {/* v4.1: 機會成本參考說明 */}
+      <div className="time-cost-display__reference-note">
+        💭 機會成本僅供參考，不直接計入退休進度
+      </div>
     </div>
   );
 }

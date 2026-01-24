@@ -17,6 +17,8 @@ export interface TimeCostParams {
   realRate: number;
   /** 距離退休年數 */
   yearsToRetire: number;
+  /** 訂閱期數（月），undefined = 持續到退休 */
+  monthsDuration?: number;
 }
 
 /**
@@ -168,8 +170,6 @@ export interface RecordItem {
   amount: number;
   /** 時間成本 (小時) */
   timeCost?: number;
-  /** 是否免罪 (已棄用) */
-  guiltFree?: boolean;
   /** 是否為循環支出 */
   isRecurring?: boolean;
   /** 訂閱狀態 */

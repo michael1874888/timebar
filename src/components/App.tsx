@@ -1,23 +1,11 @@
 import { useState, useEffect } from 'react';
 import { OnboardingScreen } from './onboarding/OnboardingScreen';
-// v4.0: 使用新版 HomePage 替代 DashboardScreen
 import { HomePage } from '@ui/pages/HomePage';
-// 保留舊版以便回退（暫時註釋）
-// import { DashboardScreen } from './dashboard/DashboardScreen';
 import { HistoryPage } from './history/HistoryPage';
 import { SettingsPage } from './settings/SettingsPage';
-// Phase 2: 以下組件改用 Modal 顯示，不再需要 import
-// import { ShopPage } from './shop/ShopPage';
-// import { ChallengeSettingsPage } from './settings/ChallengeSettingsPage';
-// import { CategorySettingsPage } from './settings/CategorySettingsPage';
-// import { QuickActionsSettingsPage } from './settings/QuickActionsSettingsPage';
-// import { SubscriptionManagerPage } from './subscription/SubscriptionManagerPage';
-// import { NewUIPreview } from '@/NewUIPreview'; // Phase 0: 暫時註釋，等待 @ui/pages 組件實現
 import { GoogleSheetsAPI } from '@/services/googleSheets';
 import { Storage } from '@/utils/storage';
 import { CONSTANTS } from '@/utils/financeCalc';
-import { PointsSystem } from '@/utils/pointsSystem';
-import { InventorySystem } from '@/utils/inventorySystem';
 import { RecordSystem } from '@/utils/recordSystem';
 import { SettingsSystem } from '@/utils/settingsSystem';
 import { UserData, Record as RecordType, Screen } from '@/types';
@@ -54,24 +42,10 @@ export default function App() {
               monthlySavings: cloudData.userData.monthlySavings ?? Math.round(cloudData.userData.salary * 0.2),
             };
 
-            // v2.0: 同步積分和庫存到對應系統
-            if (cloudUserData.pointsBalance !== undefined) {
-              PointsSystem.setBalance(cloudUserData.pointsBalance);
-            }
-            if (cloudUserData.inventory) {
-              InventorySystem.setInventory(cloudUserData.inventory);
-            }
-
-            // v2.1: 同步快速記帳按鈕
-            if (cloudData.quickActions && cloudData.quickActions.length > 0) {
-              Storage.save('timebar_quick_actions', cloudData.quickActions);
-            }
-
-            // v2.2: 同步所有設置（分類、挑戰、預算）
+            // v2.2: 同步所有設置（分類等）
             await SettingsSystem.syncFromCloud();
 
             // 完全以雲端為準（source of truth），不合併本地記錄
-            // 這樣可以確保跨裝置資料同步的一致性，避免資料重置後出現舊資料
             const cloudRecords = cloudData.records || [];
 
             // 按時間戳排序（最新的在前）
@@ -91,7 +65,6 @@ export default function App() {
             return;
           } else if (cloudData.success && !cloudData.userData) {
             // 雲端成功回應但沒有資料 = 資料已被其他裝置清除
-            // 清除本地資料以保持同步
             Storage.clear();
             setUserData(null);
             setRecords([]);
@@ -133,23 +106,23 @@ export default function App() {
       Storage.save('userData', userData);
       GoogleSheetsAPI.saveUserData(userData).catch((error) => {
         console.error('Failed to sync userData to cloud:', error);
-        // 即使雲端同步失敗，本地資料已儲存，不影響使用
       });
     }
   }, [userData]);
 
-  // 當 records 更新時，同步到本地（包括空陣列）
+  // 當 records 更新時，同步到本地
   useEffect(() => {
     if (userData) {
-      // 只在有 userData 時才儲存 records（避免初始載入時覆蓋）
       Storage.save('records', records);
     }
   }, [records, userData]);
 
-  const handleOnboardingComplete = (data: UserData): void => { setUserData(data); setScreen('home'); };
+  const handleOnboardingComplete = (data: UserData): void => {
+    setUserData(data);
+    setScreen('home');
+  };
 
   const handleAddRecord = async (record: RecordType): Promise<void> => {
-    // v2.1: 新增 createdAt 時間戳記
     const recordWithMeta: RecordType = {
       ...record,
       createdAt: Date.now()
@@ -157,23 +130,11 @@ export default function App() {
     setRecords(prev => [...prev, recordWithMeta]);
     try {
       await GoogleSheetsAPI.saveRecord(recordWithMeta);
-
-      // v2.0: 記帳後同步積分和庫存到雲端
-      if (userData) {
-        const updatedUserData: UserData = {
-          ...userData,
-          pointsBalance: PointsSystem.getBalance(),
-          inventory: InventorySystem.load()
-        };
-        setUserData(updatedUserData);
-      }
     } catch (error) {
       console.error('Failed to save record to cloud:', error);
-      // 記錄已加入本地，即使雲端同步失敗也不影響使用
     }
   };
 
-  // v2.1: 更新記錄
   const handleUpdateRecord = async (id: string, updates: { amount: number; category: string; note: string }): Promise<void> => {
     const result = await RecordSystem.updateRecord(records, id, updates);
     if (result.success) {
@@ -184,7 +145,6 @@ export default function App() {
     }
   };
 
-  // v2.1: 刪除記錄
   const handleDeleteRecord = async (id: string): Promise<void> => {
     const result = await RecordSystem.deleteRecord(records, id);
     if (result.success) {
@@ -196,25 +156,16 @@ export default function App() {
   };
 
   const handleUpdateUser = (data: UserData): void => {
-    // v2.0: 同步積分和庫存
-    const updatedData: UserData = {
-      ...data,
-      pointsBalance: PointsSystem.getBalance(),
-      inventory: InventorySystem.load()
-    };
-    setUserData(updatedData);
+    setUserData(data);
   };
+
   const handleReset = async (): Promise<void> => {
     try {
       await GoogleSheetsAPI.clearAllData();
     } catch (error) {
       console.error('Failed to clear cloud data:', error);
-      // 繼續清除本地資料
     }
     Storage.clear();
-    // v2.0: 重置積分和庫存系統
-    PointsSystem.reset();
-    InventorySystem.reset();
     setUserData(null);
     setRecords([]);
     setScreen('onboarding');
@@ -244,20 +195,21 @@ export default function App() {
           }}
           fullUserData={userData}
           records={records.map(r => ({
+            id: r.id,  // 必須傳遞 id 讓 GPS 判斷是否有真實記錄
             type: r.type === 'spend' ? 'spend' : 'save',
             amount: r.amount,
             timeCost: r.timeCost || 0,
             isRecurring: r.isRecurring || false,
-          }))}
+            timestamp: r.timestamp,
+            date: r.date,
+            recurringStatus: r.recurringStatus,
+          } as any))}
           onAddRecord={(record) => {
-            // 如果已經是完整的 RecordType (有 id 和 timestamp)，直接使用
             if ('id' in record && 'timestamp' in record) {
               handleAddRecord(record as RecordType);
               return;
             }
 
-            // 否則轉換為完整 RecordType
-            // 根據類型設定預設分類（如果沒有提供）
             const category = record.category || (record.type === 'save' ? '主動儲蓄' : '一般消費');
             const note = record.note || (record.type === 'save'
               ? (record.isRecurring ? '每月固定儲蓄' : '一次性儲蓄')
@@ -275,12 +227,13 @@ export default function App() {
               isRecurring: record.isRecurring,
             } as RecordType);
           }}
-          points={userData.pointsBalance || 0}
           onSettingsClick={() => setScreen('settings')}
           onHistoryClick={() => setScreen('history')}
+          onUpdateUserData={(updates) => {
+            setUserData(prev => prev ? { ...prev, ...updates } : null);
+          }}
         />
       )}
-      {/* Phase 1: tracker 路由已移除，功能已整合到 DashboardScreen */}
       {screen === 'history' && userData && (
         <HistoryPage
           records={records}
@@ -300,41 +253,6 @@ export default function App() {
           onUpdateRecords={setRecords}
         />
       )}
-      {/* Phase 2: 以下路由已移除，改用 Modal 顯示
-      {screen === 'shop' && userData && (
-        <ShopPage onClose={() => setScreen('settings')} />
-      )}
-      {screen === 'challenge-settings' && (
-        <ChallengeSettingsPage onClose={() => setScreen('settings')} />
-      )}
-      {screen === 'subscription-manager' && userData && (
-        <SubscriptionManagerPage
-          records={records}
-          onUpdateRecords={setRecords}
-          onClose={() => setScreen('settings')}
-        />
-      )}
-      {screen === 'category-settings' && (
-        <CategorySettingsPage onClose={() => setScreen('settings')} />
-      )}
-      {screen === 'quick-actions-settings' && (
-        <QuickActionsSettingsPage onBack={() => setScreen('home')} />
-      )}
-      */}
-      {/* Phase 0: 暫時註釋，等待 @ui/pages 組件實現
-      {screen === 'new-ui' && userData && (
-        <div className="relative">
-          <button
-            onClick={() => setScreen('home')}
-            className="fixed top-4 left-4 z-50 bg-white/90 backdrop-blur px-4 py-2 rounded-lg shadow-lg text-gray-700 hover:bg-white transition"
-          >
-            ← 返回舊版
-          </button>
-          <NewUIPreview />
-        </div>
-      )}
-      */}
     </div>
   );
 }
-

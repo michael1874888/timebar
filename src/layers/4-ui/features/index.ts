@@ -3,7 +3,7 @@
  * Layer 4 (UI Layer) - 功能組件統一導出
  */
 
-// 退休進度條
+// 退休進度條 (Legacy - 用於 HistoryPage, DashboardScreen)
 export { RetirementProgress } from './retirement-progress';
 export type { RetirementProgressProps } from './retirement-progress';
 
@@ -23,3 +23,10 @@ export type { DecisionButtonsProps } from './decision-buttons';
 export { Celebration } from './celebration';
 export type { CelebrationProps } from './celebration';
 
+// GPS Header Badge（v4.2 主版本 - Header 內嵌）
+export { GPSHeaderBadge } from './retirement-gps/GPSHeaderBadge';
+export type { GPSHeaderBadgeProps } from './retirement-gps/GPSHeaderBadge';
+
+// 儲蓄進度卡片（v4.2 新版 - 整合未分配資金）
+export { SavingsProgressCard } from './savings-progress/SavingsProgressCard';
+export type { SavingsProgressCardProps } from './savings-progress/SavingsProgressCard';
