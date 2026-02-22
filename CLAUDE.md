@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**TimeBar v4.1** - A financial tracking web app that converts spending into "retirement time cost" with gamification features. Helps users understand their spending in terms of delayed/advanced retirement days using the Goal Trajectory Deviation model.
+**TimeBar v4.2** - A financial tracking web app that converts spending into "retirement time cost" with gamification features. Helps users understand their spending in terms of delayed/advanced retirement days using the Goal Trajectory Deviation model.
 
 - **Language**: Traditional Chinese (繁體中文) - all UI text, comments, and documentation
 - **Stack**: React 18 + TypeScript + Vite 5
@@ -226,7 +226,7 @@ Optional cloud sync via Google Apps Script:
 - [vite.config.js](vite.config.js) - Vite config (base: '/timebar/', alias: '@')
 - [vitest.config.ts](vitest.config.ts) - Test config (jsdom, setup file)
 - [tsconfig.json](tsconfig.json) - TypeScript config
-- [tailwind.config.js](tailwind.config.js) - Tailwind CSS config
+- [tailwind.config.js](tailwind.config.js) - Tailwind CSS config (`darkMode: 'selector'`，避免 OS 深色模式滲漏)
 
 **Tests:**
 - [src/tests/setup.ts](src/tests/setup.ts) - Test environment setup
@@ -284,6 +284,12 @@ CategorySystem.addCustomCategory({
 
 ## Version History Context
 
+- **v4.2** (2026-02-22): 消費備註功能 & Dark Mode 修正
+  - CategorySelectModal 漸進式展開 UI（選分類 → 確認+備註+儲存）
+  - `onSelect` callback 改為 `(categoryId, note)` 雙參數
+  - 歷史頁面備註顯示修正（分類名 + 備註分行，不再互相覆蓋）
+  - Tailwind `darkMode` 改為 `selector`，修復 OS 深色模式下淺色介面文字對比度問題
+  - 所有元件 CSS 的 `@media (prefers-color-scheme: dark)` 改為 `:root[data-theme="dark"]`
 - **v4.1** (2026-01-16): Goal Trajectory Deviation Model
   - Replaced absolute opportunity cost model with trajectory-based deviation tracking
   - New TrajectoryCalculator (`src/layers/2-domain/calculators/TrajectoryCalculator.ts`)
