@@ -135,8 +135,8 @@ export function HomePage({
     setShowCategoryModal(true);
   }, [amount, isRecurring, timeCost, loading]);
 
-  // 處理分類選擇完成
-  const handleCategorySelect = useCallback(async (categoryId: string) => {
+  // 處理分類選擇完成（含備註）
+  const handleCategorySelect = useCallback(async (categoryId: string, note: string) => {
     if (!pendingPurchase || !onAddRecord) return;
 
     try {
@@ -147,7 +147,7 @@ export function HomePage({
         isRecurring: pendingPurchase.isRecurring,
         timeCost: pendingPurchase.timeCost,
         category: categoryId,
-        note: '',
+        note,
         timestamp: new Date().toISOString(),
         date: new Date().toISOString().split('T')[0],
       };
@@ -482,6 +482,7 @@ export function HomePage({
           setLoading(false);
         }}
         onSelect={handleCategorySelect}
+        amount={pendingPurchase?.amount}
       />
     </div>
   );
