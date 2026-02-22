@@ -101,30 +101,27 @@
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* Dark Mode - 支援兩種啟用方式：
-   1. 系統偏好 (prefers-color-scheme: dark)
-   2. 手動設定 (data-theme="dark" on html/body)
+/* Dark Mode - 使用 selector 策略，與 Tailwind darkMode: 'selector' 對齊
+   Tailwind 使用 .dark class，我們額外支援 data-theme="dark"
    
    當前預設：Light Mode
-   未來擴展：可透過 document.documentElement.dataset.theme = 'dark' 切換
+   啟用方式：document.documentElement.classList.add('dark') 或 dataset.theme = 'dark'
 */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --color-bg-base: #0f172a;
-    --color-bg-elevated: #1e293b;
-    --color-bg-overlay: rgba(30, 41, 59, 0.9);
-    --color-bg-muted: #1e293b;
+:root.dark:not([data-theme="light"]) {
+  --color-bg-base: #0f172a;
+  --color-bg-elevated: #1e293b;
+  --color-bg-overlay: rgba(30, 41, 59, 0.9);
+  --color-bg-muted: #1e293b;
 
-    --color-text-primary: #f1f5f9;
-    --color-text-secondary: #94a3b8;
-    --color-text-muted: #64748b;
+  --color-text-primary: #f1f5f9;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #64748b;
 
-    --color-border: #334155;
-    --color-border-hover: #475569;
+  --color-border: #334155;
+  --color-border-hover: #475569;
 
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
-  }
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
 }
 
 /* 手動 Dark Mode (data-theme="dark") */

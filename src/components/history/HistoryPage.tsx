@@ -199,8 +199,13 @@ export function HistoryPage({ records, userData, onClose, onUpdateRecord, onDele
                           <div className="flex justify-between items-start">
                             <div className="min-w-0">
                               <div className={`font-medium truncate ${isExempted ? 'text-slate-400' : 'text-slate-900'}`}>
-                                {record.note || categoryDisplay.name || (record.type === 'save' ? '儲蓄' : '消費')}
+                                {categoryDisplay.name || (record.type === 'save' ? '儲蓄' : '消費')}
                               </div>
+                              {record.note && (
+                                <div className="text-slate-500 text-xs truncate">
+                                  {record.note}
+                                </div>
+                              )}
                               <div className="text-slate-400 text-xs">
                                 {record.isRecurring ? '🔄 ' : ''}{date.getMonth() + 1}/{date.getDate()}
                                 {isExempted && <span className="text-amber-500 ml-1">(已終止・不計入統計)</span>}

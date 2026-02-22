@@ -160,28 +160,27 @@
 }
 
 /* Dark Mode */
-@media (prefers-color-scheme: dark) {
-  .gps-badge__modal {
-    background: #1f2937;
-  }
-
-  .gps-badge__modal-header {
-    border-bottom-color: #374151;
-  }
-
-  .gps-badge__modal-header h3 {
-    color: #f9fafb;
-  }
-
-  .gps-badge__modal-row {
-    color: #d1d5db;
-  }
-
-  .gps-badge__modal-row-value {
-    color: #f9fafb;
-  }
-
-  .gps-badge__modal-note p {
-    color: #e5e7eb;
-  }
+:root[data-theme="dark"] .gps-badge__modal {
+  background: #1f2937;
 }
+
+:root[data-theme="dark"] .gps-badge__modal-header {
+  border-bottom-color: #374151;
+}
+
+:root[data-theme="dark"] .gps-badge__modal-header h3 {
+  color: #f9fafb;
+}
+
+:root[data-theme="dark"] .gps-badge__modal-row {
+  color: #d1d5db;
+}
+
+:root[data-theme="dark"] .gps-badge__modal-row-value {
+  color: #f9fafb;
+}
+
+:root[data-theme="dark"] .gps-badge__modal-note p {
+  color: #e5e7eb;
+}
+

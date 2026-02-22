@@ -73,6 +73,7 @@
 - **GPS Header Badge**：即時顯示退休進度狀態（+3.1年 / 0天 / -5天）
 - **累積儲蓄進度**：顯示目標 vs 實際累積儲蓄的進度條
 - **快速決策**：大尺寸的「💸 我買了」和「💪 我忍住了」按鈕
+- **消費備註**：選擇分類後可選填備註（漸進式展開 UI）
 
 ### 📊 歷史頁面
 - **退休 GPS 儀表板**：目標年齡 vs 預估年齡的視覺化對比
@@ -158,7 +159,7 @@ const {
 
 ### 技術棧
 - **Frontend**: React 18 + TypeScript + Vite 5
-- **UI**: Tailwind CSS + 自訂動畫系統
+- **UI**: Tailwind CSS（`darkMode: 'selector'`）+ 自訂動畫系統
 - **測試**: Vitest
 - **Backend**: Google Apps Script（可選雲端同步）
 - **部署**: GitHub Pages
@@ -251,17 +252,25 @@ TimeBar 支援透過 Google Sheets 進行跨裝置同步：
 
 ## 🛣️ Roadmap
 
-### v4.0（當前版本）✅
+### v4.2（當前版本）✅
+- [x] 消費備註功能（選填，漸進式展開 UI）
+- [x] Dark Mode 策略修正（`darkMode: 'selector'`，避免 OS 深色模式滲漏）
+- [x] 歷史頁面備註顯示（分類名 + 備註分行顯示）
+
+### v4.1 ✅
+- [x] Goal Trajectory Deviation Model
+- [x] 儲蓄進度追蹤（週目標系統）
+- [x] RetirementProgress 累積儲蓄進度條
+
+### v4.0 ✅
 - [x] 四層架構重構（layers/1-data, 2-domain, 3-business, 4-ui）
 - [x] GPS 計算邏輯統一（基於 timeCost）
-- [x] 儲蓄進度追蹤（週目標系統）
 - [x] GPS Header Badge 即時顯示
 - [x] 新用戶友善預設值
 
-### v4.1（規劃中）
+### 規劃中
 - [ ] Design Tokens 系統
 - [ ] Atomic Design 組件化
-- [ ] Storybook 組件文檔
 - [ ] E2E 測試（Playwright）
 
 ---
