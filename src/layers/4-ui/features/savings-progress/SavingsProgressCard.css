@@ -205,47 +205,45 @@
   color: #1f2937;
 }
 
-/* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
-  .savings-card__title {
-    color: #f9fafb;
-  }
+/* Dark Mode Support - 使用 selector 策略，與 Tailwind darkMode: 'selector' 對齊 */
+:root[data-theme="dark"] .savings-card__title {
+  color: #f9fafb;
+}
 
-  .savings-card__progress-track {
-    background: rgba(255, 255, 255, 0.1);
-  }
+:root[data-theme="dark"] .savings-card__progress-track {
+  background: rgba(255, 255, 255, 0.1);
+}
 
-  .savings-card__progress-labels {
-    color: #9ca3af;
-  }
+:root[data-theme="dark"] .savings-card__progress-labels {
+  color: #9ca3af;
+}
 
-  .savings-card__detail-header {
-    color: #9ca3af;
-  }
+:root[data-theme="dark"] .savings-card__detail-header {
+  color: #9ca3af;
+}
 
-  .savings-card__detail-list li {
-    color: #d1d5db;
-  }
+:root[data-theme="dark"] .savings-card__detail-list li {
+  color: #d1d5db;
+}
 
-  .savings-card__monthly-label {
-    color: #9ca3af;
-  }
+:root[data-theme="dark"] .savings-card__monthly-label {
+  color: #9ca3af;
+}
 
-  .savings-card__monthly-value {
-    color: #f9fafb;
-  }
+:root[data-theme="dark"] .savings-card__monthly-value {
+  color: #f9fafb;
+}
 
-  .savings-card__details {
-    border-top-color: rgba(255, 255, 255, 0.1);
-  }
+:root[data-theme="dark"] .savings-card__details {
+  border-top-color: rgba(255, 255, 255, 0.1);
+}
 
-  .savings-card__early-title {
-    color: #93c5fd;
-  }
+:root[data-theme="dark"] .savings-card__early-title {
+  color: #93c5fd;
+}
 
-  .savings-card__early-subtitle {
-    color: #60a5fa;
-  }
+:root[data-theme="dark"] .savings-card__early-subtitle {
+  color: #60a5fa;
 }
 
 /* Unallocated Funds Section */
@@ -309,19 +307,17 @@
 }
 
 /* Dark Mode for Unallocated */
-@media (prefers-color-scheme: dark) {
-  .savings-card__unallocated {
-    background: linear-gradient(135deg, #78350f 0%, #92400e 100%);
-    border-color: rgba(251, 191, 36, 0.2);
-  }
+:root[data-theme="dark"] .savings-card__unallocated {
+  background: linear-gradient(135deg, #78350f 0%, #92400e 100%);
+  border-color: rgba(251, 191, 36, 0.2);
+}
 
-  .savings-card__unallocated-label {
-    color: #fcd34d;
-  }
+:root[data-theme="dark"] .savings-card__unallocated-label {
+  color: #fcd34d;
+}
 
-  .savings-card__unallocated-amount {
-    color: #fef3c7;
-  }
+:root[data-theme="dark"] .savings-card__unallocated-amount {
+  color: #fef3c7;
 }
 
 /* Detail Row Layout */
@@ -400,23 +396,21 @@
 }
 
 /* Dark Mode for Formula */
-@media (prefers-color-scheme: dark) {
-  .savings-card__formula-content {
-    background: linear-gradient(135deg, #0c4a6e 0%, #0369a1 100%);
-    border-color: #0ea5e9;
-    color: #e0f2fe;
-  }
+:root[data-theme="dark"] .savings-card__formula-content {
+  background: linear-gradient(135deg, #0c4a6e 0%, #0369a1 100%);
+  border-color: #0ea5e9;
+  color: #e0f2fe;
+}
 
-  .savings-card__formula-content strong {
-    color: #f0f9ff;
-  }
+:root[data-theme="dark"] .savings-card__formula-content strong {
+  color: #f0f9ff;
+}
 
-  .savings-card__formula-calc {
-    background: rgba(0, 0, 0, 0.3);
-    color: #7dd3fc;
-  }
+:root[data-theme="dark"] .savings-card__formula-calc {
+  background: rgba(0, 0, 0, 0.3);
+  color: #7dd3fc;
+}
 
-  .savings-card__formula-note {
-    color: #94a3b8;
-  }
+:root[data-theme="dark"] .savings-card__formula-note {
+  color: #94a3b8;
 }

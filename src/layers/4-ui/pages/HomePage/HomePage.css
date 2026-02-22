@@ -148,9 +148,7 @@
 }
 
 /* Dark Mode - 問句區域 */
-@media (prefers-color-scheme: dark) {
-  .home-page__question {
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
-  }
+:root[data-theme="dark"] .home-page__question {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
 }
 
